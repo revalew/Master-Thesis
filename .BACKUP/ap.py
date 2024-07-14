@@ -28,7 +28,7 @@ def setup_ap():
     while ap.active() == False:
         pass
 
-    print("Successfuly started AP")
+    print("Successfully started AP")
     print(ap.ifconfig())
 
 
@@ -80,7 +80,6 @@ async def handle_client(reader, writer):
     await writer.drain()  # Drain the writer buffer
     await writer.wait_closed()  # Wait until writer is closed
     print("Client disconnected")  # Print message when client is disconnected
-
 
 
 async def main():
