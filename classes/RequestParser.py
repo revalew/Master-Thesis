@@ -242,8 +242,11 @@ class RequestParser:
                 json_string += "\n"
             json_string += self.content[line_num]
             line_num += 1
-            print(json_string)
         # parse json string to dictionary
+        if json_string == "":
+            json_string = r"{}"
+        # else:
+        #     print(f"json_string: {json_string}")
         self.post_data = json.loads(json_string)
 
     def url_match(self, test_url):

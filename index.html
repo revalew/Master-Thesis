@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pico Control Panel</title>
+    <link rel="stylesheet" href="./src/style.css" type="text/css">
+</head>
+
+<body>
+    <h1>Pico Control Panel</h1>
+    <div class="container">
+
+        <div class="col">
+            <div class="col">
+                <h2>Onboard LED</h2>
+                <button id="onboard_led">&nbsp;</button>
+                <div class="row">
+                    <button type="button" onclick="setLedColour('on')" class="btn">on</button>
+                    <button type="button" onclick="setLedColour('off')" class="btn">off</button>
+                </div>
+            </div>
+
+            <div class="col">
+                <h2>Temperature</h2>
+                <div id="tempValue"> 0 </div>
+                <div>
+                    <canvas id="tempGauge"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./src/gauge.min.js"></script>
+    <script src="./src/fetch_data.js"></script>
+</body>
+
+</html>

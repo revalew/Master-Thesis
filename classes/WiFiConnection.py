@@ -22,6 +22,7 @@ class WiFiConnection:
         cls.wlan.active(True)  # Activate Access Point
         cls.wlan.config(pm=0xA11140)  # Disable power-save mode
 
+        # print("Setting up the Access Point")
         while cls.wlan.active() == False:
             if print_progress:
                 print("Setting up the Access Point - Please wait")
