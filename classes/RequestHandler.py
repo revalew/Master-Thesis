@@ -91,7 +91,7 @@ class RequestHandler:
 
             # try to serve static file
             else:
-                response_builder.serve_static_file(request.url, "./index.html")
+                response_builder.serve_static_file(request.url, "./src/index.html")
 
             response_builder.build_response()
             writer.write(response_builder.response)

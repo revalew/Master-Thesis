@@ -19,6 +19,7 @@ if not WiFiConnection.start_ap_mode():
 
 
 async def main() -> None:
+    gc.collect()
     # print("Setting up webserver...")
     # handler = RequestHandler()
     # asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
