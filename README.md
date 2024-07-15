@@ -22,7 +22,7 @@ This project consists of many files and directories, the most important of which
 
 - Directory `~/.BACKUP/` containing the backup and important files that should not be transferred to the Pico,
   - Adding the CircuitPython compatibility layer - short tutorial in `~/.BACKUP/adafiut_libs/README.md` (with required libraries),
-  - Raspberry Pi Pico W board pinout in `~/.BACKUP/pico-pinout.svg
+  - Raspberry Pi Pico W board pinout in `~/.BACKUP/pico-pinout.svg`
   - Firmware used in the project in `~/.BACKUP/RPI_PICO-20240602-v1.23.0.uf2`,
   - (LINUX USERS: MicroPico Extension for VSCode) script used to resolve user permissions in `~/.BACKUP/solvePermissions.sh`,
   - `~/.BACKUP/code/` for old / sample / backup code,
@@ -40,7 +40,7 @@ I managed to create an asynchronous web server that handles clients and reads se
 - Pico acting as an access point,
 - Handling of asynchronous requests,
 - Added translation layer for CircuitPython,
-- Reading IMU sensor data using the CircuitPython library (LSM6DSOX + LIS3MDL 9 DoF),
+- Reading IMU sensor data using the CircuitPython library (Adafruit "LSM6DSOX + LIS3MDL 9 DoF" Sensor),
 - Control the device from a web page,
 - Live UI update and synchronous data retrieval.
 
