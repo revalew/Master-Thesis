@@ -11,29 +11,78 @@
 <body>
     <h1>Pico Control Panel</h1>
     <div class="container">
-
         <div class="col">
             <div class="col">
-                <h2>Onboard LED</h2>
-                <button id="onboard_led">&nbsp;</button>
-                <div class="row">
-                    <button type="button" onclick="setLedColour('on')" class="btn">on</button>
-                    <button type="button" onclick="setLedColour('off')" class="btn">off</button>
+                <h2>Onboard LED</h2><button id="onboard_led">&nbsp;</button>
+                <div class="row"><button type="button" onclick="setLedColour('on')" class="btn">on</button><button
+                        type="button" onclick="setLedColour('off')" class="btn">off</button></iv>
+                </div>
+                <div class="col">
+                    <h2>Temperature</h2>
+                    <div id="tempValue">0</div><!--<div><canvas id="tempGauge"></canvas></div>-->
+                </div>
+                <div class="col">
+                    <h2>Read the IMU data</h2>
+                    <!-- <div class="row"><button type="button" onclick="gatherIMUData()" class="btn">get reading</button>
+                    </div> -->
+
+                    <div class="row">
+                        <div class="col">
+                            <h2>Accelerometer</h2>
+                            <div class="row">
+                                <div class="col">
+                                    <p>accelX:</p>
+                                    <div id="accelX">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>accelY:</p>
+                                    <div id="accelY">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>accelZ:</p>
+                                    <div id="accelZ">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h2>Gyroscope</h2>
+                            <div class="row">
+                                <div class="col">
+                                    <p>gyroX:</p>
+                                    <div id="gyroX">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>gyroY:</p>
+                                    <div id="gyroY">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>gyroZ:</p>
+                                    <div id="gyroZ">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h2>Magnetometer</h2>
+                            <div class="row">
+                                <div class="col">
+                                    <p>magnetX:</p>
+                                    <div id="magnetX">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>magnetY:</p>
+                                    <div id="magnetY">0</div>
+                                </div>
+                                <div class="col">
+                                    <p>magnetZ:</p>
+                                    <div id="magnetZ">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="col">
-                <h2>Temperature</h2>
-                <div id="tempValue"> 0 </div>
-                <div>
-                    <canvas id="tempGauge"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="./src/gauge.min.js"></script>
-    <script src="./src/fetch_data.js"></script>
+        </div><!--<script src="./src/gauge.min.js"></script>-->
+        <script src="./src/fetch_data.js"></script>
 </body>
 
 </html>

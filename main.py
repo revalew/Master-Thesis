@@ -18,18 +18,21 @@ if not WiFiConnection.start_ap_mode():
     raise RuntimeError("Setting up Access Point failed")
 
 
-async def main():
+async def main() -> None:
     # print("Setting up webserver...")
-    handler = RequestHandler()
-    asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
+    # handler = RequestHandler()
+    # asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
+    asyncio.create_task(
+        asyncio.start_server(RequestHandler().handle_request, "0.0.0.0", 80)
+    )
     # print("WebServer started!\n\n")
 
     # main async loop on first core
     # counter = 0
     while True:
-        # if counter % 5000 == 0:
+        # if counter % 1000 == 0:
         #     gc.collect()
-        # #     IoHandler.toggle_onboard_led()
+        #     # print(gc.mem_free())
         # counter += 1
         await asyncio.sleep(0)
 

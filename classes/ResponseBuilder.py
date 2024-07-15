@@ -1,42 +1,52 @@
 # Class to build an HTTP response
 import json
 import os
+import gc
+
+try:
+    from typing import Union
+except ImportError:
+    pass
 
 
 class ResponseBuilder:
     protocol = "HTTP/1.1"
     server = "Pi Pico MicroPython"
 
-    def __init__(self):
+    def __init__(self) -> None:
         # set default values
         self.status = 200
         self.content_type = "text/html"
         self.body = ""
         self.response = ""
+        gc.enable()
 
-    def set_content_type(self, content_type):
+    def set_content_type(self, content_type: str) -> None:
         self.content_type = content_type
 
-    def set_status(self, status):
+    def set_status(self, status: int) -> None:
         self.status = status
 
-    def set_body(self, body):
+    def set_body(self, body: str) -> None:
         self.body = body
 
-    def serve_static_file(self, req_filename, default_file="/index.html"):
+    def serve_static_file(
+        self, req_filename: str, default_file: str = "./index.html"
+    ) -> None:
         # make sure filename starts with /
         if req_filename.find("/") == -1:
             req_filename = "/" + req_filename
         # remove query string
         if req_filename.find("?") != -1:
-            req_filename, qs = req_filename.split("?", 1)
+            req_filename, _ = req_filename.split("?", 1)
         # remove bookmark
         if req_filename.find("#") != -1:
-            req_filename, qs = req_filename.split("#", 1)
+            req_filename, _ = req_filename.split("#", 1)
         # filter out default file
         if req_filename == "/":
             req_filename = default_file
         # break filename into path and filename
+        gc.collect()
         path, filename = req_filename.rsplit("/", 1)
         # reinstate root path for listdir
         if len(path) == 0:
@@ -44,13 +54,11 @@ class ResponseBuilder:
         # print(path, filename)
         # make sure working from root directory
         os.chdir("/")
-        # get directory listing
-        dir_contents = os.listdir(path)
         # check if file exists
-        if filename in dir_contents:
+        if filename in os.listdir(path):
             # file found
             # get file type
-            name, file_type = filename.rsplit(".", 1)
+            _, file_type = filename.rsplit(".", 1)
             if file_type == "htm" or file_type == "html":
                 self.content_type = "text/html"
             elif file_type == "js":
@@ -61,19 +69,21 @@ class ResponseBuilder:
                 # let browser work it out
                 self.content_type = "text/html"
             # load content
-            # print(f"path: {path}\nfilename: {filename}")
-            file = open(path + "/" + filename)
+            gc.collect()
+            # print("{}/{}".format(path, filename))
+            file = open("{}/{}".format(path, filename))
             self.set_body(file.read())
             self.set_status(200)
         else:
             # file not found
             self.set_status(404)
 
-    def set_body_from_dict(self, dictionary):
+    def set_body_from_dict(self, dictionary: dict[str, Union[str, int, float]]) -> None:
         self.body = json.dumps(dictionary)
         self.set_content_type("application/json")
 
-    def build_response(self):
+    def build_response(self) -> None:
+        gc.collect()
         self.response = ""
         # status line
         self.response += (
@@ -94,7 +104,7 @@ class ResponseBuilder:
         if len(self.body) > 0:
             self.response += self.body
 
-    def get_status_message(self):
+    def get_status_message(self) -> str:
         status_messages = {
             200: "OK",
             400: "Bad Request",

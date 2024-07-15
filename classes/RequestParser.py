@@ -2,10 +2,15 @@
 import re
 import json
 
+try:
+    from typing import Tuple, Union
+except ImportError:
+    pass
+
 
 class RequestParser:
 
-    def __init__(self, raw_request):
+    def __init__(self, raw_request) -> None:
         # make sure raw_request is a str
         if isinstance(raw_request, bytes):
             raw_request = raw_request.decode("utf-8")
@@ -22,7 +27,7 @@ class RequestParser:
 
         self.parse_request(raw_request)
 
-    def parse_request(self, raw_request):
+    def parse_request(self, raw_request) -> None:
 
         if len(raw_request) > 0:
             # some data supplied
@@ -98,13 +103,13 @@ class RequestParser:
         else:
             return
 
-    def get_header_value(self, header_name):
+    def get_header_value(self, header_name: str) -> str | bool:
         if header_name in self.headers:
             return self.headers[header_name]
         else:
             return False
 
-    def parse_first_line(self, first_line):
+    def parse_first_line(self, first_line: str) -> None:
         # split line on spaces to get words
         line_parts = first_line.split()
         # should be three parts
@@ -125,7 +130,9 @@ class RequestParser:
             # something is wrong - flag it
             self.method = "ERROR"
 
-    def parse_header_line(self, header_line):
+    def parse_header_line(
+        self, header_line: str
+    ) -> Tuple[bool, bool] | Tuple[str, str]:
         # split header line on : to get name and value
         line_parts = header_line.split(":")
         # should be two parts
@@ -138,7 +145,7 @@ class RequestParser:
             # return as tuple
             return (header_name, header_value)
 
-    def decode_query_string(self, query_string):
+    def decode_query_string(self, query_string: str) -> dict[str, Union[str, bool]]:
         # split query string on &
         # this gives key=value list
         param_strings = query_string.split("&")
@@ -160,7 +167,7 @@ class RequestParser:
             params[key] = value
         return params
 
-    def parse_content_form_data(self):
+    def parse_content_form_data(self) -> None:
         # check if boundary found
         if not self.boundary:
             return
@@ -228,11 +235,11 @@ class RequestParser:
             self.post_data[var_name] = var_value
             # process next section
 
-    def parse_content_form_url_encoded(self):
+    def parse_content_form_url_encoded(self) -> None:
         # first line of content will contain data
         self.post_data = self.decode_query_string(self.content[0])
 
-    def parse_json_body(self):
+    def parse_json_body(self) -> None:
         # content contains json string
         line_num = 0  # first line in content
         json_string = ""
@@ -249,7 +256,7 @@ class RequestParser:
         #     print(f"json_string: {json_string}")
         self.post_data = json.loads(json_string)
 
-    def url_match(self, test_url):
+    def url_match(self, test_url: str) -> bool:
         # make sure string is cleaned and has leading /
         test_url = "/" + str(test_url).strip().strip("/")
         # check for / route
@@ -263,7 +270,7 @@ class RequestParser:
         else:
             return False
 
-    def unquote(self, url_string):
+    def unquote(self, url_string: str) -> str:
         # replaces %20 with space
         # %0A with newline
         url_string = re.sub(r"%20", " ", url_string)
@@ -271,7 +278,7 @@ class RequestParser:
         return url_string
 
     # return relevant data set depending on request method
-    def data(self):
+    def data(self) -> dict[str, Union[str, bool]] | bool:
         if self.method == "POST":
             return self.post_data
         elif self.method == "GET":
@@ -281,7 +288,7 @@ class RequestParser:
 
     # return the request action
     # gets the value from the request method data section
-    def get_action(self):
+    def get_action(self) -> str | bool | bool:
         if self.method == "POST":
             if "action" in self.post_data:
                 return self.post_data["action"]

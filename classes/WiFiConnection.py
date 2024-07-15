@@ -16,7 +16,7 @@ class WiFiConnection:
         pass
 
     @classmethod
-    def start_ap_mode(cls, print_progress=False):
+    def start_ap_mode(cls, print_progress: bool = False) -> bool:
         cls.wlan = network.WLAN(network.AP_IF)
         cls.wlan.config(essid=NetworkCredentials.ap_ssid, password=NetworkCredentials.ap_password)
         cls.wlan.active(True)  # Activate Access Point
@@ -43,7 +43,7 @@ class WiFiConnection:
 
 
     @classmethod
-    def start_station_mode(cls, print_progress=False):
+    def start_station_mode(cls, print_progress: bool = False) -> bool:
         # set WiFi to station interface
         cls.wlan = network.WLAN(network.STA_IF)
         # activate the network interface
