@@ -68,12 +68,15 @@ class ResponseBuilder:
             else:
                 # let browser work it out
                 self.content_type = "text/html"
-            # load content
             gc.collect()
-            # print("{}/{}".format(path, filename))
-            file = open("{}/{}".format(path, filename))
-            self.set_body(file.read())
+            # file = open("{}/{}".format(path, filename))
+            # self.set_body(file.read())
+            with open("{}/{}".format(path, filename)) as f:
+                self.set_body(f.read())
+            # self.set_body(open("{}/{}".format(path, filename)).read())
+            gc.collect()
             self.set_status(200)
+            gc.collect()
         else:
             # file not found
             self.set_status(404)
