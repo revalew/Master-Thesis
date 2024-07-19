@@ -19,17 +19,19 @@ if not WiFiConnection.start_ap_mode():
 
 
 async def main() -> None:
-    gc.collect()
     handler = RequestHandler()
     asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
-    # asyncio.create_task(
+    # asyncio.create_task/(
     #     asyncio.start_server(RequestHandler().handle_request, "0.0.0.0", 80)
     # )
+    gc.collect()
     counter = 0
     while True:
-        if counter % 1000 == 0:
+        # if counter % 1000 == 0:
+        if counter == 1000:
             gc.collect()
             print(gc.mem_free())
+            counter = 0
         counter += 1
         await asyncio.sleep(0)
 

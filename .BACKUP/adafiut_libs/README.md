@@ -1,4 +1,4 @@
-# HOW TO INSTALL CircuitPython LIBRARIES ON MicroPython
+# HOW TO INSTALL CircuitPython LIBRARIES ON MicroPython BOARD
 
 ## Overview
 
@@ -32,16 +32,23 @@ Platform detect:
 
 ## I2C Usage
 
-Init the I2C with explicit pins using `busio.I2C()`. The pico doesn't have a default set of pins labeled for I2C.
+Init the I2C with explicit pins using `busio.I2C()`. The pico doesn't have a default set of pins labeled for I2C, so this:
 
 ```python
-# Adafruit libraries for IMU
+import board
+
+i2c = board.I2C()  # uses board.SCL and board.SDA
+```
+
+has to be modified to this:
+
+```python
 import board
 import busio
 
 # I2C initialization
-# GP4 and GP5 are the default I2C ports (pin 6 & 7)
+# GP4 and GP5 are the default ports for I2C bus no. 1 (pin 6 & 7)
 i2c = busio.I2C(board.GP5, board.GP4)
 ```
 
-If you are using different I2C interface change those values accordingly (check pinout @`.BACKUP/pico-pinout.svg`)
+If you are using different I2C interface change those values accordingly (check pinout @[`.BACKUP/pico-pinout.svg`](../pico-pinout.svg))

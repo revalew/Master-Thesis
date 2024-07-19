@@ -1,6 +1,6 @@
 # class to handle the IO for the demo setup
 # from machine import Pin, ADC
-import board
+from board import GP6, GP7
 from busio import I2C
 
 try:
@@ -10,7 +10,7 @@ except ImportError:
 
 # Adafruit libraries for IMU 1
 # import adafruit_lps2x # pressure n temp
-import adafruit_icm20x
+from adafruit_icm20x import ICM20948
 
 # Adafruit libraries for IMU 2
 from adafruit_lsm6ds.lsm6dsox import LSM6DSOX as LSM6DS
@@ -26,7 +26,7 @@ class IoHandler:
     # led_state = 0
 
     # I2C initialization
-    i2c = I2C(board.GP7, board.GP6)  # I2C(SCL, SDA)
+    i2c = I2C(GP7, GP6)  # I2C(SCL, SDA)
     # print(i2c.scan())
     """
     [28, 67, 92, 104, 106] == [0x1C, 0x43, 0x5C, 0x68, 0x6A]
@@ -37,7 +37,7 @@ class IoHandler:
     # """
     # IMU 1 - Waveshare
     # press_temp_wav = adafruit_lps2x.LPS22(i2c, 0x5C)
-    imu_wav = adafruit_icm20x.ICM20948(i2c, 0x68)
+    imu_wav = ICM20948(i2c, 0x68)
 
     # pressure_wav = 0.0
     # temp_wav = 0.0

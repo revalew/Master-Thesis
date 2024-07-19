@@ -16,20 +16,24 @@ The project will make use of a variety of components:
 - [Pico-Dual-Expander](https://www.waveshare.com/pico-dual-expander.htm) to hold some components together w/o soldering,
 - 3D printed enclosure for the device to protect the circuit (custom design).
 
+## How to connect the components
+
+Simple list of connections in [`~/.BACKUP/project_circuit_simple_diagram.pdf`](./.BACKUP/project_circuit_simple_diagram.pdf)
+
 ## Project structure and important locations
 
 This project consists of many files and directories, the most important of which are described below:
 
-- Directory `~/.BACKUP/` containing the backup and important files that should not be transferred to the Pico,
-  - Adding the CircuitPython compatibility layer - short tutorial in `~/.BACKUP/adafiut_libs/README.md` (with required libraries),
-  - Raspberry Pi Pico W board pinout in `~/.BACKUP/pico-pinout.svg`
-  - Firmware used in the project in `~/.BACKUP/RPI_PICO-20240602-v1.23.0.uf2`,
-  - (LINUX USERS: MicroPico Extension for VSCode) script used to resolve user permissions in `~/.BACKUP/solvePermissions.sh`,
-  - `~/.BACKUP/code/` for old / sample / backup code,
-- `~/classes/` directory containing all necessary classes for easy development,
-- `~/lib/` directory containing all the CircuitPython libraries that may be needed in the project,
-- `~/src/` directory contains all the resources needed for the web server,
-- **`main.py`** as the main file of the project and the program to be executed on startup.
+- Directory [`~/.BACKUP/`](./.BACKUP/) containing the backup and important files that should not be transferred to the Pico:
+  - Adding the CircuitPython compatibility layer - short tutorial in [`~/.BACKUP/adafiut_libs/README.md`](./.BACKUP/adafiut_libs/README.md) (with required libraries in the same directory),
+  - Raspberry Pi Pico W board pinout in [`~/.BACKUP/pico-pinout.svg`](./.BACKUP/pico-pinout.svg),
+  - Firmware used in the project in [`~/.BACKUP/RPI_PICO-20240602-v1.23.0.uf2`](./.BACKUP/RPI_PICO-20240602-v1.23.0.uf2),
+  - [`~/.BACKUP/code/`](./.BACKUP/code/) for old / sample / backup code,
+  - **(LINUX USERS: MicroPico Extension for VSCode)** script used to resolve user permissions in [`~/.BACKUP/solvePermissions.sh`](./.BACKUP/solvePermissions.sh),
+- [`~/classes/`](./classes/) directory containing all necessary classes for easy development,
+- [`~/lib/`](./lib/) directory containing all the CircuitPython libraries that may be needed in the project,
+- [`~/src/`](./src/) directory contains all the resources needed for the web server,
+- **[`main.py`](./main.py)** as the main file of the project and the program to be executed on startup.
 
 ## Progress
 
