@@ -1,0 +1,1 @@
+For testing I uploaded `pico2_w-v0.0.12-pimoroni-micropython.uf2` and it seems to be working?

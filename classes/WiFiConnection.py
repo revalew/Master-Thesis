@@ -1,7 +1,7 @@
 # class to handle WiFi conenction
 import utime
 import network
-from classes.NetworkCredentials import NetworkCredentials
+from . import NetworkCredentials
 
 class WiFiConnection:
     # class level vars
@@ -11,6 +11,7 @@ class WiFiConnection:
     gateway = ""
     dns_server = ""
     wlan = None
+    fullConfig = None
 
     def __init__(self):
         pass
@@ -18,7 +19,10 @@ class WiFiConnection:
     @classmethod
     def start_ap_mode(cls, print_progress: bool = False) -> bool:
         cls.wlan = network.WLAN(network.AP_IF)
-        cls.wlan.config(essid=NetworkCredentials.ap_ssid, password=NetworkCredentials.ap_password)
+        cls.wlan.config(
+            essid=NetworkCredentials.ap_ssid,
+            password=NetworkCredentials.ap_password
+        )
         cls.wlan.active(True)  # Activate Access Point
         cls.wlan.config(pm=0xA11140)  # Disable power-save mode
 
@@ -34,6 +38,21 @@ class WiFiConnection:
         cls.subnet_mask = config[1]
         cls.gateway = config[2]
         cls.dns_server = config[3]
+
+        cls.status = cls.wlan.status()
+
+        cls.fullConfig = [
+            f"status: {cls.status}",
+            f"ssid: {cls.wlan.config("ssid")}",
+            # f"key: {cls.wlan.config("key")}",
+            f"txpower: {cls.wlan.config("txpower")}",
+            f"pm: {cls.wlan.config("pm")}",
+            f"mac: {cls.wlan.config("mac")}",
+            f"ip: {cls.ip}",
+            f"subnet_mask: {cls.subnet_mask}",
+            f"gateway: {cls.gateway}",
+            f"dns_server: {cls.dns_server}",
+        ]
 
         if print_progress:
             print("Successfully started AP")
@@ -84,6 +103,20 @@ class WiFiConnection:
             cls.subnet_mask = config[1]
             cls.gateway = config[2]
             cls.dns_server = config[3]
+
+            cls.fullConfig = [
+                f"status: {cls.status}",
+                f"ssid: {cls.wlan.config("ssid")}",
+                # f"key: {cls.wlan.config("key")}",
+                f"txpower: {cls.wlan.config("txpower")}",
+                f"pm: {cls.wlan.config("pm")}",
+                f"mac: {cls.wlan.config("mac")}",
+                f"ip: {cls.ip}",
+                f"subnet_mask: {cls.subnet_mask}",
+                f"gateway: {cls.gateway}",
+                f"dns_server: {cls.dns_server}",
+            ]
+
             if print_progress:
                 print('ip = ' + str(cls.ip))
             return True

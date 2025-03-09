@@ -5,6 +5,7 @@ from busio import I2C
 
 try:
     from typing import Tuple
+    
 except ImportError:
     pass
 
@@ -34,7 +35,6 @@ class IoHandler:
     0x43        => UPS-A
     0x5C, 0x68  => Waveshare IMU
     """
-    # """
     # IMU 1 - Waveshare
     # press_temp_wav = adafruit_lps2x.LPS22(i2c, 0x5C)
     imu_wav = ICM20948(i2c, 0x68)
@@ -44,7 +44,7 @@ class IoHandler:
     acceleration_wav = (0.0, 0.0, 0.0)
     gyro_wav = (0.0, 0.0, 0.0)
     magnetic_wav = (0.0, 0.0, 0.0)
-    # """
+    
     # IMU 2 - Adafruit
     accel_gyro_ada = LSM6DS(i2c)
     mag_ada = LIS3MDL(i2c)
@@ -53,14 +53,14 @@ class IoHandler:
     gyro_ada = (0.0, 0.0, 0.0)
     magnetic_ada = (0.0, 0.0, 0.0)
 
-    # """
+    
     # UPS - Waveshare
     ups = INA219(i2c, 0x43)
 
     ups_voltage = 0.0  # voltage on V- (load side)
     ups_current_draw = 0.0  # current in A
     ups_battery_remaining = 0.0
-    # """
+    
 
     def __init__(self):
         # get everything into a starting state
@@ -161,7 +161,7 @@ class IoHandler:
         # print("Magnetometer X:%.2f, Y: %.2f, Z: %.2f uT" % (cls.magnetic_wav))
         return cls.magnetic_wav
 
-    # """
+    
     # Waveshare UPS voltage handler
     @classmethod
     def get_ups_voltage_reading(cls) -> float:
@@ -190,4 +190,4 @@ class IoHandler:
         # print("Percent:  {:6.1f} %".format(cls.ups_battery_remaining))
         return (cls.ups_battery_remaining, cls.ups.bus_voltage)
 
-    # """
+    

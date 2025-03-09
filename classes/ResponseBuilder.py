@@ -5,6 +5,7 @@ import gc
 
 try:
     from typing import Union
+    
 except ImportError:
     pass
 

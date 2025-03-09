@@ -4,6 +4,7 @@ import json
 
 try:
     from typing import Tuple, Union
+    
 except ImportError:
     pass
 
@@ -14,6 +15,7 @@ class RequestParser:
         # make sure raw_request is a str
         if isinstance(raw_request, bytes):
             raw_request = raw_request.decode("utf-8")
+            
         self.method = ""
         self.full_url = ""
         self.url = ""

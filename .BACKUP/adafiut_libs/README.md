@@ -51,4 +51,4 @@ import busio
 i2c = busio.I2C(board.GP5, board.GP4)
 ```
 
-If you are using different I2C interface change those values accordingly (check pinout @[`.BACKUP/pico-pinout.svg`](../pico-pinout.svg))
+If you are using different I2C interface change those values accordingly (check pinout @[`.BACKUP/pinout/`](../pinout/))

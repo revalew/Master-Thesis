@@ -1,6 +1,4 @@
-from classes.RequestParser import RequestParser
-from classes.ResponseBuilder import ResponseBuilder
-from classes.IoHandler import IoHandler
+from . import RequestParser, ResponseBuilder, IoHandler
 
 import gc
 
@@ -13,8 +11,9 @@ class RequestHandler:
         pass
 
     # Asynchronous function to handle client requests
-    @classmethod
-    async def handle_request(cls, reader, writer) -> None:
+    # @classmethod
+    # async def handle_request(cls, reader, writer) -> None:
+    async def handle_request(self, reader, writer) -> None:
         try:
             raw_request = await reader.read(1024)
             gc.collect()
@@ -27,6 +26,7 @@ class RequestHandler:
             if request.url_match("/api"):
                 action = request.get_action()
                 gc.collect()
+
                 if action == "AdaReadIMU":
                     # ajax request for data
                     acceleration = {
@@ -34,25 +34,31 @@ class RequestHandler:
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     gyro = {
                         "X": 0.0,
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     magnetic = {
                         "X": 0.0,
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     acceleration["X"], acceleration["Y"], acceleration["Z"] = (
                         IoHandler.get_accel_ada_reading()
                     )
                     gc.collect()
+
                     gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_ada_reading()
                     gc.collect()
+
                     magnetic["X"], magnetic["Y"], magnetic["Z"] = (
                         IoHandler.get_magnetic_ada_reading()
                     )
+                    
                     gc.collect()
                     response_obj = {
                         "status": "OK",
@@ -60,7 +66,9 @@ class RequestHandler:
                         "gyro": gyro,
                         "magnetic": magnetic,
                     }
+
                     response_builder.set_body_from_dict(response_obj)
+
                 elif action == "WavReadIMU":
                     # ajax request for data
                     acceleration = {
@@ -68,26 +76,32 @@ class RequestHandler:
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     gyro = {
                         "X": 0.0,
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     magnetic = {
                         "X": 0.0,
                         "Y": 0.0,
                         "Z": 0.0,
                     }
+
                     acceleration["X"], acceleration["Y"], acceleration["Z"] = (
                         IoHandler.get_accel_wav_reading()
                     )
                     gc.collect()
+
                     gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_wav_reading()
                     gc.collect()
+
                     magnetic["X"], magnetic["Y"], magnetic["Z"] = (
                         IoHandler.get_magnetic_wav_reading()
                     )
                     gc.collect()
+
                     response_obj = {
                         "status": "OK",
                         "acceleration": acceleration,
@@ -95,20 +109,25 @@ class RequestHandler:
                         "magnetic": magnetic,
                     }
                     response_builder.set_body_from_dict(response_obj)
+
                 elif action == "getBatteryInfo":
                     battery_percentage, battery_voltage = (
                         IoHandler.get_ups_battery_reading()
                     )
                     gc.collect()
+
                     battery_current = IoHandler.get_ups_current_reading()
                     gc.collect()
+
                     response_obj = {
                         "status": "OK",
                         "battery_voltage": battery_voltage,
                         "battery_current": battery_current,
                         "battery_percentage": battery_percentage,
                     }
+
                     response_builder.set_body_from_dict(response_obj)
+
                 # elif action == "getPressureInfo":
                 #     pressure = IoHandler.get_pressure_wav_reading()
                 #     gc.collect()
@@ -120,6 +139,7 @@ class RequestHandler:
                 #         "temperature": temperature,
                 #     }
                 #     response_builder.set_body_from_dict(response_obj)
+                
                 else:
                     # unknown action
                     response_builder.set_status(404)

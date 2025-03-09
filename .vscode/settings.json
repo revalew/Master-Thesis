@@ -18,6 +18,8 @@
 		"**/venv",
 		"**/.venv",
 		"**/.BACKUP",
+		"**/.mypy_cache",
+		"**/Makefile",
 		"**/LICENSE",
 		"**/README.md"
 	],

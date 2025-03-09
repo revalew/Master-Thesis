@@ -3,12 +3,10 @@
 
 import uasyncio as asyncio
 
-# import _thread
 import machine
 import gc
 
-from classes.WiFiConnection import WiFiConnection
-from classes.RequestHandler import RequestHandler
+from classes import WiFiConnection#, RequestHandler
 
 gc.enable()
 gc.collect()
@@ -17,20 +15,20 @@ gc.collect()
 if not WiFiConnection.start_ap_mode():
     raise RuntimeError("Setting up Access Point failed")
 
+# for prop in WiFiConnection().fullConfig:
+#     print(f"{prop}\n")
 
 async def main() -> None:
-    handler = RequestHandler()
-    asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
-    # asyncio.create_task/(
-    #     asyncio.start_server(RequestHandler().handle_request, "0.0.0.0", 80)
-    # )
+    # handler = RequestHandler()
+    # asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))
     gc.collect()
+
     counter = 0
     while True:
         # if counter % 1000 == 0:
         if counter == 1000:
             gc.collect()
-            print(gc.mem_free())
+            print(f"Allocated RAM: {gc.mem_alloc()}\nFree RAM: {gc.mem_free()}\n")
             counter = 0
         counter += 1
         await asyncio.sleep(0)
