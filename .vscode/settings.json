@@ -25,5 +25,7 @@
 	],
 	"micropico.openOnStart": true,
 	"python.analysis.typeshedPaths": ["~/.micropico-stubs/included"],
-	"python.analysis.extraPaths": ["~/.micropico-stubs/included"]
+	"python.analysis.extraPaths": ["~/.micropico-stubs/included"],
+	
+	"cSpell.words": ["uasyncio"]
 }
