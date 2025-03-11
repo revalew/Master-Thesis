@@ -1,7 +1,7 @@
 # class to handle WiFi conenction
 import utime
 import network
-from . import NetworkCredentials
+from .NetworkCredentials import NetworkCredentials
 
 class WiFiConnection:
     # class level vars

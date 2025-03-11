@@ -1,4 +1,6 @@
-from . import RequestParser, ResponseBuilder, IoHandler
+from .RequestParser import RequestParser
+from .ResponseBuilder import ResponseBuilder
+from .IoHandler import IoHandler
 
 import gc
 

@@ -1,8 +1,14 @@
 # Master thesis project - "Step estimation from motion sensors" with RPi Pico W
 
+<br/>
+<br/>
+
 ## Overview
 
 The aim of this project is to create a circuit to measure and analyze the data from two different IMUs (Inertial Measurement Units) to determine the accuracy of the step estimation algorithm (multiple if there is time).
+
+<br/>
+<br/>
 
 ## Required / used components
 
@@ -22,9 +28,15 @@ The project will make use of a variety of components:
 
 - 3D printed enclosure for the device to protect the circuit (custom design).
 
+<br/>
+<br/>
+
 ## How to connect the components
 
 Simple list of connections in [`~/.BACKUP/project_circuit_simple_diagram.pdf`](./.BACKUP/project_circuit_simple_diagram.pdf)
+
+<br/>
+<br/>
 
 ## Project structure and important locations
 
@@ -54,7 +66,13 @@ This project consists of many files and directories, the most important of which
 
 - **[`main.py`](./main.py)** as the main file of the project and the program to be executed on startup.
 
+<br/>
+<br/>
+
 ## Progress
+
+<br/>
+<br/>
 
 ### First major success
 
@@ -72,7 +90,33 @@ I managed to create an asynchronous web server that handles clients and reads se
 
 - Live UI update and synchronous data retrieval.
 
-<p align='center'>
-  <img src="./.BACKUP/img_README/first_success.png" width="400"/>
-  <img src="./.BACKUP/img_README/first_success_mobile.png" width="180" height="344" />
-</p>
+<div align='center'>
+  <img src="./.BACKUP/img_README/1/first_success.png" alt="First success PC" width="400"/>
+  <img src="./.BACKUP/img_README/1/first_success_mobile.png" alt="First success mobile" height="344" />
+</div>
+
+<br/>
+<br/>
+
+### Migration to Pico 2 W
+
+I moved the project to the Pico 2 W, and it works just fine now using the `Blinka`, `Platform Detect` and `CircuitPython` libraries. Doubled RAM and Flash memory of the Pico 2 W makes it possible to run the project without the fear of low RAM and storage issues (as it was the case with the Pico W, but the `gc.collect()` function is still called everywhere just in case :skull:).
+
+Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. The display cycles through the measurements of the IMU sensors and battery level every 5 seconds using the `asyncio` library (accelerometer and gyroscope values from a single sensor are displayed for 5 seconds, then the values from the second sensor are displayed for 5 seconds, and so on - battery level is always displayed as the last value).
+
+Updated the web page to display the measurements and battery level.
+
+<div align='center'>
+  <img src="./.BACKUP/img_README/2/IMU_1.jpg" alt="IMU 1 measurements displayed on the OLED" height="344" />
+  <img src="./.BACKUP/img_README/2/IMU_2.jpg" alt="IMU 2 measurements displayed on the OLED" height="344" />
+  <img src="./.BACKUP/img_README/2/pico_2_w_on_battery.jpg" alt="Pico 2 W running on the battery" height="344" />
+
+  <br/>
+
+  <img src="./.BACKUP/img_README/2/updated_webpage.png" alt="Updated webpage" width="400"/>
+</div>
+
+<br/>
+<br/>
+
+### ...
