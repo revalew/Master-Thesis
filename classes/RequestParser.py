@@ -21,11 +21,11 @@ class RequestParser:
         self.url = ""
         self.query_string = ""
         self.protocol = ""
-        self.headers = {}
-        self.query_params = {}
-        self.post_data = {}
+        self.headers: dict = {}
+        self.query_params: dict = {}
+        self.post_data: dict = {}
         self.boundary = False
-        self.content = []
+        self.content: list = []
 
         self.parse_request(raw_request)
 
@@ -70,26 +70,26 @@ class RequestParser:
                 content_type = self.get_header_value("Content-Type")
                 if content_type:
                     # filter out form submissions
-                    if content_type.find("multipart/form-data") != -1:
+                    if content_type.find("multipart/form-data") != -1: # type: ignore
                         # data is in multipart/form-data format
                         # get boundary string
-                        content_type_parts = content_type.split("boundary=")
+                        content_type_parts = content_type.split("boundary=") # type: ignore
                         if len(content_type_parts) == 2:
                             # found boundary
-                            self.boundary = content_type_parts[1]
+                            self.boundary = content_type_parts[1] # type: ignore
                         else:
                             # boundary not found - error
                             self.boundary = False
                             return
                         self.parse_content_form_data()
 
-                    elif content_type.find("application/x-www-form-urlencoded") != -1:
+                    elif content_type.find("application/x-www-form-urlencoded") != -1: # type: ignore
                         # data is in application/x-www-form-urlencoded format
                         self.parse_content_form_url_encoded()
 
                     elif (
-                        content_type.find("application/json") != -1
-                        or content_type.find("application/javascript") != -1
+                        content_type.find("application/json") != -1 # type: ignore
+                        or content_type.find("application/javascript") != -1 # type: ignore
                     ):
                         # data is in application/json format
                         self.parse_json_body()
@@ -163,11 +163,11 @@ class RequestParser:
             except:
                 # no value specified
                 key = param_string
-                value = False
+                value = False  # type: ignore
 
             # save param in dictionary
             params[key] = value
-        return params
+        return params  # type: ignore
 
     def parse_content_form_data(self) -> None:
         # check if boundary found
@@ -208,7 +208,7 @@ class RequestParser:
             line_num += 1
             try:
                 # check if regular expression caught a variable
-                var_name = match.group(1)
+                var_name = match.group(1)  # type: ignore
             except:
                 continue  # skip this section
             # skip rest of section headers to find blank line

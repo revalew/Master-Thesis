@@ -1,6 +1,6 @@
 # class to handle WiFi conenction
-import utime
-import network
+import utime # type: ignore
+import network # type: ignore
 from .NetworkCredentials import NetworkCredentials
 
 class WiFiConnection:

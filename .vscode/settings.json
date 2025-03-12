@@ -25,7 +25,18 @@
 	],
 	"micropico.openOnStart": true,
 	"python.analysis.typeshedPaths": ["~/.micropico-stubs/included"],
-	"python.analysis.extraPaths": ["~/.micropico-stubs/included"],
-	
-	"cSpell.words": ["uasyncio"]
+	"python.analysis.extraPaths": ["~/.micropico-stubs/included", "./lib"],
+
+	"cSpell.words": [
+		"adafruit",
+		"busio",
+		"datasheet",
+		"dsox",
+		"Micropython",
+		"milliamps",
+		"poweroff",
+		"poweron",
+		"uasyncio",
+		"Waveshare"
+	]
 }

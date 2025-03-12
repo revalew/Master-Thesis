@@ -1,9 +1,10 @@
 # full demo with web control panel
 # combines multi core and multi tasking
 
-import uasyncio as asyncio  # type: ignore
+# import uasyncio as asyncio # type: ignore
+import asyncio
 
-import machine  # type: ignore
+import machine # type: ignore
 import gc
 
 from classes import WiFiConnection, RequestHandler, IoHandler
@@ -61,17 +62,17 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Program interrupted by user.")
         IoHandler.oled.fill(0)  # Clear the display
-        IoHandler.oled.text("Stopped", 0, 0)
+        IoHandler.oled.text("Stopped", 35, 30)
         IoHandler.oled.show()
-        asyncio.sleep(2)  # Leave the error message on the screen before restarting
+        IoHandler.oled.poweroff()
         machine.reset()
     
     except Exception as e:
         print(f"Error: {e}")
         IoHandler.oled.fill(0)  # Clear the display
-        IoHandler.oled.text("Error", 0, 0)
+        IoHandler.oled.text("Error", 45, 30)
         IoHandler.oled.show()
-        asyncio.sleep(2)  # Leave the error message on the screen before restarting
+        # asyncio.sleep(2)  # Leave the error message on the screen before restarting
         machine.reset()
 
     finally:

@@ -50,15 +50,15 @@ class RequestHandler:
                     }
 
                     acceleration["X"], acceleration["Y"], acceleration["Z"] = (
-                        IoHandler.get_accel_ada_reading()
+                        IoHandler.get_accel_reading("ada")
                     )
                     gc.collect()
 
-                    gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_ada_reading()
+                    gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_reading("ada")
                     gc.collect()
 
                     magnetic["X"], magnetic["Y"], magnetic["Z"] = (
-                        IoHandler.get_magnetic_ada_reading()
+                        IoHandler.get_magnetic_reading("ada")
                     )
                     
                     gc.collect()
@@ -92,15 +92,15 @@ class RequestHandler:
                     }
 
                     acceleration["X"], acceleration["Y"], acceleration["Z"] = (
-                        IoHandler.get_accel_wav_reading()
+                        IoHandler.get_accel_reading("wav")
                     )
                     gc.collect()
 
-                    gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_wav_reading()
+                    gyro["X"], gyro["Y"], gyro["Z"] = IoHandler.get_gyro_reading("wav")
                     gc.collect()
 
                     magnetic["X"], magnetic["Y"], magnetic["Z"] = (
-                        IoHandler.get_magnetic_wav_reading()
+                        IoHandler.get_magnetic_reading("wav")
                     )
                     gc.collect()
 
@@ -123,9 +123,9 @@ class RequestHandler:
 
                     response_obj = {
                         "status": "OK",
-                        "battery_voltage": battery_voltage,
-                        "battery_current": battery_current,
-                        "battery_percentage": battery_percentage,
+                        "battery_voltage": battery_voltage, # type: ignore
+                        "battery_current": battery_current, # type: ignore
+                        "battery_percentage": battery_percentage, # type: ignore
                     }
 
                     response_builder.set_body_from_dict(response_obj)
@@ -152,8 +152,10 @@ class RequestHandler:
 
             response_builder.build_response()
             writer.write(response_builder.response)
+
             await writer.drain()
             await writer.wait_closed()
+            
             gc.collect()
 
         except OSError as e:

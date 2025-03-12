@@ -1,4 +1,4 @@
-from machine import Pin, Timer
+from machine import Pin, Timer  # type: ignore
 # import utime as time
 
 
@@ -90,7 +90,7 @@ class DebouncedInput:
             #     else 0
             # )
             # self.callback(self.pinNum, True, msSinceLastPress)
-            self.callback(self.pin, True)
+            self.callback(self.pin, True) # type: ignore
 
         elif not self.expectedValue and not current_value:
             # Button released
@@ -98,7 +98,7 @@ class DebouncedInput:
             # self.lastReleaseMs = time.ticks_ms()
             # msDurationOfPress = time.ticks_diff(self.lastReleaseMs, self.lastPressMs)
             # self.callback(self.pinNum, False, msDurationOfPress)
-            self.callback(self.pin, False)
+            self.callback(self.pin, False) # type: ignore
 
         # Enable IRQ for button
         self.pin.irq(self.__irq_handler, self.irqTrigger)

@@ -4,7 +4,7 @@ import os
 import gc
 
 try:
-    from typing import Union
+    from typing import Union, Any
     
 except ImportError:
     pass
@@ -12,7 +12,7 @@ except ImportError:
 
 class ResponseBuilder:
     protocol = "HTTP/1.1"
-    server = "Pi Pico MicroPython"
+    server = "Pi Pico 2 W MicroPython"
 
     def __init__(self) -> None:
         # set default values
@@ -82,7 +82,7 @@ class ResponseBuilder:
             # file not found
             self.set_status(404)
 
-    def set_body_from_dict(self, dictionary: dict[str, Union[str, int, float]]) -> None:
+    def set_body_from_dict(self, dictionary: dict[str, Union[str, int, float]] | Any) -> None:
         self.body = json.dumps(dictionary)
         self.set_content_type("application/json")
 
