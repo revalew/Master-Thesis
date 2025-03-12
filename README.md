@@ -6,7 +6,7 @@
 <div align='center'>
 
 
-[![GitHub License](https://img.shields.io/github/license/revalew/Master-Thesis)](https://github.com/revalew/Master-Thesis/blob/master/LICENSE)
+[![GitHub License](https://img.shields.io/github/license/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis/blob/master/LICENSE)
 
 [![GitHub](https://img.shields.io/github/commit-activity/t/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
 [![GitHub](https://img.shields.io/github/last-commit/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
