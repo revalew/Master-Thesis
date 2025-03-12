@@ -28,12 +28,16 @@
 	"python.analysis.extraPaths": ["~/.micropico-stubs/included", "./lib"],
 
 	"cSpell.words": [
+		"adafiut",
 		"adafruit",
+		"bouncetime",
 		"busio",
 		"datasheet",
 		"dsox",
 		"Micropython",
 		"milliamps",
+		"pimoroni",
+		"pinout",
 		"poweroff",
 		"poweron",
 		"uasyncio",

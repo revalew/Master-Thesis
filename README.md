@@ -3,6 +3,15 @@
 <br/>
 <br/>
 
+> [!CAUTION]
+>
+> After the migration to the `Pico 2 W`, the project might not be compatible with the original `Pico W` anymore. The `Pico 2 W` has more RAM and storage to handle additional devices and resources.
+> 
+> To run the project on the original `Pico W`, you might need to modify the code to work with the `Pico W` instead of the `Pico 2 W`. This could include removing some devices (like OLED display), libraries or lines of code (docs and whitespaces) to save both RAM and storage.
+
+<br/>
+<br/>
+
 ## Overview
 
 The aim of this project is to create a circuit to measure and analyze the data from two different IMUs (Inertial Measurement Units) to determine the accuracy of the step estimation algorithm (multiple if there is time).
@@ -100,15 +109,24 @@ I managed to create an asynchronous web server that handles clients and reads se
 
 ### Migration to Pico 2 W
 
-I moved the project to the Pico 2 W, and it works just fine now using the `Blinka`, `Platform Detect` and `CircuitPython` libraries. Doubled RAM and Flash memory of the Pico 2 W makes it possible to run the project without the fear of low RAM and storage issues (as it was the case with the Pico W, but the `gc.collect()` function is still called everywhere just in case :skull:).
+I moved the project to the Pico 2 W, and it works just fine now using the [`Blinka`](./lib/adafruit_blinka/), [`Platform Detect`](./lib/adafruit_platformdetect/) and other [`CircuitPython`](./lib/) libraries. 
 
-Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. The display cycles through the measurements of the IMU sensors and battery level every 5 seconds using the `asyncio` library (accelerometer and gyroscope values from a single sensor are displayed for 5 seconds, then the values from the second sensor are displayed for 5 seconds, and so on - battery level is always displayed as the last value).
+Doubled RAM and Flash memory of the Pico 2 W makes it possible to run the project without the fear of low RAM (especially when creating new objects / adding more devices and sending WWW resources) and storage issues (as it was the case with the Pico W, but the `gc.collect()` function is still called everywhere just in case :skull: and all WWW resources don't have any white space).
+
+Added new class [`DebouncedInput.py`](./classes/ResponseBuilder.py) to handle the debouncing of the buttons 
+This feature is built-in to the standard Python library for the Raspberry Pi like RPi 3/4/5 etc., but not to the MicroPython - `import RPi.GPIO as GPIO; GPIO.add_event_detect(sensor, GPIO.BOTH, bouncetime=300) # signals when the pin goes HIGH/LOW`, full example in [another project](https://github.com/revalew/Plant-Inspector/blob/master/plantinspector.com/public_html/python/sensorDataLogger.py#L138).
+
+Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. The display starts turned off, but it can be turned on by pressing the button. Another button can be used to cycle through the measurements of the IMU sensors and battery level. The display is updated every 0.5 seconds for the IMUs and 5 seconds for the battery.
 
 Updated the web page to display the measurements and battery level.
 
 <div align='center'>
   <img src="./.BACKUP/img_README/2/IMU_1.jpg" alt="IMU 1 measurements displayed on the OLED" height="344" />
   <img src="./.BACKUP/img_README/2/IMU_2.jpg" alt="IMU 2 measurements displayed on the OLED" height="344" />
+
+  <br/>
+
+  <img src="./.BACKUP/img_README/2/battery.jpg" alt="Battery level displayed on the OLED" height="344" />
   <img src="./.BACKUP/img_README/2/pico_2_w_on_battery.jpg" alt="Pico 2 W running on the battery" height="344" />
 
   <br/>
