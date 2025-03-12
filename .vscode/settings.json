@@ -19,13 +19,14 @@
 		"**/.venv",
 		"**/.BACKUP",
 		"**/.mypy_cache",
+		"**/libs_to_compile",
 		"**/Makefile",
 		"**/LICENSE",
 		"**/README.md"
 	],
 	"micropico.openOnStart": true,
 	"python.analysis.typeshedPaths": ["~/.micropico-stubs/included"],
-	"python.analysis.extraPaths": ["~/.micropico-stubs/included", "./lib"],
+	"python.analysis.extraPaths": ["~/.micropico-stubs/included", "./lib", "./libs_to_compile/lib"],
 
 	"cSpell.words": [
 		"adafiut",

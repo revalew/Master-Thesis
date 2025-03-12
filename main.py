@@ -51,6 +51,7 @@ async def main() -> None:
             gc.collect()
             # print(f"Allocated RAM: {gc.mem_alloc()}\nFree RAM: {gc.mem_free()}\n")  # type: ignore
             counter = 0
+            
         counter += 1
         await asyncio.sleep(0)
 
@@ -60,19 +61,31 @@ if __name__ == "__main__":
         asyncio.run(main())  # Run the main asynchronous function
 
     except KeyboardInterrupt:
+        from time import sleep
+        
         print("Program interrupted by user.")
+        
         IoHandler.oled.fill(0)  # Clear the display
+        IoHandler.oled.text("KeyboardInterrupt", 0, 0)
         IoHandler.oled.text("Stopped", 35, 30)
         IoHandler.oled.show()
+        sleep(2)
         IoHandler.oled.poweroff()
+        
         machine.reset()
     
     except Exception as e:
+        from time import sleep
+
         print(f"Error: {e}")
+        
         IoHandler.oled.fill(0)  # Clear the display
+        IoHandler.oled.text("Exception", 0, 0)
         IoHandler.oled.text("Error", 45, 30)
         IoHandler.oled.show()
-        # asyncio.sleep(2)  # Leave the error message on the screen before restarting
+        sleep(2)
+        IoHandler.oled.poweroff()
+        
         machine.reset()
 
     finally:

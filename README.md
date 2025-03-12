@@ -1,4 +1,4 @@
-# Master thesis project - "Step estimation from motion sensors" with RPi Pico W
+# Master thesis project - "Step estimation from motion sensors" with RPi Pico 2 W
 
 <br/>
 <br/>
@@ -8,6 +8,8 @@
 > After the migration to the `Pico 2 W`, the project might not be compatible with the original `Pico W` anymore. The `Pico 2 W` has more RAM and storage to handle additional devices and resources.
 > 
 > To run the project on the original `Pico W`, you might need to modify the code to work with the `Pico W` instead of the `Pico 2 W`. This could include removing some devices (like OLED display), libraries or lines of code (docs and whitespaces) to save both RAM and storage.
+>
+> Try uploading the compiled libraries to the `Pico W` and see if it works. If it doesn't, you might need to modify the code to work with the `Pico W` and recompile the libraries.
 
 <br/>
 <br/>
@@ -15,6 +17,19 @@
 ## Overview
 
 The aim of this project is to create a circuit to measure and analyze the data from two different IMUs (Inertial Measurement Units) to determine the accuracy of the step estimation algorithm (multiple if there is time).
+
+<br/>
+<br/>
+
+## Table of contents
+
+- [Required / used components](#required--used-components)
+- [How to connect the components](#how-to-connect-the-components)
+- [Project structure and important locations](#project-structure-and-important-locations)
+- [Progress](#progress)
+  - [First major success](#first-major-success)
+  - [Migration to Pico 2 W](#migration-to-pico-2-w)
+  - [Compiling the libraries for Pico 2 W (`.py` to `.mpy`)](#compiling-the-libraries-for-pico-2-w-py-to-mpy)
 
 <br/>
 <br/>
@@ -31,7 +46,7 @@ The project will make use of a variety of components:
 
 - [Pico-UPS-B](https://www.waveshare.com/wiki/Pico-UPS-B) as a power source,
 
-- [3.5inch_TFT_Touch_Shield](https://www.waveshare.com/wiki/3.5inch_TFT_Touch_Shield) to display the measurements and battery level,
+- [0.96inch_OLED_Module](https://www.waveshare.com/wiki/0.96inch_OLED_Module) to display the measurements and battery level (I used no-name super-cheap I2C `128x64` OLED display marked as [`gm009605v4.2`](https://allegro.pl/oferta/wyswietlacz-oled-0-96-i2c-ssd1306-bialy-17251217815), originally planned to use [3.5inch_TFT_Touch_Shield](https://www.waveshare.com/wiki/3.5inch_TFT_Touch_Shield)),
 
 - [Pico-Dual-Expander](https://www.waveshare.com/pico-dual-expander.htm) to hold some components together w/o soldering,
 
@@ -67,11 +82,16 @@ This project consists of many files and directories, the most important of which
 
   - **(LINUX USERS: MicroPico Extension for VSCode)** script used to resolve user permissions in [`~/.BACKUP/solvePermissions.sh`](./.BACKUP/solvePermissions.sh),
 
-- [`~/classes/`](./classes/) directory (module) containing all necessary classes for easy development,
 
-- [`~/lib/`](./lib/) directory containing all the CircuitPython libraries that may be needed in the project,
+- [`~/libs_to_compile/`](./libs_to_compile/) directory containing all the CircuitPython libraries ([`~/libs_to_compile/lib/`](./libs_to_compile/lib/)) that may be needed in the project (before compilation) and instructions on how to compile them along with the scripts to do it,
+
+  - [`~/libs_to_compile/lib/classes/`](./libs_to_compile/lib/classes/) directory (module) containing all necessary custom-written classes for easy development,
+
+- [`~/libs/`](./libs/) directory containing all the CircuitPython libraries after compilation,
 
 - [`~/src/`](./src/) directory contains all the resources needed for the web server (HTML, CSS, JS),
+
+- [`Makefile`](./Makefile) for automating the git process (committing, pushing, adding new tags, etc.),
 
 - **[`main.py`](./main.py)** as the main file of the project and the program to be executed on startup.
 
@@ -116,7 +136,7 @@ Doubled RAM and Flash memory of the Pico 2 W makes it possible to run the projec
 Added new class [`DebouncedInput.py`](./classes/ResponseBuilder.py) to handle the debouncing of the buttons 
 This feature is built-in to the standard Python library for the Raspberry Pi like RPi 3/4/5 etc., but not to the MicroPython - `import RPi.GPIO as GPIO; GPIO.add_event_detect(sensor, GPIO.BOTH, bouncetime=300) # signals when the pin goes HIGH/LOW`, full example in [another project](https://github.com/revalew/Plant-Inspector/blob/master/plantinspector.com/public_html/python/sensorDataLogger.py#L138).
 
-Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. The display starts turned off, but it can be turned on by pressing the button. Another button can be used to cycle through the measurements of the IMU sensors and battery level. The display is updated every 0.5 seconds for the IMUs and 5 seconds for the battery.
+Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. Separate I2C interface is used to connect the display to the `Pico 2 W`, because it requires `frequency=400000` instead of the default `frequency=100000`. The display starts turned off, but it can be turned on by pressing the button attached to `GP14`. Another button (`GP15`) can be used to cycle through the measurements of the IMU sensors and battery level. The display is updated every 0.5 seconds for the IMUs and 5 seconds for the battery.
 
 Updated the web page to display the measurements and battery level.
 
@@ -137,4 +157,16 @@ Updated the web page to display the measurements and battery level.
 <br/>
 <br/>
 
+### Compiling the libraries for Pico 2 W (`.py` to `.mpy`)
+
+The libraries of the project were successfully compiled for the `Pico 2 W` using the script [`./libs_to_compile/mpy_compile_all_libs.sh`](./libs_to_compile/mpy_compile_all_libs.sh) to optimize the size of the libraries and RAM usage. It seems to be faster than before.
+
+The script is in the [`libs_to_compile/`](./libs_to_compile/) directory and it compiles all the libraries in the `libs_to_compile/lib` directory into `../lib/` (root of the project). Instructions for the script can be found in the [`./libs_to_compile/README.md`](./libs_to_compile/README.md) file.
+
+<br/>
+<br/>
+
 ### ...
+
+<br/>
+<br/>
