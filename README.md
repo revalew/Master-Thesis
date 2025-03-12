@@ -3,6 +3,22 @@
 <br/>
 <br/>
 
+<div align='center'>
+
+
+[![GitHub License](https://img.shields.io/github/license/revalew/Master-Thesis)](https://github.com/revalew/Master-Thesis/blob/master/LICENSE)
+
+[![GitHub](https://img.shields.io/github/commit-activity/t/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
+[![GitHub](https://img.shields.io/github/last-commit/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
+
+[![GitHub](https://img.shields.io/github/repo-size/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis) [![GitHub](https://img.shields.io/github/languages/top/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
+
+</div>
+
+
+<br/>
+<br/>
+
 > [!CAUTION]
 >
 > After the migration to the `Pico 2 W`, the project might not be compatible with the original `Pico W` anymore. The `Pico 2 W` has more RAM and storage to handle additional devices and resources.
@@ -83,7 +99,7 @@ This project consists of many files and directories, the most important of which
   - **(LINUX USERS: MicroPico Extension for VSCode)** script used to resolve user permissions in [`~/.BACKUP/solvePermissions.sh`](./.BACKUP/solvePermissions.sh),
 
 
-- [`~/libs_to_compile/`](./libs_to_compile/) directory containing all the CircuitPython libraries ([`~/libs_to_compile/lib/`](./libs_to_compile/lib/)) that may be needed in the project (before compilation) and instructions on how to compile them along with the scripts to do it,
+- [`~/libs_to_compile/`](./libs_to_compile/) directory containing all the CircuitPython libraries that may be needed in the project (before compilation, [`~/libs_to_compile/lib/`](./libs_to_compile/lib/)) and instructions on how to compile them along with the scripts to do it,
 
   - [`~/libs_to_compile/lib/classes/`](./libs_to_compile/lib/classes/) directory (module) containing all necessary custom-written classes for easy development,
 
@@ -91,7 +107,7 @@ This project consists of many files and directories, the most important of which
 
 - [`~/src/`](./src/) directory contains all the resources needed for the web server (HTML, CSS, JS),
 
-- [`Makefile`](./Makefile) for automating the git process (committing, pushing, adding new tags, etc.),
+- [`Makefile`](./Makefile) file for automating the `git` workflow (committing, pushing, adding new tags, etc.),
 
 - **[`main.py`](./main.py)** as the main file of the project and the program to be executed on startup.
 

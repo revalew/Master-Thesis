@@ -2,7 +2,11 @@
 
 <br/><br/>
 
-> [!WARN]
+This directory contains scripts for compiling the libraries in the `libs_to_compile/lib` directory. Use `Bash` to run the scripts (`Git Bash` if you're on Windows).
+
+<br/><br/>
+
+> [!WARNING]
 >
 > Remember to make sure the script is executable by running
 >
@@ -31,6 +35,8 @@ To check the CPU architecture, run the file [`../.BACKUP/architecture_check.py`]
 <br/><br/>
 
 ## Compiling the libraries
+
+<br/><br/>
 
 1. To compile all the libraries included in this repository, run `./mpy_compile_all_libs.sh` in the `libs_to_compile/` directory. This will compile all of the libraries in the `libs_to_compile/lib` directory into `../lib/` (root of the project).
 
