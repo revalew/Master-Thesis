@@ -27,31 +27,44 @@ SRC_DIR="./lib"
 MPY_DIR="../lib"
 
 # Create the output directory
-mkdir -p $MPY_DIR
+mkdir -p "$MPY_DIR"
 
 echo -e "\n\nStarting compilation...\n"
 
-# Loop through all .py and .mpy files in the $SRC_DIR directory
-find $SRC_DIR \( -name "*.py" -o -name "*.mpy" \) | while read FILE; do
+# Loop through all .py and .mpy files in the $SRC_DIR directory, **following symlinks**
+find -L "$SRC_DIR" \( -name "*.py" -o -name "*.mpy" \) | while read FILE; do
     # Create the corresponding directory structure in the $MPY_DIR directory
     DEST_DIR="$MPY_DIR/$(dirname "$FILE" | sed "s|$SRC_DIR||")"
     mkdir -p "$DEST_DIR"
 
+    # Define destination file path
+    DEST_FILE="$DEST_DIR/$(basename "$FILE")"
+
     # If the file is __init__.py, don't compile it, just move it
     if [[ "$(basename "$FILE")" == "__init__.py" ]]; then
-        echo -e "\nSkipping compilation of $FILE, moving it as a .py file"
-        cp "$FILE" "$DEST_DIR/" -f # -f to overwrite existing files
+        echo -e "\nSkipping compilation of: $FILE"
+        echo -e "Copying to: $DEST_FILE\n"
+        cp "$FILE" "$DEST_FILE" -f # -f to overwrite existing files
     elif [[ "$(basename "$FILE")" == *.mpy ]]; then
         # If it's a .mpy file, just copy it 1:1
-        echo -e "\nCopying $FILE as .mpy to $DEST_DIR"
-        cp "$FILE" "$DEST_DIR/" -f # -f to overwrite existing files
+        echo -e "\nCopying existing .mpy file:"
+        echo -e "From: $FILE"
+        echo -e "To:   $DEST_FILE\n"
+        cp "$FILE" "$DEST_FILE" -f # -f to overwrite existing files
     else
         # Compile the .py file to .mpy
         echo -e "\nCompiling $FILE to .mpy"
         "$MPY_CROSS_PATH" "$FILE" -march="$ARCHITECTURE"
-        
+
         # Move the .mpy file to the corresponding directory
-        mv "${FILE%.py}.mpy" "$DEST_DIR/" -f # -f to overwrite existing files
+        SRC_MPY_FILE="${FILE%.py}.mpy"
+        DEST_MPY_FILE="$DEST_DIR/$(basename "$SRC_MPY_FILE")"
+
+        echo -e "Moving compiled file:"
+        echo -e "From: $SRC_MPY_FILE"
+        echo -e "To:   $DEST_MPY_FILE\n"
+
+        mv "$SRC_MPY_FILE" "$DEST_MPY_FILE" -f # -f to overwrite existing files
     fi
 done
 
