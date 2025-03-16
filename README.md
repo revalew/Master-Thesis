@@ -32,6 +32,8 @@
 
 ## Overview
 
+<br/>
+
 The aim of this project is to create a circuit to measure and analyze the data from two different IMUs (Inertial Measurement Units) to determine the accuracy of the step estimation algorithm (multiple if there is time).
 
 <br/>
@@ -39,12 +41,20 @@ The aim of this project is to create a circuit to measure and analyze the data f
 
 ## Table of contents
 
+<br/>
+
 - [Required / used components](#required--used-components)
+
 - [How to connect the components](#how-to-connect-the-components)
+
 - [Project structure and important locations](#project-structure-and-important-locations)
+
 - [Progress](#progress)
+
   - [First major success](#first-major-success)
+
   - [Migration to Pico 2 W](#migration-to-pico-2-w)
+
   - [Compiling the libraries for Pico 2 W (`.py` to `.mpy`)](#compiling-the-libraries-for-pico-2-w-py-to-mpy)
 
 <br/>
@@ -52,19 +62,35 @@ The aim of this project is to create a circuit to measure and analyze the data f
 
 ## Required / used components
 
+<br/>
+
 The project will make use of a variety of components:
+
+<br/>
 
 - [Raspberry Pi `Pico W` / `Pico 2 W`](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html) (access point, web server, reading sensors, driving TFT display) running [MicroPython](https://micropython.org/download/RPI_PICO/) with various [CircuitPython Libraries](https://learn.adafruit.com/circuitpython-libraries-on-micropython-using-the-raspberry-pi-pico/overview),
 
+<br/>
+
 - [Pico-10DOF-IMU](https://www.waveshare.com/wiki/Pico-10DOF-IMU) as the first IMU,
+
+<br/>
 
 - [ST-9-DOF-Combo](https://learn.adafruit.com/st-9-dof-combo) as the second IMU,
 
+<br/>
+
 - [Pico-UPS-B](https://www.waveshare.com/wiki/Pico-UPS-B) as a power source,
+
+<br/>
 
 - [0.96inch_OLED_Module](https://www.waveshare.com/wiki/0.96inch_OLED_Module) to display the measurements and battery level (I used no-name super-cheap I2C `128x64` OLED display marked as [`gm009605v4.2`](https://allegro.pl/oferta/wyswietlacz-oled-0-96-i2c-ssd1306-bialy-17251217815), originally planned to use [3.5inch_TFT_Touch_Shield](https://www.waveshare.com/wiki/3.5inch_TFT_Touch_Shield)),
 
+<br/>
+
 - [Pico-Dual-Expander](https://www.waveshare.com/pico-dual-expander.htm) to hold some components together w/o soldering,
+
+<br/>
 
 - 3D printed enclosure for the device to protect the circuit (custom design).
 
@@ -73,6 +99,8 @@ The project will make use of a variety of components:
 
 ## How to connect the components
 
+<br/>
+
 Simple list of connections in [`~/.BACKUP/project_circuit_simple_diagram.pdf`](./.BACKUP/project_circuit_simple_diagram.pdf)
 
 <br/>
@@ -80,7 +108,11 @@ Simple list of connections in [`~/.BACKUP/project_circuit_simple_diagram.pdf`](.
 
 ## Project structure and important locations
 
+<br/>
+
 This project consists of many files and directories, the most important of which are described below:
+
+<br/>
 
 - Directory [`~/.BACKUP/`](./.BACKUP/) containing the backup and important files that should not be transferred to the Pico:
 
@@ -98,16 +130,27 @@ This project consists of many files and directories, the most important of which
 
   - **(LINUX USERS: MicroPico Extension for VSCode)** script used to resolve user permissions in [`~/.BACKUP/solvePermissions.sh`](./.BACKUP/solvePermissions.sh),
 
+<br/>
 
-- [`~/libs_to_compile/`](./libs_to_compile/) directory containing all the CircuitPython libraries that may be needed in the project (before compilation, [`~/libs_to_compile/lib/`](./libs_to_compile/lib/)) and instructions on how to compile them along with the scripts to do it,
+- [`~/libs_to_compile/`](./libs_to_compile/) - Directory containing all the libraries (before compilation) and instructions on how to compile them along with the scripts to do it. The scripts also work with the symlinked libraries (read the [README](./libs_to_compile/README.md) there),
 
-  - [`~/libs_to_compile/lib/classes/`](./libs_to_compile/lib/classes/) directory (module) containing all necessary custom-written classes for easy development,
+  - [`~/libs_to_compile/lib/`](./libs_to_compile/lib/) - Directory containing the libraries and custom classes (before compilation),
+
+  - [`~/libs_to_compile/lib/classes/`](./libs_to_compile/lib/classes/) - Directory (module) containing all necessary custom-written classes for easy development.
+
+<br/>
 
 - [`~/libs/`](./libs/) directory containing all the CircuitPython libraries after compilation,
 
+<br/>
+
 - [`~/src/`](./src/) directory contains all the resources needed for the web server (HTML, CSS, JS),
 
+<br/>
+
 - [`Makefile`](./Makefile) file for automating the `git` workflow (committing, pushing, adding new tags, etc.),
+
+<br/>
 
 - **[`main.py`](./main.py)** as the main file of the project and the program to be executed on startup.
 

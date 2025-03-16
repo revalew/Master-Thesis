@@ -43,3 +43,5 @@ To check the CPU architecture, run the file [`../.BACKUP/architecture_check.py`]
 <br/><br/>
 
 2. To compile a specific library / module, edit the `SRC_DIR` and `MPY_DIR` in the `compile_mpy.sh` script and run it `./compile_mpy.sh`.
+
+<br/><br/>

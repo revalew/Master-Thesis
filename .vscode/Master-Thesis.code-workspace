@@ -22,7 +22,8 @@
 			"/home/maks/.config/Code/User/globalStorage/wmerkens.vscode-circuitpython-v2/bundle/20250314/adafruit-circuitpython-bundle-py-20250314/lib", // CircuitPython
 			"/home/maks/Dokumenty/Master-Thesis/libs_to_compile/lib", // Any custom libs
 			"/home/maks/Dokumenty/Master-Thesis/lib" // Any custom libs
-		]
+		],
+		"circuitpython.board.version": null
 		// "circuitpython.board.version": null
 	}
 }
