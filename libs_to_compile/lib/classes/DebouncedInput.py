@@ -78,6 +78,9 @@ class DebouncedInput:
         Returns:
             None
         """
+        # Enable IRQ for button
+        self.pin.irq(self.__irq_handler, self.irqTrigger)
+
         current_value = self.pin.value() == self.pinLogicPressed
 
         if self.expectedValue and current_value:
@@ -100,8 +103,6 @@ class DebouncedInput:
             # self.callback(self.pinNum, False, msDurationOfPress)
             self.callback(self.pin, False) # type: ignore
 
-        # Enable IRQ for button
-        self.pin.irq(self.__irq_handler, self.irqTrigger)
 
 
     def __irq_handler(self, pin: Pin) -> None:

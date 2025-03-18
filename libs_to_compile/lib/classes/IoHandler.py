@@ -46,13 +46,15 @@ class IoHandler:
         pinNum=14,
         callback=lambda pin, pressed: IoHandler.toggle_screen(pin, pressed),
         pinPull=Pin.PULL_UP,
-        debounceMs=50,
+        debounceMs=30,
+        irqTrigger=Pin.IRQ_RISING | Pin.IRQ_FALLING,
     )
     btn2: DebouncedInput = DebouncedInput(
         pinNum=15,
         callback=lambda pin, pressed: IoHandler.change_display_mode(pin, pressed),
         pinPull=Pin.PULL_UP,
-        debounceMs=50,
+        debounceMs=30,
+        irqTrigger=Pin.IRQ_RISING | Pin.IRQ_FALLING,
     )
 
     # I2C initialization
@@ -109,13 +111,12 @@ class IoHandler:
     sleep(2)
     oled.poweroff()
 
-
     def __init__(self) -> None:
         # get everything into a starting state
         # self.__class__.show_onboard_led()
         """
-        Initializes the IoHandler class, setting up the I2C communication and 
-        preparing the display, IMUs, and UPS for data reading. This method 
+        Initializes the IoHandler class, setting up the I2C communication and
+        preparing the display, IMUs, and UPS for data reading. This method
         prepares all components into a starting state.
 
         Args:
@@ -125,7 +126,6 @@ class IoHandler:
             None
         """
         pass
-
 
     @classmethod
     async def update_oled(cls) -> None:
@@ -145,7 +145,7 @@ class IoHandler:
         Returns:
             None
         """
-        sleepTime = 0.5 # Repeat task every X seconds
+        sleepTime = 0.5  # Repeat task every X seconds
         while True:
             if not cls.screen_on:  # If the screen is off display nothing
                 await asyncio.sleep(1)
@@ -159,12 +159,16 @@ class IoHandler:
                 gyro = cls.get_gyro_reading("wav")
 
                 cls.oled.text("IMU 1 Waveshare", 0, 0)
-                
+
                 cls.oled.text("Accel (X Y Z):", 0, 20)
-                cls.oled.text("{:.1f} {:.1f} {:.1f}".format(accel[0], accel[1], accel[2]), 0, 30)
-                
+                cls.oled.text(
+                    "{:.1f} {:.1f} {:.1f}".format(accel[0], accel[1], accel[2]), 0, 30
+                )
+
                 cls.oled.text("Gyro (X Y Z):", 0, 40)
-                cls.oled.text("{:.1f} {:.1f} {:.1f}".format(gyro[0], gyro[1], gyro[2]), 0, 50)
+                cls.oled.text(
+                    "{:.1f} {:.1f} {:.1f}".format(gyro[0], gyro[1], gyro[2]), 0, 50
+                )
 
                 sleepTime = 0.5
 
@@ -176,10 +180,14 @@ class IoHandler:
                 cls.oled.text("IMU 2 Adafruit", 0, 0)
 
                 cls.oled.text("Accel (X Y Z):", 0, 20)
-                cls.oled.text("{:.1f} {:.1f} {:.1f}".format(accel[0], accel[1], accel[2]), 0, 30)
+                cls.oled.text(
+                    "{:.1f} {:.1f} {:.1f}".format(accel[0], accel[1], accel[2]), 0, 30
+                )
 
                 cls.oled.text("Gyro (X Y Z):", 0, 40)
-                cls.oled.text("{:.1f} {:.1f} {:.1f}".format(gyro[0], gyro[1], gyro[2]), 0, 50)
+                cls.oled.text(
+                    "{:.1f} {:.1f} {:.1f}".format(gyro[0], gyro[1], gyro[2]), 0, 50
+                )
 
                 sleepTime = 0.5
 
@@ -187,18 +195,19 @@ class IoHandler:
                 # Read data from UPS (Waveshare)
                 battery_percentage, battery_voltage = cls.get_ups_battery_reading()
                 battery_current = cls.get_ups_current_reading()
-                
+
                 cls.oled.text("Battery Info", 0, 0)
                 cls.oled.text("{:.1f}%".format(battery_percentage), 0, 20)
                 cls.oled.text("Load:", 0, 40)
-                cls.oled.text("{:.2f}V, {:.2f}A".format(battery_voltage, battery_current), 0, 50)
+                cls.oled.text(
+                    "{:.2f}V, {:.2f}A".format(battery_voltage, battery_current), 0, 50
+                )
 
                 sleepTime = 5
 
             cls.oled.show()
 
             await asyncio.sleep(sleepTime)
-
 
     @classmethod
     def toggle_screen(cls, pin: Pin, pressed: bool) -> None:
@@ -227,7 +236,6 @@ class IoHandler:
                 cls.oled.poweron()
                 cls.oled.contrast(cls.oledContrast)
 
-
     @classmethod
     def change_display_mode(cls, pin: Pin, pressed: bool) -> None:
         """
@@ -246,12 +254,8 @@ class IoHandler:
 
             # print(f"cls.display_mode: {cls.display_mode}")
 
-
     @classmethod
-    def get_accel_reading(
-        cls,
-        imu: str
-    ) -> tuple[float, float, float]:
+    def get_accel_reading(cls, imu: str) -> tuple[float, float, float]:
         """
         Returns the acceleration reading of the specified IMU
 
@@ -268,21 +272,17 @@ class IoHandler:
             cls.acceleration_wav = cls.imu_wav.acceleration
             # print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (cls.acceleration_wav))
             return cls.acceleration_wav
-        
+
         elif imu == "ada":
             cls.acceleration_ada = cls.accel_gyro_ada.acceleration
             # print("Acceleration: X:{0:7.2f}, Y:{1:7.2f}, Z:{2:7.2f} m/s^2".format(*cls.acceleration_ada))
             return cls.acceleration_ada
-        
+
         else:
             raise ValueError(f"Invalid IMU: {imu}")
 
-
     @classmethod
-    def get_gyro_reading(
-        cls,
-        imu: str
-    ) -> tuple[float, float, float]:
+    def get_gyro_reading(cls, imu: str) -> tuple[float, float, float]:
         """
         Returns the gyroscope reading of the specified IMU
 
@@ -299,23 +299,19 @@ class IoHandler:
             cls.gyro_wav = cls.imu_wav.gyro
             # print("Gyro X:%.2f, Y: %.2f, Z: %.2f rads/s" % (cls.gyro_wav))
             return cls.gyro_wav
-        
+
         elif imu == "ada":
             cls.gyro_ada = cls.accel_gyro_ada.gyro
             # print(
             #     "Gyro          X:{0:7.2f}, Y:{1:7.2f}, Z:{2:7.2f} rad/s".format(*cls.gyro_ada)
             # )
             return cls.gyro_ada
-        
+
         else:
             raise ValueError(f"Invalid IMU: {imu}")
 
-
     @classmethod
-    def get_magnetic_reading(
-        cls,
-        imu: str
-    ) -> tuple[float, float, float]:
+    def get_magnetic_reading(cls, imu: str) -> tuple[float, float, float]:
         """
         Returns the magnetometer reading of the specified IMU
 
@@ -332,17 +328,16 @@ class IoHandler:
             cls.magnetic_wav = cls.imu_wav.magnetic
             # print("Magnetometer X:%.2f, Y: %.2f, Z: %.2f uT" % (cls.magnetic_wav))
             return cls.magnetic_wav
-        
+
         elif imu == "ada":
             cls.magnetic_ada = cls.mag_ada.magnetic
             # print(
             #     "Magnetic      X:{0:7.2f}, Y:{1:7.2f}, Z:{2:7.2f} uT".format(*cls.magnetic_ada)
             # )
             return cls.magnetic_ada
-        
+
         else:
             raise ValueError(f"Invalid IMU: {imu}")
-
 
     @classmethod
     def get_ups_current_reading(cls) -> float:
@@ -363,10 +358,9 @@ class IoHandler:
 
         if cls.ups_current_draw < 0:
             cls.ups_current_draw = 0
-            
+
         # print("Current:  {:6.3f} A".format(cls.ups_current_draw))
         return cls.ups_current_draw
-
 
     @classmethod
     def get_ups_battery_reading(cls) -> tuple[float, float]:
@@ -402,7 +396,6 @@ class IoHandler:
 
         # print("Percent:  {:6.1f} %".format(cls.ups_battery_remaining))
         return (cls.ups_battery_remaining, cls.ups_voltage)
-
 
     """
     # onboard_led handlers
