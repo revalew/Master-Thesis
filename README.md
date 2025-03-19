@@ -57,6 +57,8 @@ The aim of this project is to create a circuit to measure and analyze the data f
 
   - [Compiling the libraries for Pico 2 W (`.py` to `.mpy`)](#compiling-the-libraries-for-pico-2-w-py-to-mpy)
 
+  - [Converting the breadboard circuit into a "HAT" for the Pico 2 W](#converting-the-breadboard-circuit-into-a-hat-for-the-pico-2-w)
+
 <br/>
 <br/>
 
@@ -178,6 +180,8 @@ I managed to create an asynchronous web server that handles clients and reads se
 
 - Live UI update and synchronous data retrieval.
 
+<br/>
+
 <div align='center'>
   <img src="./.BACKUP/img_README/1/first_success.png" alt="First success PC" width="400"/>
   <img src="./.BACKUP/img_README/1/first_success_mobile.png" alt="First success mobile" height="344" />
@@ -198,6 +202,8 @@ This feature is built-in to the standard Python library for the Raspberry Pi lik
 Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. Separate I2C interface is used to connect the display to the `Pico 2 W`, because it requires `frequency=400000` instead of the default `frequency=100000`. The display starts turned off, but it can be turned on by pressing the button attached to `GP14`. Another button (`GP15`) can be used to cycle through the measurements of the IMU sensors and battery level. The display is updated every 0.5 seconds for the IMUs and 5 seconds for the battery.
 
 Updated the web page to display the measurements and battery level.
+
+<br/>
 
 <div align='center'>
   <img src="./.BACKUP/img_README/2/IMU_1.jpg" alt="IMU 1 measurements displayed on the OLED" height="344" />
@@ -221,6 +227,23 @@ Updated the web page to display the measurements and battery level.
 The libraries of the project were successfully compiled for the `Pico 2 W` using the script [`./libs_to_compile/mpy_compile_all_libs.sh`](./libs_to_compile/mpy_compile_all_libs.sh) to optimize the size of the libraries and RAM usage. It seems to be faster than before.
 
 The script is in the [`libs_to_compile/`](./libs_to_compile/) directory and it compiles all the libraries in the `libs_to_compile/lib` directory into `../lib/` (root of the project). Instructions for the script can be found in the [`./libs_to_compile/README.md`](./libs_to_compile/README.md) file.
+
+<br/>
+<br/>
+
+### Converting the breadboard circuit into a "HAT" for the Pico 2 W
+
+I finally converted the breadboard circuit into a "HAT" for the Pico 2 W and it works just fine now.
+It is far from perfect and definitely not my finest work, but it works.
+I also fixed the button detection, and now the interrupts work as intended, at least from my tests.
+
+Now I have to create an enclosure and print it.
+
+<br/>
+
+<div align='center'>
+  <img src="./.BACKUP/img_README/4/completed_circuit_cropped.jpg" alt="Completed circuit" width="400"/>
+</div>
 
 <br/>
 <br/>
