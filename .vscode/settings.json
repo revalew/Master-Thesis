@@ -17,8 +17,6 @@
 		"/home/maks/Dokumenty/Master-Thesis/libs_to_compile/lib", // Any custom libs
 		"/home/maks/Dokumenty/Master-Thesis/lib" // Any custom libs
 	],
-	// "circuitpython.board.version": null,
-
 	"cSpell.words": [
 		"adafiut",
 		"adafruit",
@@ -34,5 +32,6 @@
 		"poweron",
 		"uasyncio",
 		"Waveshare"
-	]
+	],
+	"circuitpython.board.version": null
 }

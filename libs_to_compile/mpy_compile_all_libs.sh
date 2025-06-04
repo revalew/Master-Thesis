@@ -29,6 +29,8 @@ MPY_DIR="../lib"
 # Create the output directory
 mkdir -p "$MPY_DIR"
 
+rm -fr "$MPY_DIR/classes"
+
 echo -e "\n\nStarting compilation...\n"
 
 # Loop through all .py and .mpy files in the $SRC_DIR directory, **following symlinks**

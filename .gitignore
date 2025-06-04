@@ -1,2 +1,3 @@
 **/.micropico
 **/.mypy_cache
+**/venv

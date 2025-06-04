@@ -36,6 +36,8 @@
 
 The aim of this project is to create a circuit to measure and analyze the data from two different IMUs (Inertial Measurement Units) to determine the accuracy of the step estimation algorithm (multiple if there is time).
 
+This project was developed by Maksymilian Kisiel as part of a Master's Thesis at Silesian University of Technology, under the supervision of dr hab. inż. Agnieszka Szczęsna, prof. PŚ.
+
 <br/>
 <br/>
 
@@ -104,6 +106,31 @@ The project will make use of a variety of components:
 <br/>
 
 Simple list of connections in [`~/.BACKUP/project_circuit_simple_diagram.pdf`](./.BACKUP/project_circuit_simple_diagram.pdf)
+
+<br/>
+
+```
+┌───────────────────────┐     ┌────────────────────┐
+│ Raspberry Pi Pico 2W  │     │                    │
+│  ┌────────────────┐   │     │  Data Processing   │
+│  │ MicroPython    │   │     │  (PC)              │
+│  │ + Adafruit     │   │     │                    │
+│  │   Blinka       ├───┼────►│  - Data Analysis   │
+│  └────────────────┘   │     │  - Visualization   │
+│  ┌────────────────┐   │     │  - Algorithm       │
+│  │ HTTP Server    │   │     │    Comparison      │
+│  │ + REST API     │   │     │                    │
+│  └────────────────┘   │     │                    │
+└───────────┬───────────┘     └────────────────────┘
+            │
+┌───────────▼───────────┐
+│  Web Interface/GUI    │
+│                       │
+│  - Real-time preview  │
+│  - Step marking       │
+│  - Data saving        │
+└───────────────────────┘
+```
 
 <br/>
 <br/>

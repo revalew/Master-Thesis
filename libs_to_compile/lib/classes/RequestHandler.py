@@ -147,6 +147,20 @@ class RequestHandler:
                     response_builder.set_status(404)
 
             # try to serve static file
+            # else:
+            #     response_builder.serve_static_file(request.url, "./src/index.html")
+
+            elif request.url_match("/advanced"):
+                # Directly open the file and set its contents as the response
+                try:
+                    with open("./src/index_advanced.html", "r") as f:
+                        response_builder.set_body(f.read())
+                    response_builder.set_status(200)
+                    response_builder.set_content_type("text/html")
+                except OSError:
+                    # Plik nie istnieje
+                    response_builder.set_status(404)
+
             else:
                 response_builder.serve_static_file(request.url, "./src/index.html")
 
