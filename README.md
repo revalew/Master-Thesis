@@ -81,6 +81,8 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Converting the breadboard circuit into a "HAT" for the Pico 2 W](#converting-the-breadboard-circuit-into-a-hat-for-the-pico-2-w)
 
+  - [Gathering data and analyzing it](#gathering-data-and-analyzing-it)
+
 <br/>
 <br/>
 
@@ -197,6 +199,18 @@ This project consists of many files and directories, the most important of which
 
 <br/>
 
+- [`~/step_detection/`](./step_detection/) - **Step Detection Analysis Module** containing the complete data analysis pipeline (read the [README](./step_detection/README.md) there):
+
+  - [`~/step_detection/step_data_collector.py`](./step_detection/step_data_collector.py) - Main GUI application for real-time data collection, step marking, and algorithm analysis,
+
+  - [`~/step_detection/step_detection_algorithms.py`](./step_detection/step_detection_algorithms.py) - Implementation of 5 step detection algorithms with performance evaluation functions,
+
+  - [`~/step_detection/analysis/`](./step_detection/analysis/) - Directory containing analysis results, plots, and example recordings,
+
+  - [`~/step_detection/requirements.txt`](./step_detection/requirements.txt) - Python dependencies for the analysis application,
+
+<br/>
+
 - [`Makefile`](./Makefile) file for automating the `git` workflow (committing, pushing, adding new tags, etc.),
 
 <br/>
@@ -290,6 +304,46 @@ Now I have to create an enclosure and print it.
 
 <div align='center'>
   <img src="./.BACKUP/img_README/4/completed_circuit_cropped.jpg" alt="Completed circuit" width="400"/>
+</div>
+
+<br/>
+<br/>
+
+### Gathering data and analyzing it
+
+Successfully implemented and tested the complete step detection pipeline. 
+
+For more information about the app and algorithms check out the [`step_detection/`](./step_detection/) directory.
+
+Major achievements of this stage:
+
+- **Step Detection GUI Application**: Created a comprehensive Python application (`step_data_collector.py`) for real-time data collection and analysis with live plotting capabilities,
+
+- **Multiple Detection Algorithms**: Implemented and compared 5 different step detection algorithms:
+  - Peak Detection with fixed threshold,
+  - Zero Crossing method,
+  - Spectral Analysis (STFT-based),
+  - Adaptive Threshold algorithm,
+  - SHOE (Step Heading Offset Estimator) approach,
+
+- **Robust Error Handling**: Added safe Savitzky-Golay filter implementation to prevent `polyorder` errors and enhanced thread management for proper application closing,
+
+- **Real-time Analysis**: Live sensor data visualization, step marking functionality, and synchronized data collection from both IMU sensors with battery monitoring,
+
+- **Performance Comparison**: Comprehensive algorithm evaluation with precision, recall, F1-score metrics and visual performance comparisons between sensors,
+
+- **Data Export/Import**: Save/load functionality for recorded sessions with CSV export and metadata tracking for further analysis.
+
+<br/>
+
+<div align='center'>
+  <img src="./step_detection/analysis/detection_0.png" alt="Step detection analysis interface" width="375" height="260" loading="lazy"/>
+  <img src="./step_detection/analysis/detection_2.png" alt="Algorithm performance comparison" width="375" height="260" loading="lazy"/>
+  
+  <br/>
+  
+  <img src="./step_detection/analysis/detection_4.png" alt="Real-time data collection" width="375" height="260" loading="lazy"/>
+  <img src="./step_detection/analysis/detection_7.png" alt="Summary metrics and rankings" width="375" height="260" loading="lazy"/>
 </div>
 
 <br/>
