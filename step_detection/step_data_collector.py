@@ -28,6 +28,9 @@ class StepDataCollector:
         self.master.title("Step Data Collector")
         self.master.geometry("1200x800")
         self.master.minsize(1000, 700)
+
+        # Add proper closing protocol - ADDED
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         # Data storage
         self.recording = False
@@ -59,6 +62,27 @@ class StepDataCollector:
         
         # Update status
         self.update_status("Ready. Connect to your Pico device to begin.")
+
+    def on_closing(self):
+        """Handle application closing properly"""
+        print("Closing application...")
+        
+        # Stop recording if it's active
+        if self.recording:
+            self.recording = False
+            print("Stopping recording...")
+            # Give the thread time to finish
+            if hasattr(self, 'recording_thread') and self.recording_thread.is_alive():
+                self.recording_thread.join(timeout=2.0)
+        
+        # Close matplotlib figures
+        plt.close('all')
+        
+        # Destroy the main window
+        self.master.quit()
+        self.master.destroy()
+        
+        print("Application closed successfully")
         
     def create_widgets(self):
         # Create main frame with padding
@@ -203,56 +227,56 @@ class StepDataCollector:
         readings_frame.columnconfigure(3, weight=1)
         
     def create_plots(self):
-        # Create matplotlib figure
-        self.fig, self.axes = plt.subplots(3, 1, figsize=(10, 8), dpi=100)
-        self.fig.tight_layout(pad=3.0)
+        # Create matplotlib figure with better spacing
+        self.fig, self.axes = plt.subplots(3, 1, figsize=(12, 10), dpi=100)
+        self.fig.tight_layout(pad=4.0)
         
         # Acceleration plot
         self.ax1 = self.axes[0]
-        self.ax1.set_title("Accelerometer Data")
-        self.ax1.set_ylabel("Acceleration (m/s²)")
+        self.ax1.set_title("Accelerometer Data", fontsize=12)
+        self.ax1.set_ylabel("Acceleration (m/s²)", fontsize=10)
         self.ax1.grid(True, alpha=0.3)
         
         # Create empty lines for accelerometer data
-        self.line_ax1, = self.ax1.plot([], [], 'r-', label='X-S1')
-        self.line_ay1, = self.ax1.plot([], [], 'g-', label='Y-S1')
-        self.line_az1, = self.ax1.plot([], [], 'b-', label='Z-S1')
+        self.line_ax1, = self.ax1.plot([], [], 'r-', label='X-S1', linewidth=1)
+        self.line_ay1, = self.ax1.plot([], [], 'g-', label='Y-S1', linewidth=1)
+        self.line_az1, = self.ax1.plot([], [], 'b-', label='Z-S1', linewidth=1)
         
-        self.line_ax2, = self.ax1.plot([], [], 'r--', label='X-S2')
-        self.line_ay2, = self.ax1.plot([], [], 'g--', label='Y-S2')
-        self.line_az2, = self.ax1.plot([], [], 'b--', label='Z-S2')
+        self.line_ax2, = self.ax1.plot([], [], 'r--', label='X-S2', linewidth=1)
+        self.line_ay2, = self.ax1.plot([], [], 'g--', label='Y-S2', linewidth=1)
+        self.line_az2, = self.ax1.plot([], [], 'b--', label='Z-S2', linewidth=1)
         
-        self.ax1.legend(loc='upper right')
+        self.ax1.legend(loc='upper right', fontsize=8)
         
         # Gyroscope plot
         self.ax2 = self.axes[1]
-        self.ax2.set_title("Gyroscope Data")
-        self.ax2.set_ylabel("Angular Velocity (rad/s)")
+        self.ax2.set_title("Gyroscope Data", fontsize=12)
+        self.ax2.set_ylabel("Angular Velocity (rad/s)", fontsize=10)
         self.ax2.grid(True, alpha=0.3)
         
         # Create empty lines for gyroscope data
-        self.line_gx1, = self.ax2.plot([], [], 'r-', label='X-S1')
-        self.line_gy1, = self.ax2.plot([], [], 'g-', label='Y-S1')
-        self.line_gz1, = self.ax2.plot([], [], 'b-', label='Z-S1')
+        self.line_gx1, = self.ax2.plot([], [], 'r-', label='X-S1', linewidth=1)
+        self.line_gy1, = self.ax2.plot([], [], 'g-', label='Y-S1', linewidth=1)
+        self.line_gz1, = self.ax2.plot([], [], 'b-', label='Z-S1', linewidth=1)
         
-        self.line_gx2, = self.ax2.plot([], [], 'r--', label='X-S2')
-        self.line_gy2, = self.ax2.plot([], [], 'g--', label='Y-S2')
-        self.line_gz2, = self.ax2.plot([], [], 'b--', label='Z-S2')
+        self.line_gx2, = self.ax2.plot([], [], 'r--', label='X-S2', linewidth=1)
+        self.line_gy2, = self.ax2.plot([], [], 'g--', label='Y-S2', linewidth=1)
+        self.line_gz2, = self.ax2.plot([], [], 'b--', label='Z-S2', linewidth=1)
         
-        self.ax2.legend(loc='upper right')
+        self.ax2.legend(loc='upper right', fontsize=8)
         
         # Step markers plot
         self.ax3 = self.axes[2]
-        self.ax3.set_title("Step Markers")
-        self.ax3.set_xlabel("Time (s)")
+        self.ax3.set_title("Step Markers", fontsize=12)
+        self.ax3.set_xlabel("Time (s)", fontsize=10)
         self.ax3.set_yticks([])
         self.ax3.grid(True, alpha=0.3)
         
         # Create empty scatter for step markers
         self.step_markers = self.ax3.scatter([], [], marker='o', color='r', s=50, label='Steps')
-        self.ax3.legend(loc='upper right')
+        self.ax3.legend(loc='upper right', fontsize=8)
         
-        # Create canvas
+        # Create canvas with better frame
         self.canvas_frame = ttk.Frame(self.master)
         self.canvas_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
@@ -363,7 +387,7 @@ class StepDataCollector:
             self.update_status("Recording stopped.")
     
     def record_data(self):
-        """Background thread to record data from the Pico"""
+        """Background thread to record data from the Pico - FIXED for data synchronization"""
         update_interval = 0.1  # seconds
         last_update_time = time.time()
         
@@ -384,14 +408,64 @@ class StepDataCollector:
                 last_update_time = current_time
             
             try:
+                # Initialize data containers for this iteration to ensure synchronization
+                data_collected = {
+                    'time': elapsed_time,
+                    'sensor1': None,
+                    'sensor2': None,
+                    'battery': None
+                }
+                
                 # Get IMU data from sensor 1 (Waveshare)
-                response1 = requests.get(f"{self.api_url}?action=WavReadIMU", timeout=1)
-                if response1.status_code == 200:
-                    data1 = response1.json()
-                    if 'status' in data1 and data1['status'] == 'OK':
-                        self.data['time'].append(elapsed_time)
-                        
-                        # Store sensor 1 data
+                try:
+                    response1 = requests.get(f"{self.api_url}?action=WavReadIMU", timeout=1)
+                    if response1.status_code == 200:
+                        data1 = response1.json()
+                        if 'status' in data1 and data1['status'] == 'OK':
+                            data_collected['sensor1'] = data1
+                            # Update display
+                            self.accel1_var.set(f"X: {data1['acceleration']['X']:.2f}, Y: {data1['acceleration']['Y']:.2f}, Z: {data1['acceleration']['Z']:.2f}")
+                            self.gyro1_var.set(f"X: {data1['gyro']['X']:.2f}, Y: {data1['gyro']['Y']:.2f}, Z: {data1['gyro']['Z']:.2f}")
+                            self.mag1_var.set(f"X: {data1['magnetic']['X']:.2f}, Y: {data1['magnetic']['Y']:.2f}, Z: {data1['magnetic']['Z']:.2f}")
+                except requests.exceptions.RequestException:
+                    pass  # Continue without sensor1 data
+                
+                # Get IMU data from sensor 2 (Adafruit)
+                try:
+                    response2 = requests.get(f"{self.api_url}?action=AdaReadIMU", timeout=1)
+                    if response2.status_code == 200:
+                        data2 = response2.json()
+                        if 'status' in data2 and data2['status'] == 'OK':
+                            data_collected['sensor2'] = data2
+                            # Update display
+                            self.accel2_var.set(f"X: {data2['acceleration']['X']:.2f}, Y: {data2['acceleration']['Y']:.2f}, Z: {data2['acceleration']['Z']:.2f}")
+                            self.gyro2_var.set(f"X: {data2['gyro']['X']:.2f}, Y: {data2['gyro']['Y']:.2f}, Z: {data2['gyro']['Z']:.2f}")
+                            self.mag2_var.set(f"X: {data2['magnetic']['X']:.2f}, Y: {data2['magnetic']['Y']:.2f}, Z: {data2['magnetic']['Z']:.2f}")
+                except requests.exceptions.RequestException:
+                    pass  # Continue without sensor2 data
+                
+                # Get battery info
+                try:
+                    response_batt = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=1)
+                    if response_batt.status_code == 200:
+                        data_batt = response_batt.json()
+                        if 'status' in data_batt and data_batt['status'] == 'OK':
+                            data_collected['battery'] = data_batt
+                            # Update display
+                            self.voltage_var.set(f"{data_batt['battery_voltage']:.2f} V")
+                            self.current_var.set(f"{data_batt['battery_current']:.3f} A")
+                            self.battery_var.set(f"{data_batt['battery_percentage']:.1f}%")
+                except requests.exceptions.RequestException:
+                    pass  # Continue without battery data
+                
+                # Only add data if we have at least one sensor reading
+                if data_collected['sensor1'] is not None or data_collected['sensor2'] is not None:
+                    # Add time - this ensures all arrays stay synchronized
+                    self.data['time'].append(elapsed_time)
+                    
+                    # Add sensor 1 data (or zeros if missing to maintain array sync)
+                    if data_collected['sensor1'] is not None:
+                        data1 = data_collected['sensor1']
                         self.data['sensor1']['accel_x'].append(data1['acceleration']['X'])
                         self.data['sensor1']['accel_y'].append(data1['acceleration']['Y'])
                         self.data['sensor1']['accel_z'].append(data1['acceleration']['Z'])
@@ -401,52 +475,57 @@ class StepDataCollector:
                         self.data['sensor1']['mag_x'].append(data1['magnetic']['X'])
                         self.data['sensor1']['mag_y'].append(data1['magnetic']['Y'])
                         self.data['sensor1']['mag_z'].append(data1['magnetic']['Z'])
-                        
-                        # Update display
-                        self.accel1_var.set(f"X: {data1['acceleration']['X']:.2f}, Y: {data1['acceleration']['Y']:.2f}, Z: {data1['acceleration']['Z']:.2f}")
-                        self.gyro1_var.set(f"X: {data1['gyro']['X']:.2f}, Y: {data1['gyro']['Y']:.2f}, Z: {data1['gyro']['Z']:.2f}")
-                        self.mag1_var.set(f"X: {data1['magnetic']['X']:.2f}, Y: {data1['magnetic']['Y']:.2f}, Z: {data1['magnetic']['Z']:.2f}")
-                
-                # Get IMU data from sensor 2 (Adafruit)
-                response2 = requests.get(f"{self.api_url}?action=AdaReadIMU", timeout=1)
-                if response2.status_code == 200:
-                    data2 = response2.json()
-                    if 'status' in data2 and data2['status'] == 'OK':
-                        # Store sensor 2 data
-                        if len(self.data['time']) > 0:  # Make sure we have a time entry
-                            self.data['sensor2']['accel_x'].append(data2['acceleration']['X'])
-                            self.data['sensor2']['accel_y'].append(data2['acceleration']['Y'])
-                            self.data['sensor2']['accel_z'].append(data2['acceleration']['Z'])
-                            self.data['sensor2']['gyro_x'].append(data2['gyro']['X'])
-                            self.data['sensor2']['gyro_y'].append(data2['gyro']['Y'])
-                            self.data['sensor2']['gyro_z'].append(data2['gyro']['Z'])
-                            self.data['sensor2']['mag_x'].append(data2['magnetic']['X'])
-                            self.data['sensor2']['mag_y'].append(data2['magnetic']['Y'])
-                            self.data['sensor2']['mag_z'].append(data2['magnetic']['Z'])
-                            
-                            # Update display
-                            self.accel2_var.set(f"X: {data2['acceleration']['X']:.2f}, Y: {data2['acceleration']['Y']:.2f}, Z: {data2['acceleration']['Z']:.2f}")
-                            self.gyro2_var.set(f"X: {data2['gyro']['X']:.2f}, Y: {data2['gyro']['Y']:.2f}, Z: {data2['gyro']['Z']:.2f}")
-                            self.mag2_var.set(f"X: {data2['magnetic']['X']:.2f}, Y: {data2['magnetic']['Y']:.2f}, Z: {data2['magnetic']['Z']:.2f}")
-                
-                # Get battery info
-                response_batt = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=1)
-                if response_batt.status_code == 200:
-                    data_batt = response_batt.json()
-                    if 'status' in data_batt and data_batt['status'] == 'OK':
-                        if len(self.data['time']) > 0:  # Make sure we have a time entry
-                            self.data['battery']['voltage'].append(data_batt['battery_voltage'])
-                            self.data['battery']['current'].append(data_batt['battery_current'])
-                            self.data['battery']['percentage'].append(data_batt['battery_percentage'])
-                            
-                            # Update display
-                            self.voltage_var.set(f"{data_batt['battery_voltage']:.2f} V")
-                            self.current_var.set(f"{data_batt['battery_current']:.3f} A")
-                            self.battery_var.set(f"{data_batt['battery_percentage']:.1f}%")
-                
-                # Update plots (not too frequently to avoid GUI lag)
-                if len(self.data['time']) % 5 == 0 and len(self.data['time']) > 0:
-                    self.update_plots()
+                    else:
+                        # Add zeros to maintain synchronization
+                        self.data['sensor1']['accel_x'].append(0.0)
+                        self.data['sensor1']['accel_y'].append(0.0)
+                        self.data['sensor1']['accel_z'].append(0.0)
+                        self.data['sensor1']['gyro_x'].append(0.0)
+                        self.data['sensor1']['gyro_y'].append(0.0)
+                        self.data['sensor1']['gyro_z'].append(0.0)
+                        self.data['sensor1']['mag_x'].append(0.0)
+                        self.data['sensor1']['mag_y'].append(0.0)
+                        self.data['sensor1']['mag_z'].append(0.0)
+                    
+                    # Add sensor 2 data (or zeros if missing to maintain array sync)
+                    if data_collected['sensor2'] is not None:
+                        data2 = data_collected['sensor2']
+                        self.data['sensor2']['accel_x'].append(data2['acceleration']['X'])
+                        self.data['sensor2']['accel_y'].append(data2['acceleration']['Y'])
+                        self.data['sensor2']['accel_z'].append(data2['acceleration']['Z'])
+                        self.data['sensor2']['gyro_x'].append(data2['gyro']['X'])
+                        self.data['sensor2']['gyro_y'].append(data2['gyro']['Y'])
+                        self.data['sensor2']['gyro_z'].append(data2['gyro']['Z'])
+                        self.data['sensor2']['mag_x'].append(data2['magnetic']['X'])
+                        self.data['sensor2']['mag_y'].append(data2['magnetic']['Y'])
+                        self.data['sensor2']['mag_z'].append(data2['magnetic']['Z'])
+                    else:
+                        # Add zeros to maintain synchronization
+                        self.data['sensor2']['accel_x'].append(0.0)
+                        self.data['sensor2']['accel_y'].append(0.0)
+                        self.data['sensor2']['accel_z'].append(0.0)
+                        self.data['sensor2']['gyro_x'].append(0.0)
+                        self.data['sensor2']['gyro_y'].append(0.0)
+                        self.data['sensor2']['gyro_z'].append(0.0)
+                        self.data['sensor2']['mag_x'].append(0.0)
+                        self.data['sensor2']['mag_y'].append(0.0)
+                        self.data['sensor2']['mag_z'].append(0.0)
+                    
+                    # Add battery data (or zeros if missing to maintain array sync)
+                    if data_collected['battery'] is not None:
+                        data_batt = data_collected['battery']
+                        self.data['battery']['voltage'].append(data_batt['battery_voltage'])
+                        self.data['battery']['current'].append(data_batt['battery_current'])
+                        self.data['battery']['percentage'].append(data_batt['battery_percentage'])
+                    else:
+                        # Add zeros to maintain synchronization
+                        self.data['battery']['voltage'].append(0.0)
+                        self.data['battery']['current'].append(0.0)
+                        self.data['battery']['percentage'].append(0.0)
+                    
+                    # Update plots (not too frequently to avoid GUI lag)
+                    if len(self.data['time']) % 5 == 0:
+                        self.update_plots()
                 
             except requests.exceptions.RequestException as e:
                 self.update_status(f"Error reading data: {str(e)}")
@@ -455,52 +534,83 @@ class StepDataCollector:
             time.sleep(update_interval)
     
     def update_plots(self):
-        """Update the data plots"""
+        """Update the data plots - FIXED for array length validation"""
         if len(self.data['time']) == 0:
             return
+        
+        try:
+            # Validate data lengths before plotting to prevent broadcast errors
+            time_len = len(self.data['time'])
+            for sensor in ['sensor1', 'sensor2']:
+                for key in self.data[sensor]:
+                    if len(self.data[sensor][key]) != time_len:
+                        print(f"Warning: {sensor}.{key} length {len(self.data[sensor][key])} != time length {time_len}")
+                        return  # Skip update if data is inconsistent
             
-        # Get the latest data
-        times = np.array(self.data['time'])
-        
-        # Update accelerometer plot
-        self.line_ax1.set_data(times, self.data['sensor1']['accel_x'])
-        self.line_ay1.set_data(times, self.data['sensor1']['accel_y'])
-        self.line_az1.set_data(times, self.data['sensor1']['accel_z'])
-        
-        self.line_ax2.set_data(times, self.data['sensor2']['accel_x'])
-        self.line_ay2.set_data(times, self.data['sensor2']['accel_y'])
-        self.line_az2.set_data(times, self.data['sensor2']['accel_z'])
-        
-        # Update gyroscope plot
-        self.line_gx1.set_data(times, self.data['sensor1']['gyro_x'])
-        self.line_gy1.set_data(times, self.data['sensor1']['gyro_y'])
-        self.line_gz1.set_data(times, self.data['sensor1']['gyro_z'])
-        
-        self.line_gx2.set_data(times, self.data['sensor2']['gyro_x'])
-        self.line_gy2.set_data(times, self.data['sensor2']['gyro_y'])
-        self.line_gz2.set_data(times, self.data['sensor2']['gyro_z'])
-        
-        # Update step markers
-        if len(self.ground_truth_steps) > 0:
-            # Create array of points for steps: [[time1, 0.5], [time2, 0.5], ...]
-            step_points = np.column_stack((self.ground_truth_steps, np.ones(len(self.ground_truth_steps)) * 0.5))
-            self.step_markers.set_offsets(step_points)
-        
-        # Update axis limits
-        self.ax1.relim()
-        self.ax1.autoscale_view()
-        self.ax2.relim()
-        self.ax2.autoscale_view()
-        
-        # Fixed y-axis for step markers
-        self.ax3.set_xlim(min(times), max(times))
-        self.ax3.set_ylim(0, 1)
-        
-        # Draw the canvas
-        self.canvas.draw_idle()
+            # Get the latest data
+            times = np.array(self.data['time'])
+            
+            # Ensure all arrays have the same length as an extra safety check
+            min_len = min(len(times), 
+                         len(self.data['sensor1']['accel_x']),
+                         len(self.data['sensor2']['accel_x']))
+            
+            if min_len == 0:
+                return
+            
+            # Truncate all arrays to the minimum length to ensure consistency
+            times = times[:min_len]
+            
+            # Update accelerometer plot with length-safe arrays
+            self.line_ax1.set_data(times, np.array(self.data['sensor1']['accel_x'])[:min_len])
+            self.line_ay1.set_data(times, np.array(self.data['sensor1']['accel_y'])[:min_len])
+            self.line_az1.set_data(times, np.array(self.data['sensor1']['accel_z'])[:min_len])
+            
+            self.line_ax2.set_data(times, np.array(self.data['sensor2']['accel_x'])[:min_len])
+            self.line_ay2.set_data(times, np.array(self.data['sensor2']['accel_y'])[:min_len])
+            self.line_az2.set_data(times, np.array(self.data['sensor2']['accel_z'])[:min_len])
+            
+            # Update gyroscope plot with length-safe arrays
+            self.line_gx1.set_data(times, np.array(self.data['sensor1']['gyro_x'])[:min_len])
+            self.line_gy1.set_data(times, np.array(self.data['sensor1']['gyro_y'])[:min_len])
+            self.line_gz1.set_data(times, np.array(self.data['sensor1']['gyro_z'])[:min_len])
+            
+            self.line_gx2.set_data(times, np.array(self.data['sensor2']['gyro_x'])[:min_len])
+            self.line_gy2.set_data(times, np.array(self.data['sensor2']['gyro_y'])[:min_len])
+            self.line_gz2.set_data(times, np.array(self.data['sensor2']['gyro_z'])[:min_len])
+            
+            # Update step markers with safe array handling
+            if len(self.ground_truth_steps) > 0:
+                # Only include steps that are within the current time range
+                step_times = [t for t in self.ground_truth_steps if t <= times[-1]]
+                if len(step_times) > 0:
+                    step_points = np.column_stack((step_times, np.ones(len(step_times)) * 0.5))
+                    self.step_markers.set_offsets(step_points)
+                else:
+                    self.step_markers.set_offsets(np.empty((0, 2)))
+            else:
+                self.step_markers.set_offsets(np.empty((0, 2)))
+            
+            # Update axis limits properly with error handling
+            if len(times) > 0:
+                self.ax1.relim()
+                self.ax1.autoscale_view()
+                self.ax2.relim()
+                self.ax2.autoscale_view()
+                
+                # Fixed y-axis for step markers
+                self.ax3.set_xlim(times[0], times[-1])
+                self.ax3.set_ylim(0, 1)
+            
+            # Draw the canvas
+            self.canvas.draw_idle()
+            
+        except Exception as e:
+            print(f"Error updating plots: {e}")
+            # Don't crash the application, just skip this update
     
     def mark_step(self):
-        """Mark a step in the data"""
+        """Mark a step in the data - FIXED for safe step marking"""
         if self.recording:
             current_time = time.time()
             elapsed_time = current_time - self.recording_start_time
@@ -511,8 +621,11 @@ class StepDataCollector:
             # Update status
             self.update_status(f"Step marked at {elapsed_time:.2f} seconds.")
             
-            # Update plots
-            self.update_plots()
+            # Update plots safely
+            try:
+                self.update_plots()
+            except Exception as e:
+                print(f"Error updating plots after step mark: {e}")
     
     def toggle_auto_counting(self):
         """Toggle automatic step counting"""
@@ -694,7 +807,7 @@ class StepDataCollector:
             messagebox.showerror("Load Error", f"Failed to load data:\n{str(e)}")
     
     def analyze_data(self):
-        """Analyze the recorded data with step detection algorithms"""
+        """Analyze the recorded data with step detection algorithms - FIXED parameters"""
         if len(self.data['time']) == 0 or len(self.ground_truth_steps) == 0:
             messagebox.showwarning("No Data", "Not enough data to analyze. Record data with steps first.")
             return
@@ -736,13 +849,13 @@ class StepDataCollector:
         # Run the algorithms
         self.update_status("Running step detection algorithms...")
         
-        # Define parameter sets
+        # Define parameter sets with safer parameters to prevent Savgol filter errors
         param_sets = {
-            'peak_detection': {'window_size': 0.1, 'threshold': 1.0, 'min_time_between_steps': 0.3},
-            'zero_crossing': {'window_size': 0.1, 'min_time_between_steps': 0.3},
+            'peak_detection': {'window_size': 1.0, 'threshold': 1.0, 'min_time_between_steps': 0.3},  # Increased from 0.1 to 1.0
+            'zero_crossing': {'window_size': 1.0, 'min_time_between_steps': 0.3},  # Increased from 0.1 to 1.0
             'spectral_analysis': {'window_size': 5.0, 'overlap': 0.5, 'step_freq_range': (1.0, 2.5)},
-            'adaptive_threshold': {'window_size': 0.1, 'sensitivity': 0.6, 'min_time_between_steps': 0.3},
-            'shoe': {'window_size': 0.1, 'threshold': 0.8, 'min_time_between_steps': 0.3}
+            'adaptive_threshold': {'window_size': 1.0, 'sensitivity': 0.6, 'min_time_between_steps': 0.3},  # Increased from 0.1 to 1.0
+            'shoe': {'window_size': 1.0, 'threshold': 0.8, 'min_time_between_steps': 0.3}  # Increased from 0.1 to 1.0
         }
         
         # Create analysis window
@@ -787,112 +900,129 @@ class StepDataCollector:
         fs = dataset['params']['fs']
         ground_truth_steps = dataset['ground_truth']['step_times']
         
-        # Run each algorithm
+        # Run each algorithm with enhanced error handling
         for algorithm_name, params in param_sets.items():
             self.update_status(f"Running {algorithm_name}...")
             
-            # Sensor 1
-            if algorithm_name == 'peak_detection':
-                detected_steps1, filtered_signal1 = peak_detection_algorithm(
-                    accel_data1, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
-                )
+            try:
+                # Sensor 1
+                if algorithm_name == 'peak_detection':
+                    detected_steps1, filtered_signal1 = peak_detection_algorithm(
+                        accel_data1, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
+                    )
+                    results['sensor1'][algorithm_name] = {
+                        'detected_steps': detected_steps1,
+                        'filtered_signal': filtered_signal1,
+                        'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'zero_crossing':
+                    detected_steps1, filtered_signal1 = zero_crossing_algorithm(
+                        accel_data1, fs, params['window_size'], params['min_time_between_steps']
+                    )
+                    results['sensor1'][algorithm_name] = {
+                        'detected_steps': detected_steps1,
+                        'filtered_signal': filtered_signal1,
+                        'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'spectral_analysis':
+                    detected_steps1, step_freqs1 = spectral_analysis_algorithm(
+                        accel_data1, fs, params['window_size'], params['overlap'], params['step_freq_range']
+                    )
+                    results['sensor1'][algorithm_name] = {
+                        'detected_steps': detected_steps1,
+                        'step_frequencies': step_freqs1,
+                        'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'adaptive_threshold':
+                    detected_steps1, filtered_signal1, threshold1 = adaptive_threshold_algorithm(
+                        accel_data1, fs, params['window_size'], params['sensitivity'], params['min_time_between_steps']
+                    )
+                    results['sensor1'][algorithm_name] = {
+                        'detected_steps': detected_steps1,
+                        'filtered_signal': filtered_signal1,
+                        'threshold': threshold1,
+                        'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'shoe':
+                    detected_steps1, combined_signal1 = shoe_algorithm(
+                        accel_data1, gyro_data1, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
+                    )
+                    results['sensor1'][algorithm_name] = {
+                        'detected_steps': detected_steps1,
+                        'combined_signal': combined_signal1,
+                        'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    }
+                
+                # Sensor 2
+                if algorithm_name == 'peak_detection':
+                    detected_steps2, filtered_signal2 = peak_detection_algorithm(
+                        accel_data2, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
+                    )
+                    results['sensor2'][algorithm_name] = {
+                        'detected_steps': detected_steps2,
+                        'filtered_signal': filtered_signal2,
+                        'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'zero_crossing':
+                    detected_steps2, filtered_signal2 = zero_crossing_algorithm(
+                        accel_data2, fs, params['window_size'], params['min_time_between_steps']
+                    )
+                    results['sensor2'][algorithm_name] = {
+                        'detected_steps': detected_steps2,
+                        'filtered_signal': filtered_signal2,
+                        'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'spectral_analysis':
+                    detected_steps2, step_freqs2 = spectral_analysis_algorithm(
+                        accel_data2, fs, params['window_size'], params['overlap'], params['step_freq_range']
+                    )
+                    results['sensor2'][algorithm_name] = {
+                        'detected_steps': detected_steps2,
+                        'step_frequencies': step_freqs2,
+                        'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'adaptive_threshold':
+                    detected_steps2, filtered_signal2, threshold2 = adaptive_threshold_algorithm(
+                        accel_data2, fs, params['window_size'], params['sensitivity'], params['min_time_between_steps']
+                    )
+                    results['sensor2'][algorithm_name] = {
+                        'detected_steps': detected_steps2,
+                        'filtered_signal': filtered_signal2,
+                        'threshold': threshold2,
+                        'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    }
+                    
+                elif algorithm_name == 'shoe':
+                    detected_steps2, combined_signal2 = shoe_algorithm(
+                        accel_data2, gyro_data2, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
+                    )
+                    results['sensor2'][algorithm_name] = {
+                        'detected_steps': detected_steps2,
+                        'combined_signal': combined_signal2,
+                        'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    }
+                    
+            except Exception as e:
+                print(f"Error running {algorithm_name}: {e}")
+                # Create dummy results if algorithm fails
                 results['sensor1'][algorithm_name] = {
-                    'detected_steps': detected_steps1,
-                    'filtered_signal': filtered_signal1,
-                    'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
+                    'detected_steps': np.array([]),
+                    'metrics': {'precision': 0, 'recall': 0, 'f1_score': 0, 'step_count': 0, 
+                               'ground_truth_count': len(ground_truth_steps), 'step_count_error': len(ground_truth_steps),
+                               'step_count_error_percent': 100.0}
                 }
-                
-            elif algorithm_name == 'zero_crossing':
-                detected_steps1, filtered_signal1 = zero_crossing_algorithm(
-                    accel_data1, fs, params['window_size'], params['min_time_between_steps']
-                )
-                results['sensor1'][algorithm_name] = {
-                    'detected_steps': detected_steps1,
-                    'filtered_signal': filtered_signal1,
-                    'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'spectral_analysis':
-                detected_steps1, step_freqs1 = spectral_analysis_algorithm(
-                    accel_data1, fs, params['window_size'], params['overlap'], params['step_freq_range']
-                )
-                results['sensor1'][algorithm_name] = {
-                    'detected_steps': detected_steps1,
-                    'step_frequencies': step_freqs1,
-                    'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'adaptive_threshold':
-                detected_steps1, filtered_signal1, threshold1 = adaptive_threshold_algorithm(
-                    accel_data1, fs, params['window_size'], params['sensitivity'], params['min_time_between_steps']
-                )
-                results['sensor1'][algorithm_name] = {
-                    'detected_steps': detected_steps1,
-                    'filtered_signal': filtered_signal1,
-                    'threshold': threshold1,
-                    'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'shoe':
-                detected_steps1, combined_signal1 = shoe_algorithm(
-                    accel_data1, gyro_data1, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
-                )
-                results['sensor1'][algorithm_name] = {
-                    'detected_steps': detected_steps1,
-                    'combined_signal': combined_signal1,
-                    'metrics': evaluate_algorithm(detected_steps1, ground_truth_steps)
-                }
-            
-            # Sensor 2
-            if algorithm_name == 'peak_detection':
-                detected_steps2, filtered_signal2 = peak_detection_algorithm(
-                    accel_data2, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
-                )
                 results['sensor2'][algorithm_name] = {
-                    'detected_steps': detected_steps2,
-                    'filtered_signal': filtered_signal2,
-                    'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'zero_crossing':
-                detected_steps2, filtered_signal2 = zero_crossing_algorithm(
-                    accel_data2, fs, params['window_size'], params['min_time_between_steps']
-                )
-                results['sensor2'][algorithm_name] = {
-                    'detected_steps': detected_steps2,
-                    'filtered_signal': filtered_signal2,
-                    'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'spectral_analysis':
-                detected_steps2, step_freqs2 = spectral_analysis_algorithm(
-                    accel_data2, fs, params['window_size'], params['overlap'], params['step_freq_range']
-                )
-                results['sensor2'][algorithm_name] = {
-                    'detected_steps': detected_steps2,
-                    'step_frequencies': step_freqs2,
-                    'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'adaptive_threshold':
-                detected_steps2, filtered_signal2, threshold2 = adaptive_threshold_algorithm(
-                    accel_data2, fs, params['window_size'], params['sensitivity'], params['min_time_between_steps']
-                )
-                results['sensor2'][algorithm_name] = {
-                    'detected_steps': detected_steps2,
-                    'filtered_signal': filtered_signal2,
-                    'threshold': threshold2,
-                    'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
-                }
-                
-            elif algorithm_name == 'shoe':
-                detected_steps2, combined_signal2 = shoe_algorithm(
-                    accel_data2, gyro_data2, fs, params['window_size'], params['threshold'], params['min_time_between_steps']
-                )
-                results['sensor2'][algorithm_name] = {
-                    'detected_steps': detected_steps2,
-                    'combined_signal': combined_signal2,
-                    'metrics': evaluate_algorithm(detected_steps2, ground_truth_steps)
+                    'detected_steps': np.array([]),
+                    'metrics': {'precision': 0, 'recall': 0, 'f1_score': 0, 'step_count': 0, 
+                               'ground_truth_count': len(ground_truth_steps), 'step_count_error': len(ground_truth_steps),
+                               'step_count_error_percent': 100.0}
                 }
         
         # Create tabs for each algorithm
@@ -1065,6 +1195,13 @@ class StepDataCollector:
         canvas_summary = FigureCanvasTkAgg(fig_summary, master=summary_tab)
         canvas_summary.draw()
         canvas_summary.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Add proper cleanup for analysis window - ADDED
+        def on_analysis_window_close():
+            plt.close('all')  # Close all matplotlib figures
+            analysis_window.destroy()
+        
+        analysis_window.protocol("WM_DELETE_WINDOW", on_analysis_window_close)
         
         self.update_status("Analysis complete!")
     
@@ -1076,4 +1213,11 @@ class StepDataCollector:
 if __name__ == "__main__":
     root = tk.Tk()
     app = StepDataCollector(root)
-    root.mainloop()
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("Interrupted by user")
+    finally:
+        # Ensure clean exit
+        plt.close('all')
+        root.quit()

@@ -9,53 +9,6 @@ from datetime import datetime
 import json
 
 # --------------------------------
-# Safe Filter Function - ADDED TO FIX SAVGOL ERRORS
-# --------------------------------
-
-def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
-    """
-    Safely apply Savitzky-Golay filter with proper parameter validation.
-    This prevents the "polyorder must be less than window_length" error.
-    
-    Parameters:
-    - data: Input signal data
-    - window_size_seconds: Window size in seconds
-    - fs: Sampling frequency in Hz
-    - polyorder: Polynomial order for the filter
-    
-    Returns:
-    - filtered_signal: Filtered signal data
-    """
-    # Convert window_size from seconds to samples
-    window_len = max(5, int(window_size_seconds * fs))
-    
-    # Ensure window_len is odd and at least 3
-    if window_len % 2 == 0:
-        window_len += 1
-    
-    # Ensure window_len is not larger than data length
-    if window_len >= len(data):
-        window_len = max(3, len(data) // 2)
-        if window_len % 2 == 0:
-            window_len -= 1
-    
-    # Ensure polyorder is less than window_len and at least 1
-    polyorder = max(1, min(polyorder, window_len - 1))
-    
-    try:
-        filtered_signal = signal.savgol_filter(data, window_len, polyorder)
-        return filtered_signal
-    except ValueError as e:
-        print(f"Savgol filter error: {e}, using moving average fallback")
-        # Fallback to simple moving average
-        kernel_size = min(5, len(data))
-        if kernel_size > 0:
-            kernel = np.ones(kernel_size) / kernel_size
-            return np.convolve(data, kernel, mode='same')
-        else:
-            return data.copy()
-
-# --------------------------------
 # Sample Data Generation Functions
 # --------------------------------
 
@@ -339,12 +292,12 @@ def save_datasets(datasets, output_dir='./data'):
             }, f, indent=4)
 
 # --------------------------------
-# Step Detection Algorithms - FIXED VERSIONS
+# Step Detection Algorithms
 # --------------------------------
 
 def peak_detection_algorithm(accel_data, fs, window_size=0.1, threshold=1.0, min_time_between_steps=0.3):
     """
-    Step detection using peak detection with fixed threshold - FIXED VERSION.
+    Step detection using peak detection with fixed threshold.
     
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -355,29 +308,29 @@ def peak_detection_algorithm(accel_data, fs, window_size=0.1, threshold=1.0, min
     
     Returns:
     - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration magnitude signal
     """
     # Calculate the magnitude of acceleration (removing gravity)
     accel_mag = np.sqrt(accel_data[0]**2 + accel_data[1]**2 + (accel_data[2] - 9.81)**2)
     
-    # Apply safe moving average filter - FIXED
-    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
+    # Apply moving average filter
+    window_len = int(window_size * fs)
+    if window_len % 2 == 0:
+        window_len += 1  # Make sure window length is odd
+    
+    filtered_signal = signal.savgol_filter(accel_mag, window_len, 2)
     
     # Find peaks
-    min_distance = max(1, int(min_time_between_steps * fs))
-    try:
-        peaks, _ = signal.find_peaks(filtered_signal, height=threshold, distance=min_distance)
-        # Convert peak indices to times
-        detected_steps = peaks / fs
-    except Exception as e:
-        print(f"Peak detection error: {e}")
-        detected_steps = np.array([])
+    min_distance = int(min_time_between_steps * fs)
+    peaks, _ = signal.find_peaks(filtered_signal, height=threshold, distance=min_distance)
+    
+    # Convert peak indices to times
+    detected_steps = peaks / fs
     
     return detected_steps, filtered_signal
 
 def zero_crossing_algorithm(accel_data, fs, window_size=0.1, min_time_between_steps=0.3):
     """
-    Step detection using zero-crossing method - IMPROVED VERSION.
+    Step detection using zero-crossing method.
     
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -387,47 +340,33 @@ def zero_crossing_algorithm(accel_data, fs, window_size=0.1, min_time_between_st
     
     Returns:
     - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration signal
     """
-    # Use acceleration magnitude instead of just Z-axis - FIXED
-    accel_mag = np.sqrt(accel_data[0]**2 + accel_data[1]**2 + accel_data[2]**2)
+    # Use vertical acceleration (Z-axis) after removing gravity
+    accel_z = accel_data[2] - 9.81
     
-    # Remove mean to center around zero
-    accel_centered = accel_mag - np.mean(accel_mag)
+    # Apply moving average filter
+    window_len = int(window_size * fs)
+    if window_len % 2 == 0:
+        window_len += 1  # Make sure window length is odd
     
-    # Apply safe moving average filter
-    filtered_signal = safe_savgol_filter(accel_centered, window_size, fs, polyorder=2)
+    filtered_signal = signal.savgol_filter(accel_z, window_len, 2)
     
-    # Find ALL zero crossings (both positive and negative slope)
-    sign_changes = np.diff(np.signbit(filtered_signal))
-    zero_crossings = np.where(sign_changes)[0]
+    # Find zero crossings with positive slope
+    zero_crossings = np.where(np.diff(np.signbit(filtered_signal)))[0]
     
-    # print(f"Zero crossings found: {len(zero_crossings)} total crossings")
-    
-    if len(zero_crossings) == 0:
-        return np.array([]), filtered_signal
-    
-    # Keep only positive slope zero crossings (signal going from negative to positive)
-    pos_slope_crossings = []
-    for crossing in zero_crossings:
-        if crossing + 1 < len(filtered_signal):
-            if filtered_signal[crossing] <= 0 and filtered_signal[crossing + 1] > 0:
-                pos_slope_crossings.append(crossing)
-    
-    # print(f"Positive slope crossings: {len(pos_slope_crossings)}")
+    # Keep only positive slope zero crossings
+    pos_slope = zero_crossings[np.where(filtered_signal[zero_crossings+1] > filtered_signal[zero_crossings])]
     
     # Apply minimum time between steps
-    min_samples = max(1, int(min_time_between_steps * fs))
+    min_samples = int(min_time_between_steps * fs)
     
     # Filter out crossings that are too close
     filtered_crossings = []
-    if len(pos_slope_crossings) > 0:
-        filtered_crossings = [pos_slope_crossings[0]]
-        for crossing in pos_slope_crossings[1:]:
+    if len(pos_slope) > 0:
+        filtered_crossings = [pos_slope[0]]
+        for crossing in pos_slope[1:]:
             if crossing - filtered_crossings[-1] >= min_samples:
                 filtered_crossings.append(crossing)
-    
-    # print(f"Final filtered crossings: {len(filtered_crossings)}")
     
     # Convert to numpy array and to times
     detected_steps = np.array(filtered_crossings) / fs
@@ -447,7 +386,6 @@ def spectral_analysis_algorithm(accel_data, fs, window_size=5.0, overlap=0.5, st
     
     Returns:
     - detected_steps: Array of detected step times
-    - step_freqs: Array of step frequencies
     """
     # Calculate the magnitude of acceleration (removing gravity)
     accel_mag = np.sqrt(accel_data[0]**2 + accel_data[1]**2 + (accel_data[2] - 9.81)**2)
@@ -456,58 +394,47 @@ def spectral_analysis_algorithm(accel_data, fs, window_size=5.0, overlap=0.5, st
     nperseg = int(window_size * fs)
     noverlap = int(nperseg * overlap)
     
-    # Ensure valid parameters
-    if nperseg >= len(accel_mag):
-        nperseg = len(accel_mag) // 2
-    if noverlap >= nperseg:
-        noverlap = nperseg // 2
+    # Compute STFT
+    f, t, Zxx = signal.stft(accel_mag, fs=fs, nperseg=nperseg, noverlap=noverlap)
     
-    try:
-        # Compute STFT
-        f, t, Zxx = signal.stft(accel_mag, fs=fs, nperseg=nperseg, noverlap=noverlap)
+    # Find the frequency bin indices corresponding to the step frequency range
+    freq_min_idx = np.argmin(np.abs(f - step_freq_range[0]))
+    freq_max_idx = np.argmin(np.abs(f - step_freq_range[1]))
+    
+    # For each time window, find the dominant frequency in the step frequency range
+    step_freqs = []
+    for i in range(Zxx.shape[1]):
+        # Get the power spectrum for this time window
+        power_spectrum = np.abs(Zxx[:, i])
         
-        # Find the frequency bin indices corresponding to the step frequency range
-        freq_min_idx = np.argmin(np.abs(f - step_freq_range[0]))
-        freq_max_idx = np.argmin(np.abs(f - step_freq_range[1]))
-        
-        # For each time window, find the dominant frequency in the step frequency range
-        step_freqs = []
-        for i in range(Zxx.shape[1]):
-            # Get the power spectrum for this time window
-            power_spectrum = np.abs(Zxx[:, i])
-            
-            # Find the dominant frequency in the step frequency range
-            dom_freq_idx = freq_min_idx + np.argmax(power_spectrum[freq_min_idx:freq_max_idx+1])
-            step_freqs.append(f[dom_freq_idx])
-        
-        # Calculate the number of steps in each window
-        # Number of steps = frequency (steps/sec) * window duration (sec)
-        # We use overlap to avoid double counting
-        effective_window_duration = window_size * (1 - overlap)
-        steps_per_window = np.array(step_freqs) * effective_window_duration
-        
-        # Total number of steps is the sum of steps in each window
-        total_steps = int(np.sum(steps_per_window))
-        
-        # We don't have exact step times from this method, so we'll distribute them evenly
-        # This is a limitation of the spectral approach
-        time_duration = accel_mag.size / fs
-        if total_steps > 0:
-            # Distribute steps evenly
-            step_interval = time_duration / total_steps
-            detected_steps = np.arange(step_interval/2, time_duration, step_interval)
-        else:
-            detected_steps = np.array([])
-        
-        return detected_steps, np.array(step_freqs)
-        
-    except Exception as e:
-        print(f"Spectral analysis error: {e}")
-        return np.array([]), np.array([])
+        # Find the dominant frequency in the step frequency range
+        dom_freq_idx = freq_min_idx + np.argmax(power_spectrum[freq_min_idx:freq_max_idx+1])
+        step_freqs.append(f[dom_freq_idx])
+    
+    # Calculate the number of steps in each window
+    # Number of steps = frequency (steps/sec) * window duration (sec)
+    # We use overlap to avoid double counting
+    effective_window_duration = window_size * (1 - overlap)
+    steps_per_window = np.array(step_freqs) * effective_window_duration
+    
+    # Total number of steps is the sum of steps in each window
+    total_steps = int(np.sum(steps_per_window))
+    
+    # We don't have exact step times from this method, so we'll distribute them evenly
+    # This is a limitation of the spectral approach
+    time_duration = accel_mag.size / fs
+    if total_steps > 0:
+        # Distribute steps evenly
+        step_interval = time_duration / total_steps
+        detected_steps = np.arange(step_interval/2, time_duration, step_interval)
+    else:
+        detected_steps = np.array([])
+    
+    return detected_steps, np.array(step_freqs)
 
 def adaptive_threshold_algorithm(accel_data, fs, window_size=0.1, sensitivity=0.6, min_time_between_steps=0.3):
     """
-    Step detection using adaptive thresholding - FIXED VERSION.
+    Step detection using adaptive thresholding.
     
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -518,17 +445,19 @@ def adaptive_threshold_algorithm(accel_data, fs, window_size=0.1, sensitivity=0.
     
     Returns:
     - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration magnitude signal
-    - adaptive_threshold: Array of adaptive threshold values
     """
     # Calculate the magnitude of acceleration (removing gravity)
     accel_mag = np.sqrt(accel_data[0]**2 + accel_data[1]**2 + (accel_data[2] - 9.81)**2)
     
-    # Apply safe moving average filter - FIXED
-    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
+    # Apply moving average filter
+    window_len = int(window_size * fs)
+    if window_len % 2 == 0:
+        window_len += 1  # Make sure window length is odd
+    
+    filtered_signal = signal.savgol_filter(accel_mag, window_len, 2)
     
     # Calculate the adaptive threshold using a longer window
-    long_window = max(int(2.0 * fs), 10)  # 2-second window, minimum 10 samples
+    long_window = int(2.0 * fs)  # 2-second window
     
     # Compute the running mean and standard deviation
     running_mean = np.zeros_like(filtered_signal)
@@ -537,31 +466,24 @@ def adaptive_threshold_algorithm(accel_data, fs, window_size=0.1, sensitivity=0.
     for i in range(len(filtered_signal)):
         start_idx = max(0, i - long_window)
         window_data = filtered_signal[start_idx:i+1]
-        if len(window_data) > 0:
-            running_mean[i] = np.mean(window_data)
-            running_std[i] = np.std(window_data)
-        else:
-            running_mean[i] = np.mean(filtered_signal)
-            running_std[i] = np.std(filtered_signal)
+        running_mean[i] = np.mean(window_data)
+        running_std[i] = np.std(window_data)
     
     # Adaptive threshold = mean + sensitivity * std
     adaptive_threshold = running_mean + sensitivity * running_std
     
     # Find peaks above the adaptive threshold
-    min_distance = max(1, int(min_time_between_steps * fs))
-    try:
-        peaks, _ = signal.find_peaks(filtered_signal, height=adaptive_threshold, distance=min_distance)
-        # Convert peak indices to times
-        detected_steps = peaks / fs
-    except Exception as e:
-        print(f"Adaptive threshold error: {e}")
-        detected_steps = np.array([])
+    min_distance = int(min_time_between_steps * fs)
+    peaks, _ = signal.find_peaks(filtered_signal, height=adaptive_threshold, distance=min_distance)
+    
+    # Convert peak indices to times
+    detected_steps = peaks / fs
     
     return detected_steps, filtered_signal, adaptive_threshold
 
 def shoe_algorithm(accel_data, gyro_data, fs, window_size=0.1, threshold=0.8, min_time_between_steps=0.3):
     """
-    Step detection using SHOE (Step Heading Offset Estimator) approach - IMPROVED VERSION.
+    Step detection using SHOE (Step Heading Offset Estimator) approach.
     This is a simplified version that uses both acceleration and gyroscope data.
     
     Parameters:
@@ -569,12 +491,11 @@ def shoe_algorithm(accel_data, gyro_data, fs, window_size=0.1, threshold=0.8, mi
     - gyro_data: Gyroscope data (3D array [x, y, z])
     - fs: Sampling frequency in Hz
     - window_size: Size of the moving average window in seconds
-    - threshold: Threshold parameter for step detection (lowered)
+    - threshold: Threshold parameter for step detection
     - min_time_between_steps: Minimum time between consecutive steps in seconds
     
     Returns:
     - detected_steps: Array of detected step times
-    - combined_signal: Combined and normalized signal
     """
     # Calculate the magnitude of acceleration (removing gravity)
     accel_mag = np.sqrt(accel_data[0]**2 + accel_data[1]**2 + (accel_data[2] - 9.81)**2)
@@ -582,45 +503,27 @@ def shoe_algorithm(accel_data, gyro_data, fs, window_size=0.1, threshold=0.8, mi
     # Calculate the magnitude of angular velocity
     gyro_mag = np.sqrt(gyro_data[0]**2 + gyro_data[1]**2 + gyro_data[2]**2)
     
-    # Apply safe moving average filter to both signals
-    filtered_accel = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
-    filtered_gyro = safe_savgol_filter(gyro_mag, window_size, fs, polyorder=2)
+    # Apply moving average filter to both signals
+    window_len = int(window_size * fs)
+    if window_len % 2 == 0:
+        window_len += 1  # Make sure window length is odd
+    
+    filtered_accel = signal.savgol_filter(accel_mag, window_len, 2)
+    filtered_gyro = signal.savgol_filter(gyro_mag, window_len, 2)
     
     # Normalize both signals to 0-1 range
-    if np.max(filtered_accel) > np.min(filtered_accel):
-        norm_accel = (filtered_accel - np.min(filtered_accel)) / (np.max(filtered_accel) - np.min(filtered_accel))
-    else:
-        norm_accel = np.ones_like(filtered_accel) * 0.5  # Flat signal gets 0.5
-        
-    if np.max(filtered_gyro) > np.min(filtered_gyro):
-        norm_gyro = (filtered_gyro - np.min(filtered_gyro)) / (np.max(filtered_gyro) - np.min(filtered_gyro))
-    else:
-        norm_gyro = np.ones_like(filtered_gyro) * 0.5  # Flat signal gets 0.5
+    norm_accel = (filtered_accel - np.min(filtered_accel)) / (np.max(filtered_accel) - np.min(filtered_accel))
+    norm_gyro = (filtered_gyro - np.min(filtered_gyro)) / (np.max(filtered_gyro) - np.min(filtered_gyro))
     
     # Combine the signals (simple weighted sum)
     combined_signal = 0.7 * norm_accel + 0.3 * norm_gyro
     
-    # Lower threshold for better detection - FIXED
-    adaptive_threshold = threshold * 0.5  # Use 0.4 instead of 0.8
-    
-    # print(f"SHOE: Combined signal range: {np.min(combined_signal):.3f} to {np.max(combined_signal):.3f}")
-    # print(f"SHOE: Using threshold: {adaptive_threshold:.3f}")
-    # print(f"SHOE: Values above threshold: {np.sum(combined_signal > adaptive_threshold)}")
-    
     # Find peaks in the combined signal
-    min_distance = max(1, int(min_time_between_steps * fs))
-    try:
-        peaks, properties = signal.find_peaks(combined_signal, 
-                                            height=adaptive_threshold, 
-                                            distance=min_distance)
-        
-        # print(f"SHOE: Found {len(peaks)} peaks")
-        
-        # Convert peak indices to times
-        detected_steps = peaks / fs
-    except Exception as e:
-        print(f"SHOE algorithm error: {e}")
-        detected_steps = np.array([])
+    min_distance = int(min_time_between_steps * fs)
+    peaks, _ = signal.find_peaks(combined_signal, height=threshold, distance=min_distance)
+    
+    # Convert peak indices to times
+    detected_steps = peaks / fs
     
     return detected_steps, combined_signal
 
@@ -640,45 +543,18 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
     Returns:
     - metrics: Dictionary of evaluation metrics
     """
-    # Handle edge cases
-    if len(ground_truth_steps) == 0:
-        return {
-            'true_positives': 0,
-            'false_positives': len(detected_steps),
-            'false_negatives': 0,
-            'precision': 0.0,
-            'recall': 0.0,
-            'f1_score': 0.0,
-            'step_count': len(detected_steps),
-            'ground_truth_count': 0,
-            'step_count_error': len(detected_steps),
-            'step_count_error_percent': 100.0 if len(detected_steps) > 0 else 0.0
-        }
-    
-    if len(detected_steps) == 0:
-        return {
-            'true_positives': 0,
-            'false_positives': 0,
-            'false_negatives': len(ground_truth_steps),
-            'precision': 0.0,
-            'recall': 0.0,
-            'f1_score': 0.0,
-            'step_count': 0,
-            'ground_truth_count': len(ground_truth_steps),
-            'step_count_error': len(ground_truth_steps),
-            'step_count_error_percent': 100.0
-        }
-    
     # Count true positives, false positives, and false negatives
     true_positives = 0
     matched_ground_truth = set()
     
     for detected in detected_steps:
         # Check if this detected step matches any ground truth step
+        matched = False
         for i, gt_step in enumerate(ground_truth_steps):
             if abs(detected - gt_step) <= tolerance and i not in matched_ground_truth:
                 true_positives += 1
                 matched_ground_truth.add(i)
+                matched = True
                 break
     
     false_positives = len(detected_steps) - true_positives
@@ -691,7 +567,6 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
     
     # Mean absolute error in step count
     step_count_error = abs(len(detected_steps) - len(ground_truth_steps))
-    step_count_error_percent = 100 * step_count_error / len(ground_truth_steps) if len(ground_truth_steps) > 0 else 0
     
     return {
         'true_positives': true_positives,
@@ -703,7 +578,7 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
         'step_count': len(detected_steps),
         'ground_truth_count': len(ground_truth_steps),
         'step_count_error': step_count_error,
-        'step_count_error_percent': step_count_error_percent
+        'step_count_error_percent': 100 * step_count_error / len(ground_truth_steps) if len(ground_truth_steps) > 0 else float('inf')
     }
 
 def run_all_algorithms(dataset, param_sets=None):
@@ -720,30 +595,11 @@ def run_all_algorithms(dataset, param_sets=None):
     # Default parameters if not provided
     if param_sets is None:
         param_sets = {
-            'peak_detection': {
-                'window_size': 1.0,
-                'threshold': 0.5,
-                'min_time_between_steps': 0.3
-            },  # Lower threshold
-            'zero_crossing': {
-                'window_size': 1.0,
-                'min_time_between_steps': 0.3
-            },
-            'spectral_analysis': {
-                'window_size': 5.0,
-                'overlap': 0.5,
-                'step_freq_range': (1.0, 2.5)
-            },
-            'adaptive_threshold': {
-                'window_size': 1.0,
-                'sensitivity': 0.3,
-                'min_time_between_steps': 0.3
-            },  # Lower sensitivity
-            'shoe': {
-                'window_size': 1.0,
-                'threshold': 0.4,
-                'min_time_between_steps': 0.3
-            }  # Much lower threshold
+            'peak_detection': {'window_size': 0.1, 'threshold': 1.0, 'min_time_between_steps': 0.3},
+            'zero_crossing': {'window_size': 0.1, 'min_time_between_steps': 0.3},
+            'spectral_analysis': {'window_size': 5.0, 'overlap': 0.5, 'step_freq_range': (1.0, 2.5)},
+            'adaptive_threshold': {'window_size': 0.1, 'sensitivity': 0.6, 'min_time_between_steps': 0.3},
+            'shoe': {'window_size': 0.1, 'threshold': 0.8, 'min_time_between_steps': 0.3}
         }
     
     results = {'sensor1': {}, 'sensor2': {}}
@@ -774,179 +630,107 @@ def run_all_algorithms(dataset, param_sets=None):
         dataset['sensor2']['gyro_z']
     ]
     
-    # Run peak detection algorithm with enhanced error handling
-    try:
-        pd_params = param_sets['peak_detection']
-        detected_steps1_pd, filtered_signal1_pd = peak_detection_algorithm(
-            accel_data1, fs, pd_params['window_size'], pd_params['threshold'], pd_params['min_time_between_steps']
-        )
-        detected_steps2_pd, filtered_signal2_pd = peak_detection_algorithm(
-            accel_data2, fs, pd_params['window_size'], pd_params['threshold'], pd_params['min_time_between_steps']
-        )
-        
-        results['sensor1']['peak_detection'] = {
-            'detected_steps': detected_steps1_pd,
-            'filtered_signal': filtered_signal1_pd,
-            'metrics': evaluate_algorithm(detected_steps1_pd, ground_truth_steps)
-        }
-        results['sensor2']['peak_detection'] = {
-            'detected_steps': detected_steps2_pd,
-            'filtered_signal': filtered_signal2_pd,
-            'metrics': evaluate_algorithm(detected_steps2_pd, ground_truth_steps)
-        }
-    except Exception as e:
-        print(f"Error in peak_detection_algorithm: {e}")
-        # Create dummy results
-        results['sensor1']['peak_detection'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
-        results['sensor2']['peak_detection'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
+    # Run peak detection algorithm
+    pd_params = param_sets['peak_detection']
+    detected_steps1_pd, filtered_signal1_pd = peak_detection_algorithm(
+        accel_data1, fs, pd_params['window_size'], pd_params['threshold'], pd_params['min_time_between_steps']
+    )
+    detected_steps2_pd, filtered_signal2_pd = peak_detection_algorithm(
+        accel_data2, fs, pd_params['window_size'], pd_params['threshold'], pd_params['min_time_between_steps']
+    )
     
-    # Run zero crossing algorithm with enhanced error handling
-    try:
-        zc_params = param_sets['zero_crossing']
-        detected_steps1_zc, filtered_signal1_zc = zero_crossing_algorithm(
-            accel_data1, fs, zc_params['window_size'], zc_params['min_time_between_steps']
-        )
-        detected_steps2_zc, filtered_signal2_zc = zero_crossing_algorithm(
-            accel_data2, fs, zc_params['window_size'], zc_params['min_time_between_steps']
-        )
-        
-        results['sensor1']['zero_crossing'] = {
-            'detected_steps': detected_steps1_zc,
-            'filtered_signal': filtered_signal1_zc,
-            'metrics': evaluate_algorithm(detected_steps1_zc, ground_truth_steps)
-        }
-        results['sensor2']['zero_crossing'] = {
-            'detected_steps': detected_steps2_zc,
-            'filtered_signal': filtered_signal2_zc,
-            'metrics': evaluate_algorithm(detected_steps2_zc, ground_truth_steps)
-        }
-    except Exception as e:
-        print(f"Error in zero_crossing_algorithm: {e}")
-        # Create dummy results
-        results['sensor1']['zero_crossing'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
-        results['sensor2']['zero_crossing'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
+    results['sensor1']['peak_detection'] = {
+        'detected_steps': detected_steps1_pd,
+        'filtered_signal': filtered_signal1_pd,
+        'metrics': evaluate_algorithm(detected_steps1_pd, ground_truth_steps)
+    }
+    results['sensor2']['peak_detection'] = {
+        'detected_steps': detected_steps2_pd,
+        'filtered_signal': filtered_signal2_pd,
+        'metrics': evaluate_algorithm(detected_steps2_pd, ground_truth_steps)
+    }
     
-    # Run spectral analysis algorithm with enhanced error handling
-    try:
-        sa_params = param_sets['spectral_analysis']
-        detected_steps1_sa, step_freqs1_sa = spectral_analysis_algorithm(
-            accel_data1, fs, sa_params['window_size'], sa_params['overlap'], sa_params['step_freq_range']
-        )
-        detected_steps2_sa, step_freqs2_sa = spectral_analysis_algorithm(
-            accel_data2, fs, sa_params['window_size'], sa_params['overlap'], sa_params['step_freq_range']
-        )
-        
-        results['sensor1']['spectral_analysis'] = {
-            'detected_steps': detected_steps1_sa,
-            'step_frequencies': step_freqs1_sa,
-            'metrics': evaluate_algorithm(detected_steps1_sa, ground_truth_steps)
-        }
-        results['sensor2']['spectral_analysis'] = {
-            'detected_steps': detected_steps2_sa,
-            'step_frequencies': step_freqs2_sa,
-            'metrics': evaluate_algorithm(detected_steps2_sa, ground_truth_steps)
-        }
-    except Exception as e:
-        print(f"Error in spectral_analysis_algorithm: {e}")
-        # Create dummy results
-        results['sensor1']['spectral_analysis'] = {
-            'detected_steps': np.array([]),
-            'step_frequencies': np.array([]),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
-        results['sensor2']['spectral_analysis'] = {
-            'detected_steps': np.array([]),
-            'step_frequencies': np.array([]),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
+    # Run zero crossing algorithm
+    zc_params = param_sets['zero_crossing']
+    detected_steps1_zc, filtered_signal1_zc = zero_crossing_algorithm(
+        accel_data1, fs, zc_params['window_size'], zc_params['min_time_between_steps']
+    )
+    detected_steps2_zc, filtered_signal2_zc = zero_crossing_algorithm(
+        accel_data2, fs, zc_params['window_size'], zc_params['min_time_between_steps']
+    )
     
-    # Run adaptive threshold algorithm with enhanced error handling
-    try:
-        at_params = param_sets['adaptive_threshold']
-        detected_steps1_at, filtered_signal1_at, threshold1_at = adaptive_threshold_algorithm(
-            accel_data1, fs, at_params['window_size'], at_params['sensitivity'], at_params['min_time_between_steps']
-        )
-        detected_steps2_at, filtered_signal2_at, threshold2_at = adaptive_threshold_algorithm(
-            accel_data2, fs, at_params['window_size'], at_params['sensitivity'], at_params['min_time_between_steps']
-        )
-        
-        results['sensor1']['adaptive_threshold'] = {
-            'detected_steps': detected_steps1_at,
-            'filtered_signal': filtered_signal1_at,
-            'threshold': threshold1_at,
-            'metrics': evaluate_algorithm(detected_steps1_at, ground_truth_steps)
-        }
-        results['sensor2']['adaptive_threshold'] = {
-            'detected_steps': detected_steps2_at,
-            'filtered_signal': filtered_signal2_at,
-            'threshold': threshold2_at,
-            'metrics': evaluate_algorithm(detected_steps2_at, ground_truth_steps)
-        }
-    except Exception as e:
-        print(f"Error in adaptive_threshold_algorithm: {e}")
-        # Create dummy results
-        results['sensor1']['adaptive_threshold'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'threshold': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
-        results['sensor2']['adaptive_threshold'] = {
-            'detected_steps': np.array([]),
-            'filtered_signal': np.zeros(len(dataset['time'])),
-            'threshold': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
+    results['sensor1']['zero_crossing'] = {
+        'detected_steps': detected_steps1_zc,
+        'filtered_signal': filtered_signal1_zc,
+        'metrics': evaluate_algorithm(detected_steps1_zc, ground_truth_steps)
+    }
+    results['sensor2']['zero_crossing'] = {
+        'detected_steps': detected_steps2_zc,
+        'filtered_signal': filtered_signal2_zc,
+        'metrics': evaluate_algorithm(detected_steps2_zc, ground_truth_steps)
+    }
     
-    # Run SHOE algorithm with enhanced error handling
-    try:
-        shoe_params = param_sets['shoe']
-        detected_steps1_shoe, combined_signal1_shoe = shoe_algorithm(
-            accel_data1, gyro_data1, fs, shoe_params['window_size'], shoe_params['threshold'], shoe_params['min_time_between_steps']
-        )
-        detected_steps2_shoe, combined_signal2_shoe = shoe_algorithm(
-            accel_data2, gyro_data2, fs, shoe_params['window_size'], shoe_params['threshold'], shoe_params['min_time_between_steps']
-        )
-        
-        results['sensor1']['shoe'] = {
-            'detected_steps': detected_steps1_shoe,
-            'combined_signal': combined_signal1_shoe,
-            'metrics': evaluate_algorithm(detected_steps1_shoe, ground_truth_steps)
-        }
-        results['sensor2']['shoe'] = {
-            'detected_steps': detected_steps2_shoe,
-            'combined_signal': combined_signal2_shoe,
-            'metrics': evaluate_algorithm(detected_steps2_shoe, ground_truth_steps)
-        }
-    except Exception as e:
-        print(f"Error in shoe_algorithm: {e}")
-        # Create dummy results
-        results['sensor1']['shoe'] = {
-            'detected_steps': np.array([]),
-            'combined_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
-        results['sensor2']['shoe'] = {
-            'detected_steps': np.array([]),
-            'combined_signal': np.zeros(len(dataset['time'])),
-            'metrics': evaluate_algorithm(np.array([]), ground_truth_steps)
-        }
+    # Run spectral analysis algorithm
+    sa_params = param_sets['spectral_analysis']
+    detected_steps1_sa, step_freqs1_sa = spectral_analysis_algorithm(
+        accel_data1, fs, sa_params['window_size'], sa_params['overlap'], sa_params['step_freq_range']
+    )
+    detected_steps2_sa, step_freqs2_sa = spectral_analysis_algorithm(
+        accel_data2, fs, sa_params['window_size'], sa_params['overlap'], sa_params['step_freq_range']
+    )
+    
+    results['sensor1']['spectral_analysis'] = {
+        'detected_steps': detected_steps1_sa,
+        'step_frequencies': step_freqs1_sa,
+        'metrics': evaluate_algorithm(detected_steps1_sa, ground_truth_steps)
+    }
+    results['sensor2']['spectral_analysis'] = {
+        'detected_steps': detected_steps2_sa,
+        'step_frequencies': step_freqs2_sa,
+        'metrics': evaluate_algorithm(detected_steps2_sa, ground_truth_steps)
+    }
+    
+    # Run adaptive threshold algorithm
+    at_params = param_sets['adaptive_threshold']
+    detected_steps1_at, filtered_signal1_at, threshold1_at = adaptive_threshold_algorithm(
+        accel_data1, fs, at_params['window_size'], at_params['sensitivity'], at_params['min_time_between_steps']
+    )
+    detected_steps2_at, filtered_signal2_at, threshold2_at = adaptive_threshold_algorithm(
+        accel_data2, fs, at_params['window_size'], at_params['sensitivity'], at_params['min_time_between_steps']
+    )
+    
+    results['sensor1']['adaptive_threshold'] = {
+        'detected_steps': detected_steps1_at,
+        'filtered_signal': filtered_signal1_at,
+        'threshold': threshold1_at,
+        'metrics': evaluate_algorithm(detected_steps1_at, ground_truth_steps)
+    }
+    results['sensor2']['adaptive_threshold'] = {
+        'detected_steps': detected_steps2_at,
+        'filtered_signal': filtered_signal2_at,
+        'threshold': threshold2_at,
+        'metrics': evaluate_algorithm(detected_steps2_at, ground_truth_steps)
+    }
+    
+    # Run SHOE algorithm
+    shoe_params = param_sets['shoe']
+    detected_steps1_shoe, combined_signal1_shoe = shoe_algorithm(
+        accel_data1, gyro_data1, fs, shoe_params['window_size'], shoe_params['threshold'], shoe_params['min_time_between_steps']
+    )
+    detected_steps2_shoe, combined_signal2_shoe = shoe_algorithm(
+        accel_data2, gyro_data2, fs, shoe_params['window_size'], shoe_params['threshold'], shoe_params['min_time_between_steps']
+    )
+    
+    results['sensor1']['shoe'] = {
+        'detected_steps': detected_steps1_shoe,
+        'combined_signal': combined_signal1_shoe,
+        'metrics': evaluate_algorithm(detected_steps1_shoe, ground_truth_steps)
+    }
+    results['sensor2']['shoe'] = {
+        'detected_steps': detected_steps2_shoe,
+        'combined_signal': combined_signal2_shoe,
+        'metrics': evaluate_algorithm(detected_steps2_shoe, ground_truth_steps)
+    }
     
     return results
 
@@ -1015,10 +799,9 @@ def plot_algorithm_results(dataset, results, algorithm_name, sensor_name, time_r
             
     elif algorithm_name == 'spectral_analysis':
         # For spectral analysis, we can plot the step frequencies over time
-        if len(alg_result['step_frequencies']) > 0:
-            t = np.linspace(0, time[-1], len(alg_result['step_frequencies']))
-            plt.plot(t, alg_result['step_frequencies'], 'k-', label='Step Frequency')
-            plt.ylabel('Frequency (Hz)')
+        t = np.linspace(0, time[-1], len(alg_result['step_frequencies']))
+        plt.plot(t, alg_result['step_frequencies'], 'k-', label='Step Frequency')
+        plt.ylabel('Frequency (Hz)')
         
     elif algorithm_name == 'adaptive_threshold':
         plt.plot(time, alg_result['filtered_signal'], 'k-', label='Filtered Signal')

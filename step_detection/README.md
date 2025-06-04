@@ -10,26 +10,26 @@ This repository contains all the necessary code and tools for step detection usi
 │   ├── normal_walking/          # Example dataset
 │   ├── fast_walking/            # Example dataset
 │   └── ...                      # Other example datasets
-├── plots/ # Generated plots and visualizations
-|   ├── by_scenario/              # Organization by walking scenario
+├── plots/                       # Generated plots and visualizations
+|   ├── by_scenario/             # Organization by walking scenario
 |   │   ├── normal_walking/
 |   │   ├── fast_walking/
 |   │   ├── slow_walking/
 |   │   ├── stairs_up/
 |   │   └── stairs_down/
-|   ├── by_algorithm/             # Organization by algorithm
+|   ├── by_algorithm/            # Organization by algorithm
 |   │   ├── peak_detection/
 |   │   ├── zero_crossing/
 |   │   ├── spectral_analysis/
 |   │   ├── adaptive_threshold/
 |   │   └── shoe/
-|   ├── by_sensor/                # Organization by sensor
+|   ├── by_sensor/               # Organization by sensor
 |   │   ├── sensor1_waveshare/
 |   │   └── sensor2_adafruit/
-|   ├── comparisons/              # Comparison plots
+|   ├── comparisons/             # Comparison plots
 |   │   ├── algorithm_comparisons/
 |   │   └── sensor_comparisons/
-|   └── summary/                  # Summary plots (metrics, rankings)
+|   └── summary/                 # Summary plots (metrics, rankings)
 ├── ../src/                      # Web interface files
 │   └── index_advanced.html      # Main web interface
 ├── step_detection_algorithms.py # Core algorithms implementation
