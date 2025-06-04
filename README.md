@@ -15,6 +15,26 @@
 
 </div>
 
+<br/>
+
+> [!NOTE]
+>
+> Repo size heavily affected by useless stuff and multiple plots (don't care)
+>
+> ```
+> (^_^) [maks: Master-Thesis] (master) > du -sh --exclude=venv --exclude=.git --exclude=.mypy_cache . && find . -type f -not -path "*/.git/*" -not -path "*/venv/*" -not -path "*/.mypy_cache/*" -exec du -h {} + | sort -rh | head -10
+> 86M     .
+> 16M     ./.BACKUP/adafiut_libs/adafruit-circuitpython-bundle-py-20240709.zip
+> 5,7M    ./.BACKUP/project_circuit_simple_diagram.pdf
+> 4,0M    ./.BACKUP/OLD_project_circuit_simple_diagram.pdf
+> 2,6M    ./.BACKUP/Firmware/Pico 2W/adafruit-circuitpython-raspberry_pi_pico2_w-pl-9.2.4.uf2
+> 2,4M    ./.BACKUP/Firmware/Pico 2W/pico2_w-v0.0.12-pimoroni-micropython.uf2
+> 2,1M    ./.BACKUP/PL_masters_degree_seminar/prezentacja_magisterska_3_MK.pdf
+> 1,7M    ./.BACKUP/pinout/PicoW-A4-Pinout.pdf
+> 808K    ./.BACKUP/pinout/pico-2-w-pinout.pdf
+> 740K    ./.BACKUP/pinout/pico-pinout.svg
+> 668K    ./.BACKUP/PL_masters_degree_seminar/prezentacja_magisterska_2_MK.pdf
+> ```
 
 <br/>
 <br/>
