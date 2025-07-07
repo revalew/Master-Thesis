@@ -5,7 +5,6 @@
 
 <div align='center'>
 
-
 [![GitHub License](https://img.shields.io/github/license/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis/blob/master/LICENSE)
 
 [![GitHub](https://img.shields.io/github/commit-activity/t/revalew/Master-Thesis?style=social)](https://github.com/revalew/Master-Thesis)
@@ -42,7 +41,7 @@
 > [!CAUTION]
 >
 > After the migration to the `Pico 2 W`, the project might not be compatible with the original `Pico W` anymore. The `Pico 2 W` has more RAM and storage to handle additional devices and resources.
-> 
+>
 > To run the project on the original `Pico W`, you might need to modify the code to work with the `Pico W` instead of the `Pico 2 W`. This could include removing some devices (like OLED display), libraries or lines of code (docs and whitespaces) to save both RAM and storage.
 >
 > Try uploading the compiled libraries to the `Pico W` and see if it works. If it doesn't, you might need to modify the code to work with the `Pico W` and recompile the libraries.
@@ -245,6 +244,8 @@ I managed to create an asynchronous web server that handles clients and reads se
 
 <div align='center'>
   <img src="./.BACKUP/img_README/1/first_success.png" alt="First success PC" width="400"/>
+</div>
+<div align='center'>
   <img src="./.BACKUP/img_README/1/first_success_mobile.png" alt="First success mobile" height="344" />
 </div>
 
@@ -253,11 +254,11 @@ I managed to create an asynchronous web server that handles clients and reads se
 
 ### Migration to Pico 2 W
 
-I moved the project to the Pico 2 W, and it works just fine now using the [`Blinka`](./lib/adafruit_blinka/), [`Platform Detect`](./lib/adafruit_platformdetect/) and other [`CircuitPython`](./lib/) libraries. 
+I moved the project to the Pico 2 W, and it works just fine now using the [`Blinka`](./lib/adafruit_blinka/), [`Platform Detect`](./lib/adafruit_platformdetect/) and other [`CircuitPython`](./lib/) libraries.
 
 Doubled RAM and Flash memory of the Pico 2 W makes it possible to run the project without the fear of low RAM (especially when creating new objects / adding more devices and sending WWW resources) and storage issues (as it was the case with the Pico W, but the `gc.collect()` function is still called everywhere just in case :skull: and all WWW resources don't have any white space).
 
-Added new class [`DebouncedInput.py`](./classes/ResponseBuilder.py) to handle the debouncing of the buttons 
+Added new class [`DebouncedInput.py`](./classes/ResponseBuilder.py) to handle the debouncing of the buttons
 This feature is built-in to the standard Python library for the Raspberry Pi like RPi 3/4/5 etc., but not to the MicroPython - `import RPi.GPIO as GPIO; GPIO.add_event_detect(sensor, GPIO.BOTH, bouncetime=300) # signals when the pin goes HIGH/LOW`, full example in [another project](https://github.com/revalew/Plant-Inspector/blob/master/plantinspector.com/public_html/python/sensorDataLogger.py#L138).
 
 Added OLED display (`ssd1306` library) instead of the TFT touch shield to display the measurements and battery level. Separate I2C interface is used to connect the display to the `Pico 2 W`, because it requires `frequency=400000` instead of the default `frequency=100000`. The display starts turned off, but it can be turned on by pressing the button attached to `GP14`. Another button (`GP15`) can be used to cycle through the measurements of the IMU sensors and battery level. The display is updated every 0.5 seconds for the IMUs and 5 seconds for the battery.
@@ -267,17 +268,27 @@ Updated the web page to display the measurements and battery level.
 <br/>
 
 <div align='center'>
+
   <img src="./.BACKUP/img_README/2/IMU_1.jpg" alt="IMU 1 measurements displayed on the OLED" height="344" />
   <img src="./.BACKUP/img_README/2/IMU_2.jpg" alt="IMU 2 measurements displayed on the OLED" height="344" />
 
-  <br/>
+</div>
+
+<!-- <br/> -->
+
+<div align='center'>
 
   <img src="./.BACKUP/img_README/2/battery.jpg" alt="Battery level displayed on the OLED" height="344" />
   <img src="./.BACKUP/img_README/2/pico_2_w_on_battery.jpg" alt="Pico 2 W running on the battery" height="344" />
 
-  <br/>
+</div>
+
+<!-- <br/> -->
+
+<div align='center'>
 
   <img src="./.BACKUP/img_README/2/updated_webpage.png" alt="Updated webpage" width="400"/>
+
 </div>
 
 <br/>
@@ -311,7 +322,7 @@ Now I have to create an enclosure and print it.
 
 ### Gathering data and analyzing it
 
-Successfully implemented and tested the complete step detection pipeline. 
+Successfully implemented and tested the complete step detection pipeline.
 
 For more information about the app and algorithms check out the [`step_detection/`](./step_detection/) directory.
 
@@ -320,6 +331,7 @@ Major achievements of this stage:
 - **Step Detection GUI Application**: Created a comprehensive Python application (`step_data_collector.py`) for real-time data collection and analysis with live plotting capabilities,
 
 - **Multiple Detection Algorithms**: Implemented and compared 5 different step detection algorithms:
+
   - Peak Detection with fixed threshold,
   - Zero Crossing method,
   - Spectral Analysis (STFT-based),
@@ -337,13 +349,19 @@ Major achievements of this stage:
 <br/>
 
 <div align='center'>
+  
   <img src="./step_detection/analysis/detection_0.png" alt="Step detection analysis interface" width="375" height="260" loading="lazy"/>
   <img src="./step_detection/analysis/detection_2.png" alt="Algorithm performance comparison" width="375" height="260" loading="lazy"/>
   
-  <br/>
+</div>
+
+<br/>
+
+<div align='center'>
   
   <img src="./step_detection/analysis/detection_4.png" alt="Real-time data collection" width="375" height="260" loading="lazy"/>
   <img src="./step_detection/analysis/detection_7.png" alt="Summary metrics and rankings" width="375" height="260" loading="lazy"/>
+
 </div>
 
 <br/>
@@ -351,5 +369,4 @@ Major achievements of this stage:
 
 ### ...
 
-<br/>
-<br/>
+<br/><br/>
