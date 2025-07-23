@@ -82,6 +82,8 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Gathering data and analyzing it](#gathering-data-and-analyzing-it)
 
+  - [Minor improvements and new metrics](#minor-improvements-and-new-metrics)
+
 <br/>
 <br/>
 
@@ -366,6 +368,12 @@ Major achievements of this stage:
 
 <br/>
 <br/>
+
+### Minor improvements and new metrics
+
+After the consultation with the professor, I changed the structure of the step estimation app (separate module `utils`), and added new metrics to the analysis (execution time and MSE). I moved those new metrics to a separate column in the analysis tab, and also added the MSE to the summary tab. After adding the new metrics, I also changed how the summary table looks - now the results can be more easily read.
+
+<br/><br/>
 
 ### ...
 
