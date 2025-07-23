@@ -202,9 +202,9 @@ This project consists of many files and directories, the most important of which
 
 - [`~/step_detection/`](./step_detection/) - **Step Detection Analysis Module** containing the complete data analysis pipeline (read the [README](./step_detection/README.md) there):
 
-  - [`~/step_detection/step_data_collector.py`](./step_detection/step_data_collector.py) - Main GUI application for real-time data collection, step marking, and algorithm analysis,
+  - [`~/step_detection/step_data_collector.py`](./step_detection/step_data_collector.py) - Main app,
 
-  - [`~/step_detection/step_detection_algorithms.py`](./step_detection/step_detection_algorithms.py) - Implementation of 5 step detection algorithms with performance evaluation functions,
+  - [`~/step_detection/utils/`](./step_detection/utils/) - Module containing the GUI application and the implementation of 5 step detection algorithms with performance evaluation,
 
   - [`~/step_detection/analysis/`](./step_detection/analysis/) - Directory containing analysis results, plots, and example recordings,
 
