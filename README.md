@@ -16,7 +16,7 @@
 
 <br/>
 
-> [!NOTE]
+<!-- > [!NOTE]
 >
 > Repo size heavily affected by useless stuff and multiple plots (don't care)
 >
@@ -36,7 +36,7 @@
 > ```
 
 <br/>
-<br/>
+<br/> -->
 
 > [!CAUTION]
 >
