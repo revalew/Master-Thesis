@@ -371,7 +371,9 @@ Major achievements of this stage:
 
 ### Minor improvements and new metrics
 
-After the consultation with the professor, I changed the structure of the step estimation app (separate module `utils`), and added new metrics to the analysis (execution time and MSE). I moved those new metrics to a separate column in the analysis tab, and also added the MSE to the summary tab. After adding the new metrics, I also changed how the summary table looks - now the results can be more easily read.
+After the consultation with the professor, I changed the structure of the step estimation app (separate module `utils`), and added new metrics to the analysis ("Execution Time" and "MSE"). I moved those new metrics to a separate column in the analysis tab, and also added the MSE to the summary tab. After adding the new metrics, I also changed how the summary table looks - now the results can be more easily read.
+
+The MSE calculation was improved to use penalty-based approach for better algorithm comparison (missed steps or steps detected outside tolerance range receive maximum penalty equal to $ \text{(tolerance)}^{2} \Rightarrow {(0.2)}^{2} $ ).
 
 <br/><br/>
 

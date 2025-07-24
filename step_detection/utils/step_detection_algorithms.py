@@ -731,41 +731,59 @@ def shoe_algorithm(
 # --------------------------------
 # Evaluation Functions
 # --------------------------------
+# def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.2):
+#     """
+#     Calculate Mean Squared Error between detected and ground truth steps.
+#     """
+#     if len(ground_truth_steps) == 0:
+#         return float("inf") if len(detected_steps) > 0 else 0.0
+
+#     if len(detected_steps) == 0:
+#         return np.mean(np.square(ground_truth_steps))
+
+#     mse = 0.0
+#     matched_gt = set()
+
+#     for detected in detected_steps:
+#         min_error = float("inf")
+#         best_match = -1
+
+#         for i, gt_step in enumerate(ground_truth_steps):
+#             if i not in matched_gt:
+#                 error = abs(detected - gt_step)
+#                 if error <= tolerance and error < min_error:
+#                     min_error = error
+#                     best_match = i
+
+#         if best_match != -1:
+#             mse += min_error**2
+#             matched_gt.add(best_match)
+#         else:
+#             mse += tolerance**2
+
+#     for i, gt_step in enumerate(ground_truth_steps):
+#         if i not in matched_gt:
+#             mse += tolerance**2
+
+#     return mse / max(len(detected_steps), len(ground_truth_steps))
 def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.2):
     """
     Calculate Mean Squared Error between detected and ground truth steps.
+    For each ground truth step, finds the closest detected step and applies
+    penalty for steps outside tolerance range.
     """
     if len(ground_truth_steps) == 0:
-        return float("inf") if len(detected_steps) > 0 else 0.0
-
+        return 0.0
+    
     if len(detected_steps) == 0:
-        return np.mean(np.square(ground_truth_steps))
-
-    mse = 0.0
-    matched_gt = set()
-
-    for detected in detected_steps:
-        min_error = float("inf")
-        best_match = -1
-
-        for i, gt_step in enumerate(ground_truth_steps):
-            if i not in matched_gt:
-                error = abs(detected - gt_step)
-                if error <= tolerance and error < min_error:
-                    min_error = error
-                    best_match = i
-
-        if best_match != -1:
-            mse += min_error**2
-            matched_gt.add(best_match)
-        else:
-            mse += tolerance**2
-
-    for i, gt_step in enumerate(ground_truth_steps):
-        if i not in matched_gt:
-            mse += tolerance**2
-
-    return mse / max(len(detected_steps), len(ground_truth_steps))
+        return tolerance ** 2
+    
+    squared_errors = []
+    for gt_step in ground_truth_steps:
+        min_error = min(abs(gt_step - detected) for detected in detected_steps)
+        squared_errors.append(min_error ** 2 if min_error <= tolerance else tolerance ** 2)
+    
+    return np.mean(squared_errors)
 
 
 def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
