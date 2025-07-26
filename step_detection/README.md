@@ -28,7 +28,8 @@ step_detection/
 <ol>
    <li> Create a virtual environment and activate it
     
-   <br/>
+<br/>
+<br/>
 
 ```bash
 python3 -m venv venv
@@ -43,7 +44,8 @@ source venv/bin/activate # On Windows: venv\Scripts\activate
     
    <li> Install Python dependencies
     
-   <br/>
+<br/>
+<br/>
 
 ```bash
 pip install -r requirements.txt
