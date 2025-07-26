@@ -376,6 +376,8 @@ After the consultation with the professor, I changed the structure of the step e
 The MSE calculation was improved to use penalty-based approach for better algorithm comparison (missed steps or steps detected outside tolerance range receive maximum penalty equal to $` \text{(tolerance)}^{2} \Rightarrow {(0.2)}^{2} `$ )
 <!-- The MSE calculation was improved to use penalty-based approach for better algorithm comparison (missed steps or steps detected outside tolerance range receive maximum penalty equal to $ \text{(tolerance)}^{2} \Rightarrow {(0.2)}^{2} $ ). -->
 
+I also added mouse bindings to improve experiment workflow. During data collection, I use a wireless mouse instead of returning to the laptop or using the keyboard, which reduces timing errors and makes the process more convenient. `Right-click` marks ground truth steps and `Middle-click` starts/stops recording.
+
 <br/><br/>
 
 ### ...

@@ -153,9 +153,6 @@ class StepDataCollector:
         self.toggle_count_btn.pack(side=tk.LEFT, padx=5)
         self.toggle_count_btn.config(state=tk.DISABLED)
 
-        # Bind space key to mark_step
-        self.master.bind("<space>", lambda event: self.mark_step())
-
         # File operations
         file_frame = ttk.Frame(control_frame)
         file_frame.pack(fill=tk.X, padx=5, pady=5)
@@ -306,6 +303,19 @@ class StepDataCollector:
         readings_frame.columnconfigure(1, weight=1)
         readings_frame.columnconfigure(2, weight=1)
         readings_frame.columnconfigure(3, weight=1)
+        
+        # Bind space key to mark_step
+        self.master.bind("<space>", lambda event: self.mark_step())
+        
+        # Mouse bindings for convenient step marking and recording control
+        # (walking with just the wireless mouse and not the whole PC, so I need a quick access for some actions)
+        self.master.bind("<Button-3>", lambda event: self.mark_step())  # Right click -> mark step
+        self.master.bind("<Button-2>", lambda event: self.toggle_recording())  # Middle click -> toggle recording
+        
+        # Mouse wheel bindings - not used as of now, because I'm afraid of the sensitivity
+        # self.master.bind("<Button-4>", lambda event: self.mark_step())  # Scroll up -> mark step (Linux)
+        # self.master.bind("<Button-5>", lambda event: self.mark_step())  # Scroll down -> mark step (Linux)
+        # self.master.bind("<MouseWheel>", lambda event: self.mark_step())  # Scroll wheel (Windows)
 
     def create_plots(self):
         # Create matplotlib figure with better spacing
