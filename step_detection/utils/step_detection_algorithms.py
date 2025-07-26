@@ -9,10 +9,8 @@ from datetime import datetime
 import json
 
 # --------------------------------
-# Safe Filter Function - ADDED TO FIX SAVGOL ERRORS
+# Safe Filter Function
 # --------------------------------
-
-
 def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
     """
     Safely apply Savitzky-Golay filter with proper parameter validation.
@@ -60,8 +58,6 @@ def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
 # --------------------------------
 # Sample Data Generation Functions
 # --------------------------------
-
-
 def generate_walking_data(
     duration=60, fs=50, noise_level=0.1, step_freq=1.8, sensor_bias=0.0, seed=None
 ):
@@ -404,10 +400,8 @@ def save_datasets(datasets, output_dir="./data"):
 
 
 # --------------------------------
-# Step Detection Algorithms - FIXED VERSIONS
+# Step Detection Algorithms
 # --------------------------------
-
-
 def peak_detection_algorithm(
     accel_data, fs, window_size=0.1, threshold=1.0, min_time_between_steps=0.3
 ):
@@ -1171,8 +1165,6 @@ def run_all_algorithms(dataset, param_sets=None):
 # --------------------------------
 # Visualization Functions
 # --------------------------------
-
-
 def plot_algorithm_results(
     dataset, results, algorithm_name, sensor_name, time_range=None
 ):
@@ -1637,36 +1629,29 @@ def plot_algorithm_rankings(all_results):
 
 
 # --------------------------------
-# Main Function
+# Main
 # --------------------------------
-
-
 def main():
     """
     Main function to generate data, run algorithms, and create visualizations.
     """
-    # Generate sample datasets
     print("Generating datasets...")
     datasets = generate_datasets()
 
-    # Save datasets to files
     print("Saving datasets to 'data' directory...")
     save_datasets(datasets)
 
-    # Run algorithms on each dataset
     print("Running algorithms on datasets...")
     all_results = {}
     for scenario_name, dataset in datasets.items():
         print(f"Processing {scenario_name}...")
         all_results[scenario_name] = run_all_algorithms(dataset)
 
-    # Create organized directory structure for plots
     print("Creating visualizations...")
     base_output_dir = "./plots"
     if not os.path.exists(base_output_dir): # type: ignore
         os.makedirs(base_output_dir)
 
-    # Create subdirectories
     dirs = {
         "by_scenario": {},
         "by_algorithm": {},
@@ -1675,7 +1660,6 @@ def main():
         "summary": {},
     }
 
-    # Create directory structure
     for main_dir, subdirs in dirs.items():
         main_path = os.path.join(base_output_dir, main_dir) # type: ignore
         if not os.path.exists(main_path): # type: ignore
@@ -1686,13 +1670,11 @@ def main():
             if not os.path.exists(subdir_path): # type: ignore
                 os.makedirs(subdir_path)
 
-    # Create scenario directories
     for scenario_name in datasets.keys():
         scenario_dir = os.path.join(base_output_dir, "by_scenario", scenario_name) # type: ignore
         if not os.path.exists(scenario_dir): # type: ignore
             os.makedirs(scenario_dir)
 
-    # Create algorithm directories
     algorithms = [
         "peak_detection",
         "zero_crossing",
@@ -1705,12 +1687,10 @@ def main():
         if not os.path.exists(alg_dir): # type: ignore
             os.makedirs(alg_dir)
 
-    # Generate visualizations
     for scenario_name in datasets.keys():
         dataset = datasets[scenario_name]
         results = all_results[scenario_name]
 
-        # Plot individual algorithm results
         for algorithm in algorithms:
             for sensor_idx, sensor in enumerate(["sensor1", "sensor2"]):
                 sensor_name = (
@@ -1719,8 +1699,6 @@ def main():
 
                 fig = plot_algorithm_results(dataset, results, algorithm, sensor)
 
-                # Save in multiple relevant directories
-                # 1. By scenario
                 fig.savefig(
                     os.path.join( # type: ignore
                         base_output_dir,
@@ -1730,7 +1708,6 @@ def main():
                     )
                 )
 
-                # 2. By algorithm
                 fig.savefig(
                     os.path.join( # type: ignore
                         base_output_dir,
@@ -1740,7 +1717,6 @@ def main():
                     )
                 )
 
-                # 3. By sensor
                 fig.savefig(
                     os.path.join( # type: ignore
                         base_output_dir,
@@ -1752,13 +1728,11 @@ def main():
 
                 plt.close(fig)
 
-        # Plot algorithm comparisons
         for sensor_idx, sensor in enumerate(["sensor1", "sensor2"]):
             sensor_name = "sensor1_waveshare" if sensor_idx == 0 else "sensor2_adafruit"
 
             fig = compare_algorithms(dataset, results, sensor)
 
-            # Save in comparisons directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1768,7 +1742,6 @@ def main():
                 )
             )
 
-            # Also save in scenario directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1778,7 +1751,6 @@ def main():
                 )
             )
 
-            # Also save in sensor directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1790,11 +1762,9 @@ def main():
 
             plt.close(fig)
 
-        # Plot sensor comparisons
         for algorithm in ["peak_detection", "adaptive_threshold", "shoe"]:
             fig = compare_sensors(dataset, results, algorithm)
 
-            # Save in comparisons directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1804,7 +1774,6 @@ def main():
                 )
             )
 
-            # Also save in scenario directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1814,7 +1783,6 @@ def main():
                 )
             )
 
-            # Also save in algorithm directory
             fig.savefig(
                 os.path.join( # type: ignore
                     base_output_dir,
@@ -1826,17 +1794,13 @@ def main():
 
             plt.close(fig)
 
-    # Plot summary metrics
     fig = plot_summary_metrics(all_results)
     fig.savefig(os.path.join(base_output_dir, "summary", "summary_metrics.png")) # type: ignore
-    # Also save at root for backward compatibility
     fig.savefig(os.path.join(base_output_dir, "summary_metrics.png")) # type: ignore
     plt.close(fig)
 
-    # Plot algorithm rankings
     fig = plot_algorithm_rankings(all_results)
     fig.savefig(os.path.join(base_output_dir, "summary", "algorithm_rankings.png")) # type: ignore
-    # Also save at root for backward compatibility
     fig.savefig(os.path.join(base_output_dir, "algorithm_rankings.png")) # type: ignore
     plt.close(fig)
 

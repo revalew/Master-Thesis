@@ -374,6 +374,7 @@ Major achievements of this stage:
 After the consultation with the professor, I changed the structure of the step estimation app (separate module `utils`), and added new metrics to the analysis ("Execution Time" and "MSE"). I moved those new metrics to a separate column in the analysis tab, and also added the MSE to the summary tab. After adding the new metrics, I also changed how the summary table looks - now the results can be more easily read.
 
 The MSE calculation was improved to use penalty-based approach for better algorithm comparison (missed steps or steps detected outside tolerance range receive maximum penalty equal to $` \text{(tolerance)}^{2} \Rightarrow {(0.2)}^{2} `$ )
+
 <!-- The MSE calculation was improved to use penalty-based approach for better algorithm comparison (missed steps or steps detected outside tolerance range receive maximum penalty equal to $ \text{(tolerance)}^{2} \Rightarrow {(0.2)}^{2} $ ). -->
 
 I also added mouse bindings to improve experiment workflow. During data collection, I use a wireless mouse instead of returning to the laptop or using the keyboard, which reduces timing errors and makes the process more convenient. `Right-click` marks ground truth steps and `Middle-click` starts/stops recording.
@@ -381,5 +382,17 @@ I also added mouse bindings to improve experiment workflow. During data collecti
 <br/><br/>
 
 ### ...
+
+<br/><br/>
+
+---
+
+<br/><br/>
+
+**Part of:** [Master's Thesis - Step Detection with RPi Pico 2W](https://github.com/revalew/Master-Thesis)
+
+**Author:** Maksymilian Kisiel
+
+**Supervisor:** dr hab. inż. Agnieszka Szczęsna, prof. PŚ
 
 <br/><br/>

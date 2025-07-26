@@ -77,6 +77,7 @@ class StepDataCollector:
 
         self.update_status("Ready. Connect to your Pico device to begin.")
 
+
     def on_closing(self):
         """Handle application closing properly"""
         print("Closing application...")
@@ -94,6 +95,7 @@ class StepDataCollector:
         self.master.destroy()
 
         print("Application closed successfully")
+
 
     def create_widgets(self):
         # Create main frame with padding
@@ -305,7 +307,7 @@ class StepDataCollector:
         readings_frame.columnconfigure(3, weight=1)
         
         # Bind space key to mark_step
-        self.master.bind("<space>", lambda event: self.mark_step())
+        # self.master.bind("<space>", lambda event: self.mark_step())
         
         # Mouse bindings for convenient step marking and recording control
         # (walking with just the wireless mouse and not the whole PC, so I need a quick access for some actions)
@@ -317,8 +319,8 @@ class StepDataCollector:
         # self.master.bind("<Button-5>", lambda event: self.mark_step())  # Scroll down -> mark step (Linux)
         # self.master.bind("<MouseWheel>", lambda event: self.mark_step())  # Scroll wheel (Windows)
 
+
     def create_plots(self):
-        # Create matplotlib figure with better spacing
         self.fig, self.axes = plt.subplots(3, 1, figsize=(12, 10), dpi=100)
         self.fig.tight_layout(pad=4.0)
 
@@ -377,13 +379,13 @@ class StepDataCollector:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
+
     def check_connection(self):
         """Test connection to the Pico API"""
         self.api_url = self.url_entry.get()
         self.update_status(f"Connecting to {self.api_url}...")
 
         try:
-            # Try to get battery info as a simple test
             response = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=3)
             if response.status_code == 200:
                 data = response.json()
@@ -412,15 +414,14 @@ class StepDataCollector:
             )
             return False
 
+
     def toggle_recording(self):
         if not self.recording:
-            # Start recording
             self.recording = True
             self.record_btn.config(text="Stop Recording")
             self.mark_step_btn.config(state=tk.NORMAL)
             self.toggle_count_btn.config(state=tk.NORMAL)
 
-            # Reset data
             self.data = {
                 "time": [],
                 "sensor1": {
@@ -486,7 +487,6 @@ class StepDataCollector:
             self.update_status("Recording started.")
 
         else:
-            # Stop recording
             self.recording = False
             self.record_btn.config(text="Start Recording")
             self.mark_step_btn.config(state=tk.DISABLED)
@@ -499,6 +499,7 @@ class StepDataCollector:
                 self.analyze_btn.config(state=tk.NORMAL)
 
             self.update_status("Recording stopped.")
+
 
     def record_data(self, update_interval: float = 0.1):
         """Background thread to record data from the Pico - FIXED for data synchronization"""
@@ -540,7 +541,6 @@ class StepDataCollector:
                         data1 = response1.json()
                         if "status" in data1 and data1["status"] == "OK":
                             data_collected["sensor1"] = data1
-                            # Update display
                             self.accel1_var.set(
                                 f"X: {data1['acceleration']['X']:.2f}, Y: {data1['acceleration']['Y']:.2f}, Z: {data1['acceleration']['Z']:.2f}"
                             )
@@ -562,7 +562,6 @@ class StepDataCollector:
                         data2 = response2.json()
                         if "status" in data2 and data2["status"] == "OK":
                             data_collected["sensor2"] = data2
-                            # Update display
                             self.accel2_var.set(
                                 f"X: {data2['acceleration']['X']:.2f}, Y: {data2['acceleration']['Y']:.2f}, Z: {data2['acceleration']['Z']:.2f}"
                             )
@@ -584,7 +583,6 @@ class StepDataCollector:
                         data_batt = response_batt.json()
                         if "status" in data_batt and data_batt["status"] == "OK":
                             data_collected["battery"] = data_batt
-                            # Update display
                             self.voltage_var.set(
                                 f"{data_batt['battery_voltage']:.2f} V"
                             )
@@ -602,10 +600,8 @@ class StepDataCollector:
                     data_collected["sensor1"] is not None
                     or data_collected["sensor2"] is not None
                 ):
-                    # Add time - this ensures all arrays stay synchronized
                     self.data["time"].append(elapsed_time)
 
-                    # Add sensor 1 data (or zeros if missing to maintain array sync)
                     if data_collected["sensor1"] is not None:
                         data1 = data_collected["sensor1"]
                         self.data["sensor1"]["accel_x"].append(
@@ -624,7 +620,6 @@ class StepDataCollector:
                         self.data["sensor1"]["mag_y"].append(data1["magnetic"]["Y"])
                         self.data["sensor1"]["mag_z"].append(data1["magnetic"]["Z"])
                     else:
-                        # Add zeros to maintain synchronization
                         self.data["sensor1"]["accel_x"].append(0.0)
                         self.data["sensor1"]["accel_y"].append(0.0)
                         self.data["sensor1"]["accel_z"].append(0.0)
@@ -635,7 +630,6 @@ class StepDataCollector:
                         self.data["sensor1"]["mag_y"].append(0.0)
                         self.data["sensor1"]["mag_z"].append(0.0)
 
-                    # Add sensor 2 data (or zeros if missing to maintain array sync)
                     if data_collected["sensor2"] is not None:
                         data2 = data_collected["sensor2"]
                         self.data["sensor2"]["accel_x"].append(
@@ -654,7 +648,6 @@ class StepDataCollector:
                         self.data["sensor2"]["mag_y"].append(data2["magnetic"]["Y"])
                         self.data["sensor2"]["mag_z"].append(data2["magnetic"]["Z"])
                     else:
-                        # Add zeros to maintain synchronization
                         self.data["sensor2"]["accel_x"].append(0.0)
                         self.data["sensor2"]["accel_y"].append(0.0)
                         self.data["sensor2"]["accel_z"].append(0.0)
@@ -665,7 +658,6 @@ class StepDataCollector:
                         self.data["sensor2"]["mag_y"].append(0.0)
                         self.data["sensor2"]["mag_z"].append(0.0)
 
-                    # Add battery data (or zeros if missing to maintain array sync)
                     if data_collected["battery"] is not None:
                         data_batt = data_collected["battery"]
                         self.data["battery"]["voltage"].append(
@@ -678,7 +670,6 @@ class StepDataCollector:
                             data_batt["battery_percentage"]
                         )
                     else:
-                        # Add zeros to maintain synchronization
                         self.data["battery"]["voltage"].append(0.0)
                         self.data["battery"]["current"].append(0.0)
                         self.data["battery"]["percentage"].append(0.0)
@@ -692,6 +683,7 @@ class StepDataCollector:
 
             # Sleep to maintain update rate
             time.sleep(update_interval)
+
 
     def update_plots(self):
         """Update the data plots - FIXED for array length validation"""
@@ -709,10 +701,8 @@ class StepDataCollector:
                         )
                         return  # Skip update if data is inconsistent
 
-            # Get the latest data
             times = np.array(self.data["time"])
 
-            # Ensure all arrays have the same length as an extra safety check
             min_len = min(
                 len(times),
                 len(self.data["sensor1"]["accel_x"]),
@@ -725,7 +715,7 @@ class StepDataCollector:
             # Truncate all arrays to the minimum length to ensure consistency
             times = times[:min_len]
 
-            # Update accelerometer plot with length-safe arrays
+            # 
             self.line_ax1.set_data(
                 times, np.array(self.data["sensor1"]["accel_x"])[:min_len]
             )
@@ -746,7 +736,7 @@ class StepDataCollector:
                 times, np.array(self.data["sensor2"]["accel_z"])[:min_len]
             )
 
-            # Update gyroscope plot with length-safe arrays
+            # 
             self.line_gx1.set_data(
                 times, np.array(self.data["sensor1"]["gyro_x"])[:min_len]
             )
@@ -767,7 +757,6 @@ class StepDataCollector:
                 times, np.array(self.data["sensor2"]["gyro_z"])[:min_len]
             )
 
-            # Update step markers with safe array handling
             if len(self.ground_truth_steps) > 0:
                 # Only include steps that are within the current time range
                 step_times = [t for t in self.ground_truth_steps if t <= times[-1]]
@@ -781,23 +770,22 @@ class StepDataCollector:
             else:
                 self.step_markers.set_offsets(np.empty((0, 2)))
 
-            # Update axis limits properly with error handling
+            # Update axis limits
             if len(times) > 0:
                 self.ax1.relim()
                 self.ax1.autoscale_view()
                 self.ax2.relim()
                 self.ax2.autoscale_view()
 
-                # Fixed y-axis for step markers
                 self.ax3.set_xlim(times[0], times[-1])
                 self.ax3.set_ylim(0, 1)
 
-            # Draw the canvas
             self.canvas.draw_idle()
 
+        # Don't crash the application, just skip this update
         except Exception as e:
             print(f"Error updating plots: {e}")
-            # Don't crash the application, just skip this update
+
 
     def mark_step(self):
         """Mark a step in the data"""
@@ -808,14 +796,13 @@ class StepDataCollector:
             self.ground_truth_steps.append(elapsed_time)
             self.step_count_var.set(str(len(self.ground_truth_steps)))
 
-            # Update status
             self.update_status(f"Step marked at {elapsed_time:.2f} seconds.")
 
-            # Update plots safely
             try:
                 self.update_plots()
             except Exception as e:
                 print(f"Error updating plots after step mark: {e}")
+
 
     def toggle_auto_counting(self):
         """Toggle automatic step counting"""
@@ -828,6 +815,7 @@ class StepDataCollector:
             self.toggle_count_btn.config(text="Start Auto Counting")
             self.update_status("Automatic step counting disabled.")
 
+
     def save_data(self):
         """Save the recorded data to CSV files"""
         if len(self.data["time"]) == 0:
@@ -836,7 +824,6 @@ class StepDataCollector:
             )
             return
 
-        # Get directory to save in
         save_dir = filedialog.askdirectory(title="Select Directory to Save Data")
         if not save_dir:
             return
@@ -845,12 +832,10 @@ class StepDataCollector:
         if not recording_name:
             recording_name = f"recording_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        # Create directory for this recording
         recording_dir = os.path.join(save_dir, recording_name) # type: ignore
         if not os.path.exists(recording_dir): # type: ignore
             os.makedirs(recording_dir)
 
-        # Save sensor 1 data
         sensor1_df = pd.DataFrame(
             {
                 "time": self.data["time"],
@@ -869,7 +854,6 @@ class StepDataCollector:
             os.path.join(recording_dir, "sensor1_waveshare.csv"), index=False # type: ignore
         )
 
-        # Save sensor 2 data
         sensor2_df = pd.DataFrame(
             {
                 "time": self.data["time"],
@@ -888,7 +872,6 @@ class StepDataCollector:
             os.path.join(recording_dir, "sensor2_adafruit.csv"), index=False # type: ignore
         )
 
-        # Save battery data
         battery_df = pd.DataFrame(
             {
                 "time": self.data["time"],
@@ -899,13 +882,11 @@ class StepDataCollector:
         )
         battery_df.to_csv(os.path.join(recording_dir, "battery.csv"), index=False) # type: ignore
 
-        # Save ground truth steps
         ground_truth_df = pd.DataFrame({"step_times": self.ground_truth_steps})
         ground_truth_df.to_csv(
             os.path.join(recording_dir, "ground_truth.csv"), index=False # type: ignore
         )
 
-        # Save metadata
         metadata = {
             "recording_name": recording_name,
             "recording_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -926,15 +907,14 @@ class StepDataCollector:
         self.update_status(f"Data saved to {recording_dir}")
         messagebox.showinfo("Data Saved", f"Recording data saved to {recording_dir}")
 
+
     def load_data(self):
         """Load previously recorded data"""
-        # Get directory to load from
         load_dir = filedialog.askdirectory(title="Select Recording Directory to Load")
         if not load_dir:
             return
 
         try:
-            # Check for required files
             required_files = [
                 "sensor1_waveshare.csv",
                 "sensor2_adafruit.csv",
@@ -948,16 +928,12 @@ class StepDataCollector:
                     )
                     return
 
-            # Load sensor 1 data
             sensor1_df = pd.read_csv(os.path.join(load_dir, "sensor1_waveshare.csv")) # type: ignore
 
-            # Load sensor 2 data
             sensor2_df = pd.read_csv(os.path.join(load_dir, "sensor2_adafruit.csv")) # type: ignore
 
-            # Load ground truth steps
             ground_truth_df = pd.read_csv(os.path.join(load_dir, "ground_truth.csv")) # type: ignore
 
-            # Load battery data if available
             battery_df = None
             if os.path.exists(os.path.join(load_dir, "battery.csv")): # type: ignore
                 battery_df = pd.read_csv(os.path.join(load_dir, "battery.csv")) # type: ignore
@@ -1003,7 +979,6 @@ class StepDataCollector:
             }
             self.ground_truth_steps = ground_truth_df["step_times"].tolist()
 
-            # Update UI
             self.step_count_var.set(str(len(self.ground_truth_steps)))
 
             if len(self.data["time"]) > 0:
@@ -1011,13 +986,10 @@ class StepDataCollector:
                 mins, secs = divmod(int(duration), 60)
                 self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
 
-                # Enable analyze button
                 self.analyze_btn.config(state=tk.NORMAL)
 
-                # Update plots
                 self.update_plots()
 
-            # Set recording name from directory name
             recording_name = os.path.basename(load_dir) # type: ignore
             self.recording_name.delete(0, tk.END)
             self.recording_name.insert(0, recording_name)
@@ -1029,6 +1001,7 @@ class StepDataCollector:
             self.update_status(f"Error loading data: {str(e)}")
             messagebox.showerror("Load Error", f"Failed to load data:\n{str(e)}")
 
+
     def analyze_data(self):
         """Analyze the recorded data with step detection algorithms"""
         if len(self.data["time"]) == 0 or len(self.ground_truth_steps) == 0:
@@ -1036,6 +1009,31 @@ class StepDataCollector:
                 "No Data", "Not enough data to analyze. Record data with steps first."
             )
             return
+        
+        # Define parameter sets
+        param_sets = {
+            "peak_detection": {
+                "window_size": 1.0,
+                "threshold": 1.0,
+                "min_time_between_steps": 0.3,
+            },
+            "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
+            "spectral_analysis": {
+                "window_size": 5.0,
+                "overlap": 0.5,
+                "step_freq_range": (1.0, 2.5),
+            },
+            "adaptive_threshold": {
+                "window_size": 1.0,
+                "sensitivity": 0.6,
+                "min_time_between_steps": 0.3,
+            },
+            "shoe": {
+                "window_size": 1.0,
+                "threshold": 0.8,
+                "min_time_between_steps": 0.3,
+            },
+        }
 
         # Create dataset in the format expected by the algorithms
         dataset = {
@@ -1075,35 +1073,8 @@ class StepDataCollector:
             },
         }
 
-        # Run the algorithms
         self.update_status("Running step detection algorithms...")
 
-        # Define parameter sets with safer parameters to prevent Savgol filter errors
-        param_sets = {
-            "peak_detection": {
-                "window_size": 1.0,
-                "threshold": 1.0,
-                "min_time_between_steps": 0.3,
-            },
-            "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
-            "spectral_analysis": {
-                "window_size": 5.0,
-                "overlap": 0.5,
-                "step_freq_range": (1.0, 2.5),
-            },
-            "adaptive_threshold": {
-                "window_size": 1.0,
-                "sensitivity": 0.6,
-                "min_time_between_steps": 0.3,
-            },
-            "shoe": {
-                "window_size": 1.0,
-                "threshold": 0.8,
-                "min_time_between_steps": 0.3,
-            },
-        }
-
-        # Create analysis window
         analysis_window = tk.Toplevel(self.master)
         analysis_window.title("Step Detection Analysis")
         analysis_window.geometry("1000x800")
@@ -1112,7 +1083,6 @@ class StepDataCollector:
         notebook = ttk.Notebook(analysis_window)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Run algorithms and create tabs for results
         results = {"sensor1": {}, "sensor2": {}}
 
         # Process sensor 1
@@ -1142,7 +1112,6 @@ class StepDataCollector:
         fs = dataset["params"]["fs"]
         ground_truth_steps = dataset["ground_truth"]["step_times"]
 
-        # Run each algorithm with enhanced error handling
         for algorithm_name, params in param_sets.items():
             self.update_status(f"Running {algorithm_name}...")
 
@@ -1379,7 +1348,6 @@ class StepDataCollector:
 
         # Create tabs for each algorithm
         for algorithm_name in param_sets.keys():
-            # Create tab
             tab = ttk.Frame(notebook)
             notebook.add(tab, text=algorithm_name.replace("_", " ").title())
 
@@ -1623,7 +1591,6 @@ class StepDataCollector:
         )
         summary_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Create style for the treeview
         style = ttk.Style()
         style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
         style.configure("Treeview", font=("TkDefaultFont", 8))
@@ -1657,7 +1624,6 @@ class StepDataCollector:
             height=len(param_sets.keys()) + 1,
         )
 
-        # Set column headings
         for col in columns:
             tree.heading(col, text=col, anchor="center")
 
@@ -1670,8 +1636,6 @@ class StepDataCollector:
             else:
                 tree.column(col, width=35, anchor="center")
 
-        # Add data to the table
-        # for algorithm_name in param_sets.keys():
         for i, algorithm_name in enumerate(param_sets.keys()):
             metrics1 = results["sensor1"][algorithm_name]["metrics"]
             metrics2 = results["sensor2"][algorithm_name]["metrics"]
@@ -1759,14 +1723,14 @@ class StepDataCollector:
         canvas_summary.draw()
         canvas_summary.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Add proper cleanup for analysis window - ADDED
         def on_analysis_window_close():
-            plt.close("all")  # Close all matplotlib figures
+            plt.close("all")
             analysis_window.destroy()
 
         analysis_window.protocol("WM_DELETE_WINDOW", on_analysis_window_close)
 
         self.update_status("Analysis complete!")
+
 
     def update_status(self, message):
         """Update the status bar with a message"""
