@@ -42,6 +42,17 @@ class StepDataCollector:
 
         self.recording = False
         self.api_url = api_url
+
+        # HTTP Session for keep-alive connections
+        self.session = requests.Session()  # type: ignore
+        # Configure connection pooling and timeouts
+        adapter = requests.adapters.HTTPAdapter(  # type: ignore
+            pool_connections=1,  # Single connection pool
+            pool_maxsize=1,  # Reuse same connection
+            max_retries=0,  # No retries for speed
+        )
+        self.session.mount("http://", adapter)
+
         self.data = {
             "time": [],
             "sensor1": {
@@ -77,7 +88,6 @@ class StepDataCollector:
 
         self.update_status("Ready. Connect to your Pico device to begin.")
 
-
     def on_closing(self):
         """Handle application closing properly"""
         print("Closing application...")
@@ -89,13 +99,16 @@ class StepDataCollector:
             if hasattr(self, "recording_thread") and self.recording_thread.is_alive():
                 self.recording_thread.join(timeout=2.0)
 
+        # Close HTTP session
+        if hasattr(self, "session"):
+            self.session.close()
+
         plt.close("all")
 
         self.master.quit()
         self.master.destroy()
 
         print("Application closed successfully")
-
 
     def create_widgets(self):
         # Create main frame with padding
@@ -305,20 +318,23 @@ class StepDataCollector:
         readings_frame.columnconfigure(1, weight=1)
         readings_frame.columnconfigure(2, weight=1)
         readings_frame.columnconfigure(3, weight=1)
-        
+
         # Bind space key to mark_step
         # self.master.bind("<space>", lambda event: self.mark_step())
-        
+
         # Mouse bindings for convenient step marking and recording control
         # (walking with just the wireless mouse and not the whole PC, so I need a quick access for some actions)
-        self.master.bind("<Button-3>", lambda event: self.mark_step())  # Right click -> mark step
-        self.master.bind("<Button-2>", lambda event: self.toggle_recording())  # Middle click -> toggle recording
-        
+        self.master.bind(
+            "<Button-3>", lambda event: self.mark_step()
+        )  # Right click -> mark step
+        self.master.bind(
+            "<Button-2>", lambda event: self.toggle_recording()
+        )  # Middle click -> toggle recording
+
         # Mouse wheel bindings - not used as of now, because I'm afraid of the sensitivity
         # self.master.bind("<Button-4>", lambda event: self.mark_step())  # Scroll up -> mark step (Linux)
         # self.master.bind("<Button-5>", lambda event: self.mark_step())  # Scroll down -> mark step (Linux)
         # self.master.bind("<MouseWheel>", lambda event: self.mark_step())  # Scroll wheel (Windows)
-
 
     def create_plots(self):
         self.fig, self.axes = plt.subplots(3, 1, figsize=(12, 10), dpi=100)
@@ -379,14 +395,16 @@ class StepDataCollector:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-
     def check_connection(self):
         """Test connection to the Pico API"""
         self.api_url = self.url_entry.get()
         self.update_status(f"Connecting to {self.api_url}...")
 
         try:
-            response = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=3)
+            # response = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=3)
+            response = self.session.get(
+                f"{self.api_url}?action=getBatteryInfo", timeout=3
+            )
             if response.status_code == 200:
                 data = response.json()
                 if "status" in data and data["status"] == "OK":
@@ -407,13 +425,12 @@ class StepDataCollector:
             )
             return False
 
-        except requests.exceptions.RequestException as e: # type: ignore
+        except requests.exceptions.RequestException as e:  # type: ignore
             self.update_status(f"Connection failed: {str(e)}")
             messagebox.showerror(
                 "Connection Error", f"Failed to connect to the Pico device:\n{str(e)}"
             )
             return False
-
 
     def toggle_recording(self):
         if not self.recording:
@@ -479,8 +496,11 @@ class StepDataCollector:
 
             # Start recording thread
             self.recording_start_time = time.time()
+            # self.recording_thread = threading.Thread(
+            #     target=self.record_data, daemon=True
+            # )
             self.recording_thread = threading.Thread(
-                target=self.record_data, daemon=True
+                target=lambda: self.record_data(update_interval=0.005), daemon=True
             )
             self.recording_thread.start()
 
@@ -500,193 +520,159 @@ class StepDataCollector:
 
             self.update_status("Recording stopped.")
 
-
-    def record_data(self, update_interval: float = 0.1):
-        """Background thread to record data from the Pico - FIXED for data synchronization"""
-        last_update_time = time.time()
+    def record_data(self, update_interval: float = 0.005):
+        """Background thread to record data from the Pico"""
+        # last_update_time = time.time()
+        sample_count = 0
 
         while self.recording:
             current_time = time.time()
             elapsed_time = current_time - self.recording_start_time
 
-            # Update recording time display
-            mins, secs = divmod(int(elapsed_time), 60)
-            self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
+            # Update recording time display only every 10 samples
+            if sample_count % 10 == 0:
+                mins, secs = divmod(int(elapsed_time), 60)
+                self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
 
-            # Auto-mark steps if enabled
-            if (
-                self.ground_truth_counting and current_time - last_update_time >= 1.0
-            ):  # Check once per second
-                # This simulates a real-time step detection - in reality, you'd integrate with a
-                # hardware button or auto-detection system
-                if np.random.random() < 0.2:  # 20% chance of a step each second
-                    self.mark_step()
-                last_update_time = current_time
+            # # Auto-mark steps if enabled
+            # if (
+            #     self.ground_truth_counting and current_time - last_update_time >= 1.0
+            # ):  # Check once per second
+            #     # This simulates a real-time step detection - in reality, you'd integrate with a
+            #     # hardware button or auto-detection system
+            #     if np.random.random() < 0.2:  # 20% chance of a step each second
+            #         self.mark_step()
+            #     last_update_time = current_time
 
             try:
-                # Initialize data containers for this iteration to ensure synchronization
-                data_collected = {
-                    "time": elapsed_time,
-                    "sensor1": None,
-                    "sensor2": None,
-                    "battery": None,
-                }
+                # response = requests.get(f"{self.api_url}?action=getAllData", timeout=1)
+                response = self.session.get(
+                    f"{self.api_url}?action=getAllData", timeout=3
+                )
 
-                # Get IMU data from sensor 1 (Waveshare)
-                try:
-                    response1 = requests.get(
-                        f"{self.api_url}?action=WavReadIMU", timeout=1
-                    )
-                    if response1.status_code == 200:
-                        data1 = response1.json()
-                        if "status" in data1 and data1["status"] == "OK":
-                            data_collected["sensor1"] = data1
-                            self.accel1_var.set(
-                                f"X: {data1['acceleration']['X']:.2f}, Y: {data1['acceleration']['Y']:.2f}, Z: {data1['acceleration']['Z']:.2f}"
-                            )
-                            self.gyro1_var.set(
-                                f"X: {data1['gyro']['X']:.2f}, Y: {data1['gyro']['Y']:.2f}, Z: {data1['gyro']['Z']:.2f}"
-                            )
-                            self.mag1_var.set(
-                                f"X: {data1['magnetic']['X']:.2f}, Y: {data1['magnetic']['Y']:.2f}, Z: {data1['magnetic']['Z']:.2f}"
-                            )
-                except requests.exceptions.RequestException: # type: ignore
-                    pass  # Continue without sensor1 data
+                if response.status_code == 200:
+                    data = response.json()
+                    if "status" in data and data["status"] == "OK":
+                        # if sample_count % 5 == 0:
+                        #     # Update UI displays
+                        #     self.accel1_var.set(
+                        #         f"X: {data['sensor1']['acceleration']['X']:.2f}, Y: {data['sensor1']['acceleration']['Y']:.2f}, Z: {data['sensor1']['acceleration']['Z']:.2f}"
+                        #     )
+                        #     self.gyro1_var.set(
+                        #         f"X: {data['sensor1']['gyro']['X']:.2f}, Y: {data['sensor1']['gyro']['Y']:.2f}, Z: {data['sensor1']['gyro']['Z']:.2f}"
+                        #     )
+                        #     self.mag1_var.set(
+                        #         f"X: {data['sensor1']['magnetic']['X']:.2f}, Y: {data['sensor1']['magnetic']['Y']:.2f}, Z: {data['sensor1']['magnetic']['Z']:.2f}"
+                        #     )
 
-                # Get IMU data from sensor 2 (Adafruit)
-                try:
-                    response2 = requests.get(
-                        f"{self.api_url}?action=AdaReadIMU", timeout=1
-                    )
-                    if response2.status_code == 200:
-                        data2 = response2.json()
-                        if "status" in data2 and data2["status"] == "OK":
-                            data_collected["sensor2"] = data2
-                            self.accel2_var.set(
-                                f"X: {data2['acceleration']['X']:.2f}, Y: {data2['acceleration']['Y']:.2f}, Z: {data2['acceleration']['Z']:.2f}"
-                            )
-                            self.gyro2_var.set(
-                                f"X: {data2['gyro']['X']:.2f}, Y: {data2['gyro']['Y']:.2f}, Z: {data2['gyro']['Z']:.2f}"
-                            )
-                            self.mag2_var.set(
-                                f"X: {data2['magnetic']['X']:.2f}, Y: {data2['magnetic']['Y']:.2f}, Z: {data2['magnetic']['Z']:.2f}"
-                            )
-                except requests.exceptions.RequestException: # type: ignore
-                    pass  # Continue without sensor2 data
+                        #     self.accel2_var.set(
+                        #         f"X: {data['sensor2']['acceleration']['X']:.2f}, Y: {data['sensor2']['acceleration']['Y']:.2f}, Z: {data['sensor2']['acceleration']['Z']:.2f}"
+                        #     )
+                        #     self.gyro2_var.set(
+                        #         f"X: {data['sensor2']['gyro']['X']:.2f}, Y: {data['sensor2']['gyro']['Y']:.2f}, Z: {data['sensor2']['gyro']['Z']:.2f}"
+                        #     )
+                        #     self.mag2_var.set(
+                        #         f"X: {data['sensor2']['magnetic']['X']:.2f}, Y: {data['sensor2']['magnetic']['Y']:.2f}, Z: {data['sensor2']['magnetic']['Z']:.2f}"
+                        #     )
 
-                # Get battery info
-                try:
-                    response_batt = requests.get(
-                        f"{self.api_url}?action=getBatteryInfo", timeout=1
-                    )
-                    if response_batt.status_code == 200:
-                        data_batt = response_batt.json()
-                        if "status" in data_batt and data_batt["status"] == "OK":
-                            data_collected["battery"] = data_batt
-                            self.voltage_var.set(
-                                f"{data_batt['battery_voltage']:.2f} V"
-                            )
-                            self.current_var.set(
-                                f"{data_batt['battery_current']:.3f} A"
-                            )
-                            self.battery_var.set(
-                                f"{data_batt['battery_percentage']:.1f}%"
-                            )
-                except requests.exceptions.RequestException: # type: ignore
-                    pass  # Continue without battery data
+                        #     self.voltage_var.set(f"{data['battery']['voltage']:.2f} V")
+                        #     self.current_var.set(f"{data['battery']['current']:.3f} A")
+                        #     self.battery_var.set(f"{data['battery']['percentage']:.1f}%")
 
-                # Only add data if we have at least one sensor reading
-                if (
-                    data_collected["sensor1"] is not None
-                    or data_collected["sensor2"] is not None
-                ):
-                    self.data["time"].append(elapsed_time)
+                        # Store data
+                        self.data["time"].append(elapsed_time)
 
-                    if data_collected["sensor1"] is not None:
-                        data1 = data_collected["sensor1"]
+                        # Sensor 1
                         self.data["sensor1"]["accel_x"].append(
-                            data1["acceleration"]["X"]
+                            data["sensor1"]["acceleration"]["X"]
                         )
                         self.data["sensor1"]["accel_y"].append(
-                            data1["acceleration"]["Y"]
+                            data["sensor1"]["acceleration"]["Y"]
                         )
                         self.data["sensor1"]["accel_z"].append(
-                            data1["acceleration"]["Z"]
+                            data["sensor1"]["acceleration"]["Z"]
                         )
-                        self.data["sensor1"]["gyro_x"].append(data1["gyro"]["X"])
-                        self.data["sensor1"]["gyro_y"].append(data1["gyro"]["Y"])
-                        self.data["sensor1"]["gyro_z"].append(data1["gyro"]["Z"])
-                        self.data["sensor1"]["mag_x"].append(data1["magnetic"]["X"])
-                        self.data["sensor1"]["mag_y"].append(data1["magnetic"]["Y"])
-                        self.data["sensor1"]["mag_z"].append(data1["magnetic"]["Z"])
-                    else:
-                        self.data["sensor1"]["accel_x"].append(0.0)
-                        self.data["sensor1"]["accel_y"].append(0.0)
-                        self.data["sensor1"]["accel_z"].append(0.0)
-                        self.data["sensor1"]["gyro_x"].append(0.0)
-                        self.data["sensor1"]["gyro_y"].append(0.0)
-                        self.data["sensor1"]["gyro_z"].append(0.0)
-                        self.data["sensor1"]["mag_x"].append(0.0)
-                        self.data["sensor1"]["mag_y"].append(0.0)
-                        self.data["sensor1"]["mag_z"].append(0.0)
+                        self.data["sensor1"]["gyro_x"].append(
+                            data["sensor1"]["gyro"]["X"]
+                        )
+                        self.data["sensor1"]["gyro_y"].append(
+                            data["sensor1"]["gyro"]["Y"]
+                        )
+                        self.data["sensor1"]["gyro_z"].append(
+                            data["sensor1"]["gyro"]["Z"]
+                        )
+                        self.data["sensor1"]["mag_x"].append(
+                            data["sensor1"]["magnetic"]["X"]
+                        )
+                        self.data["sensor1"]["mag_y"].append(
+                            data["sensor1"]["magnetic"]["Y"]
+                        )
+                        self.data["sensor1"]["mag_z"].append(
+                            data["sensor1"]["magnetic"]["Z"]
+                        )
 
-                    if data_collected["sensor2"] is not None:
-                        data2 = data_collected["sensor2"]
+                        # Sensor 2
                         self.data["sensor2"]["accel_x"].append(
-                            data2["acceleration"]["X"]
+                            data["sensor2"]["acceleration"]["X"]
                         )
                         self.data["sensor2"]["accel_y"].append(
-                            data2["acceleration"]["Y"]
+                            data["sensor2"]["acceleration"]["Y"]
                         )
                         self.data["sensor2"]["accel_z"].append(
-                            data2["acceleration"]["Z"]
+                            data["sensor2"]["acceleration"]["Z"]
                         )
-                        self.data["sensor2"]["gyro_x"].append(data2["gyro"]["X"])
-                        self.data["sensor2"]["gyro_y"].append(data2["gyro"]["Y"])
-                        self.data["sensor2"]["gyro_z"].append(data2["gyro"]["Z"])
-                        self.data["sensor2"]["mag_x"].append(data2["magnetic"]["X"])
-                        self.data["sensor2"]["mag_y"].append(data2["magnetic"]["Y"])
-                        self.data["sensor2"]["mag_z"].append(data2["magnetic"]["Z"])
-                    else:
-                        self.data["sensor2"]["accel_x"].append(0.0)
-                        self.data["sensor2"]["accel_y"].append(0.0)
-                        self.data["sensor2"]["accel_z"].append(0.0)
-                        self.data["sensor2"]["gyro_x"].append(0.0)
-                        self.data["sensor2"]["gyro_y"].append(0.0)
-                        self.data["sensor2"]["gyro_z"].append(0.0)
-                        self.data["sensor2"]["mag_x"].append(0.0)
-                        self.data["sensor2"]["mag_y"].append(0.0)
-                        self.data["sensor2"]["mag_z"].append(0.0)
+                        self.data["sensor2"]["gyro_x"].append(
+                            data["sensor2"]["gyro"]["X"]
+                        )
+                        self.data["sensor2"]["gyro_y"].append(
+                            data["sensor2"]["gyro"]["Y"]
+                        )
+                        self.data["sensor2"]["gyro_z"].append(
+                            data["sensor2"]["gyro"]["Z"]
+                        )
+                        self.data["sensor2"]["mag_x"].append(
+                            data["sensor2"]["magnetic"]["X"]
+                        )
+                        self.data["sensor2"]["mag_y"].append(
+                            data["sensor2"]["magnetic"]["Y"]
+                        )
+                        self.data["sensor2"]["mag_z"].append(
+                            data["sensor2"]["magnetic"]["Z"]
+                        )
 
-                    if data_collected["battery"] is not None:
-                        data_batt = data_collected["battery"]
+                        # Battery
                         self.data["battery"]["voltage"].append(
-                            data_batt["battery_voltage"]
+                            data["battery"]["voltage"]
                         )
                         self.data["battery"]["current"].append(
-                            data_batt["battery_current"]
+                            data["battery"]["current"]
                         )
                         self.data["battery"]["percentage"].append(
-                            data_batt["battery_percentage"]
+                            data["battery"]["percentage"]
                         )
+
+                        sample_count += 1
+
                     else:
-                        self.data["battery"]["voltage"].append(0.0)
-                        self.data["battery"]["current"].append(0.0)
-                        self.data["battery"]["percentage"].append(0.0)
+                        self.update_status("Error: Invalid data format.")
+                        print("Error: Invalid data format.")
+                else:
+                    print(f"Error: HTTP {response.status_code}: {response.text}")
+                    self.update_status(
+                        f"Error: HTTP {response.status_code}: {response.text}"
+                    )
 
-                    # Update plots (not too frequently to avoid GUI lag)
-                    if len(self.data["time"]) % 5 == 0:
-                        self.update_plots()
-
-            except requests.exceptions.RequestException as e: # type: ignore
+            except requests.exceptions.RequestException as e:  # type: ignore
+                if sample_count > 0:  # Only print rate if we have samples
+                    print(
+                        f"Sample {sample_count}, Duration: {elapsed_time:.3f}s, Rate: {sample_count/elapsed_time:.1f}Hz"
+                    )
                 self.update_status(f"Error reading data: {str(e)}")
 
-            # Sleep to maintain update rate
             time.sleep(update_interval)
 
-
     def update_plots(self):
-        """Update the data plots - FIXED for array length validation"""
+        """Update the data plots"""
         if len(self.data["time"]) == 0:
             return
 
@@ -715,7 +701,7 @@ class StepDataCollector:
             # Truncate all arrays to the minimum length to ensure consistency
             times = times[:min_len]
 
-            # 
+            #
             self.line_ax1.set_data(
                 times, np.array(self.data["sensor1"]["accel_x"])[:min_len]
             )
@@ -736,7 +722,7 @@ class StepDataCollector:
                 times, np.array(self.data["sensor2"]["accel_z"])[:min_len]
             )
 
-            # 
+            #
             self.line_gx1.set_data(
                 times, np.array(self.data["sensor1"]["gyro_x"])[:min_len]
             )
@@ -777,7 +763,11 @@ class StepDataCollector:
                 self.ax2.relim()
                 self.ax2.autoscale_view()
 
-                self.ax3.set_xlim(times[0], times[-1])
+                # self.ax3.set_xlim(times[0], times[-1])
+                if len(times) > 1:
+                    self.ax3.set_xlim(times[0], times[-1])
+                else:
+                    self.ax3.set_xlim(0, 1)
                 self.ax3.set_ylim(0, 1)
 
             self.canvas.draw_idle()
@@ -785,7 +775,6 @@ class StepDataCollector:
         # Don't crash the application, just skip this update
         except Exception as e:
             print(f"Error updating plots: {e}")
-
 
     def mark_step(self):
         """Mark a step in the data"""
@@ -803,7 +792,6 @@ class StepDataCollector:
             except Exception as e:
                 print(f"Error updating plots after step mark: {e}")
 
-
     def toggle_auto_counting(self):
         """Toggle automatic step counting"""
         if not self.ground_truth_counting:
@@ -814,7 +802,6 @@ class StepDataCollector:
             self.ground_truth_counting = False
             self.toggle_count_btn.config(text="Start Auto Counting")
             self.update_status("Automatic step counting disabled.")
-
 
     def save_data(self):
         """Save the recorded data to CSV files"""
@@ -832,8 +819,8 @@ class StepDataCollector:
         if not recording_name:
             recording_name = f"recording_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        recording_dir = os.path.join(save_dir, recording_name) # type: ignore
-        if not os.path.exists(recording_dir): # type: ignore
+        recording_dir = os.path.join(save_dir, recording_name)  # type: ignore
+        if not os.path.exists(recording_dir):  # type: ignore
             os.makedirs(recording_dir)
 
         sensor1_df = pd.DataFrame(
@@ -851,7 +838,7 @@ class StepDataCollector:
             }
         )
         sensor1_df.to_csv(
-            os.path.join(recording_dir, "sensor1_waveshare.csv"), index=False # type: ignore
+            os.path.join(recording_dir, "sensor1_waveshare.csv"), index=False  # type: ignore
         )
 
         sensor2_df = pd.DataFrame(
@@ -869,7 +856,7 @@ class StepDataCollector:
             }
         )
         sensor2_df.to_csv(
-            os.path.join(recording_dir, "sensor2_adafruit.csv"), index=False # type: ignore
+            os.path.join(recording_dir, "sensor2_adafruit.csv"), index=False  # type: ignore
         )
 
         battery_df = pd.DataFrame(
@@ -880,11 +867,11 @@ class StepDataCollector:
                 "percentage": self.data["battery"]["percentage"],
             }
         )
-        battery_df.to_csv(os.path.join(recording_dir, "battery.csv"), index=False) # type: ignore
+        battery_df.to_csv(os.path.join(recording_dir, "battery.csv"), index=False)  # type: ignore
 
         ground_truth_df = pd.DataFrame({"step_times": self.ground_truth_steps})
         ground_truth_df.to_csv(
-            os.path.join(recording_dir, "ground_truth.csv"), index=False # type: ignore
+            os.path.join(recording_dir, "ground_truth.csv"), index=False  # type: ignore
         )
 
         metadata = {
@@ -901,12 +888,11 @@ class StepDataCollector:
             ),
         }
 
-        with open(os.path.join(recording_dir, "metadata.json"), "w") as f: # type: ignore
-            json.dump(metadata, f, indent=4) # type: ignore
+        with open(os.path.join(recording_dir, "metadata.json"), "w") as f:  # type: ignore
+            json.dump(metadata, f, indent=4)  # type: ignore
 
         self.update_status(f"Data saved to {recording_dir}")
         messagebox.showinfo("Data Saved", f"Recording data saved to {recording_dir}")
-
 
     def load_data(self):
         """Load previously recorded data"""
@@ -921,22 +907,22 @@ class StepDataCollector:
                 "ground_truth.csv",
             ]
             for file in required_files:
-                if not os.path.exists(os.path.join(load_dir, file)): # type: ignore
+                if not os.path.exists(os.path.join(load_dir, file)):  # type: ignore
                     messagebox.showerror(
                         "Missing File",
                         f"Required file {file} not found in the selected directory.",
                     )
                     return
 
-            sensor1_df = pd.read_csv(os.path.join(load_dir, "sensor1_waveshare.csv")) # type: ignore
+            sensor1_df = pd.read_csv(os.path.join(load_dir, "sensor1_waveshare.csv"))  # type: ignore
 
-            sensor2_df = pd.read_csv(os.path.join(load_dir, "sensor2_adafruit.csv")) # type: ignore
+            sensor2_df = pd.read_csv(os.path.join(load_dir, "sensor2_adafruit.csv"))  # type: ignore
 
-            ground_truth_df = pd.read_csv(os.path.join(load_dir, "ground_truth.csv")) # type: ignore
+            ground_truth_df = pd.read_csv(os.path.join(load_dir, "ground_truth.csv"))  # type: ignore
 
             battery_df = None
-            if os.path.exists(os.path.join(load_dir, "battery.csv")): # type: ignore
-                battery_df = pd.read_csv(os.path.join(load_dir, "battery.csv")) # type: ignore
+            if os.path.exists(os.path.join(load_dir, "battery.csv")):  # type: ignore
+                battery_df = pd.read_csv(os.path.join(load_dir, "battery.csv"))  # type: ignore
 
             # Reset data structures
             self.data = {
@@ -990,7 +976,7 @@ class StepDataCollector:
 
                 self.update_plots()
 
-            recording_name = os.path.basename(load_dir) # type: ignore
+            recording_name = os.path.basename(load_dir)  # type: ignore
             self.recording_name.delete(0, tk.END)
             self.recording_name.insert(0, recording_name)
 
@@ -1001,7 +987,6 @@ class StepDataCollector:
             self.update_status(f"Error loading data: {str(e)}")
             messagebox.showerror("Load Error", f"Failed to load data:\n{str(e)}")
 
-
     def analyze_data(self):
         """Analyze the recorded data with step detection algorithms"""
         if len(self.data["time"]) == 0 or len(self.ground_truth_steps) == 0:
@@ -1009,7 +994,7 @@ class StepDataCollector:
                 "No Data", "Not enough data to analyze. Record data with steps first."
             )
             return
-        
+
         # Define parameter sets
         param_sets = {
             "peak_detection": {
@@ -1017,10 +1002,7 @@ class StepDataCollector:
                 "threshold": 0.01,
                 "min_time_between_steps": 0.3,
             },
-            "zero_crossing": {
-                "window_size": 1.0,
-                "min_time_between_steps": 0.3
-            },
+            "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
             "spectral_analysis": {
                 "window_size": 5.0,
                 "overlap": 0.3,
@@ -1060,7 +1042,6 @@ class StepDataCollector:
         #         "min_time_between_steps": 0.3,
         #     },
         # }
-
 
         # Create dataset in the format expected by the algorithms
         dataset = {
@@ -1354,8 +1335,8 @@ class StepDataCollector:
                         "ground_truth_count": len(ground_truth_steps),
                         "step_count_error": len(ground_truth_steps),
                         "step_count_error_percent": 100.0,
-                        "mse": float("inf"),
-                        'count_mse': float("inf"),
+                        "mse": 99999.9,
+                        "count_mse": 99999.9,
                     },
                     "execution_time": 0.0,
                 }
@@ -1369,8 +1350,8 @@ class StepDataCollector:
                         "ground_truth_count": len(ground_truth_steps),
                         "step_count_error": len(ground_truth_steps),
                         "step_count_error_percent": 100.0,
-                        "mse": float("inf"),
-                        'count_mse': float("inf"),
+                        "mse": 99999.9,
+                        "count_mse": 99999.9,
                     },
                     "execution_time": 0.0,
                 }
@@ -1503,7 +1484,7 @@ class StepDataCollector:
                 pady=2,
                 sticky="w",
             )
-            
+
             ttk.Label(s1_frame, text="MSE (Count):").grid(
                 row=2, column=4, padx=5, pady=2, sticky="w"
             )
@@ -1593,11 +1574,11 @@ class StepDataCollector:
                 pady=2,
                 sticky="w",
             )
-            
+
             ttk.Label(s2_frame, text="MSE (Count):").grid(
                 row=2, column=4, padx=5, pady=2, sticky="w"
             )
-            ttk.Label(s2_frame, text=f"{metrics1['count_mse']}").grid(
+            ttk.Label(s2_frame, text=f"{metrics2['count_mse']}").grid(
                 row=2, column=5, padx=5, pady=2, sticky="w"
             )
 
@@ -1777,7 +1758,6 @@ class StepDataCollector:
         analysis_window.protocol("WM_DELETE_WINDOW", on_analysis_window_close)
 
         self.update_status("Analysis complete!")
-
 
     def update_status(self, message):
         """Update the status bar with a message"""

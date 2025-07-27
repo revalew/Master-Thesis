@@ -2,7 +2,8 @@
 # import uasyncio as asyncio
 import asyncio
 
-from time import sleep
+# from time import sleep
+import time
 
 # class to handle the IO for the demo setup
 # from machine import Pin, ADC
@@ -102,13 +103,26 @@ class IoHandler:
     ups_voltage: float = 0.0  # voltage on V- (load side)
     ups_current_draw: float = 0.0  # current in A
     ups_battery_remaining: float = 0.0
+    
+    _last_sensor_read = 0.0
+    # _sensor_cache_duration = 0.1  # 100ms cache = max 10Hz
+    _sensor_cache_duration = 0.04  # 40ms cache = max 25Hz
+    # _sensor_cache_duration = 0.02  # 20ms cache = max 50Hz
+    # _sensor_cache_duration = 0.01  # 10ms cache = max 100Hz
+    # _sensor_cache_duration = 0.005  # 5ms cache = max 200Hz
+    # _sensor_cache_duration = 0.002  # 2ms = max 500Hz
+    _cached_data = {
+        "sensor1": {"accel": (0,0,0), "gyro": (0,0,0), "mag": (0,0,0)},
+        "sensor2": {"accel": (0,0,0), "gyro": (0,0,0), "mag": (0,0,0)},
+        "battery": {"percentage": 0, "voltage": 0, "current": 0}
+    }
 
     # print("IoHandler initialized")
     oled.fill(0)  # Clear the display
     oled.text("IoHandler", 0, 25)
     oled.text("initialized...", 0, 35)
     oled.show()
-    sleep(2)
+    time.sleep(2)
     oled.poweroff()
 
     def __init__(self) -> None:
@@ -254,6 +268,40 @@ class IoHandler:
 
             # print(f"cls.display_mode: {cls.display_mode}")
 
+    @classmethod
+    def get_all_sensor_data_cached(cls):
+        """Get all sensor data with caching for better performance"""
+        current_time = time.time()
+        
+        # Check if cache is still valid
+        if (current_time - cls._last_sensor_read) < cls._sensor_cache_duration:
+            return cls._cached_data
+        
+        # Update cache
+        try:
+            # Read all sensors
+            cls._cached_data["sensor1"]["accel"] = cls.get_accel_reading("wav")
+            cls._cached_data["sensor1"]["gyro"] = cls.get_gyro_reading("wav") 
+            cls._cached_data["sensor1"]["mag"] = cls.get_magnetic_reading("wav")
+            
+            cls._cached_data["sensor2"]["accel"] = cls.get_accel_reading("ada")
+            cls._cached_data["sensor2"]["gyro"] = cls.get_gyro_reading("ada")
+            cls._cached_data["sensor2"]["mag"] = cls.get_magnetic_reading("ada")
+            
+            battery_percentage, battery_voltage = cls.get_ups_battery_reading()
+            battery_current = cls.get_ups_current_reading()
+            
+            cls._cached_data["battery"]["percentage"] = battery_percentage
+            cls._cached_data["battery"]["voltage"] = battery_voltage  
+            cls._cached_data["battery"]["current"] = battery_current
+            
+            cls._last_sensor_read = current_time
+            
+        except Exception as e:
+            print(f"Sensor read error: {e}")
+        
+        return cls._cached_data
+    
     @classmethod
     def get_accel_reading(cls, imu: str) -> tuple[float, float, float]:
         """

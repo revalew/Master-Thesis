@@ -770,6 +770,8 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
             "ground_truth_count": 0,
             "step_count_error": len(detected_steps),
             "step_count_error_percent": 100.0 if len(detected_steps) > 0 else 0.0,
+            "mse": float("inf"),
+            'count_mse': float("inf"),
         }
 
     if len(detected_steps) == 0:
@@ -784,6 +786,8 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
             "ground_truth_count": len(ground_truth_steps),
             "step_count_error": len(ground_truth_steps),
             "step_count_error_percent": 100.0,
+            "mse": float("inf"),
+            'count_mse': float("inf"),
         }
 
     # Count true positives, false positives, and false negatives
