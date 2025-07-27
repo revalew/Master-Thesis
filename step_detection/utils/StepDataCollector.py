@@ -1014,26 +1014,53 @@ class StepDataCollector:
         param_sets = {
             "peak_detection": {
                 "window_size": 1.0,
-                "threshold": 1.0,
+                "threshold": 0.01,
                 "min_time_between_steps": 0.3,
             },
-            "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
+            "zero_crossing": {
+                "window_size": 1.0,
+                "min_time_between_steps": 0.3
+            },
             "spectral_analysis": {
                 "window_size": 5.0,
-                "overlap": 0.5,
-                "step_freq_range": (1.0, 2.5),
+                "overlap": 0.3,
+                "step_freq_range": (1.0, 3.5),
             },
             "adaptive_threshold": {
                 "window_size": 1.0,
-                "sensitivity": 0.6,
+                "sensitivity": 0.2,
                 "min_time_between_steps": 0.3,
             },
             "shoe": {
                 "window_size": 1.0,
-                "threshold": 0.8,
+                "threshold": 0.01,
                 "min_time_between_steps": 0.3,
             },
         }
+        # param_sets = {
+        #     "peak_detection": {
+        #         "window_size": 1.0,
+        #         "threshold": 1.0,
+        #         "min_time_between_steps": 0.3,
+        #     },
+        #     "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
+        #     "spectral_analysis": {
+        #         "window_size": 5.0,
+        #         "overlap": 0.5,
+        #         "step_freq_range": (1.0, 2.5),
+        #     },
+        #     "adaptive_threshold": {
+        #         "window_size": 1.0,
+        #         "sensitivity": 0.6,
+        #         "min_time_between_steps": 0.3,
+        #     },
+        #     "shoe": {
+        #         "window_size": 1.0,
+        #         "threshold": 0.8,
+        #         "min_time_between_steps": 0.3,
+        #     },
+        # }
+
 
         # Create dataset in the format expected by the algorithms
         dataset = {
@@ -1328,6 +1355,7 @@ class StepDataCollector:
                         "step_count_error": len(ground_truth_steps),
                         "step_count_error_percent": 100.0,
                         "mse": float("inf"),
+                        'count_mse': float("inf"),
                     },
                     "execution_time": 0.0,
                 }
@@ -1342,6 +1370,7 @@ class StepDataCollector:
                         "step_count_error": len(ground_truth_steps),
                         "step_count_error_percent": 100.0,
                         "mse": float("inf"),
+                        'count_mse': float("inf"),
                     },
                     "execution_time": 0.0,
                 }
@@ -1444,7 +1473,7 @@ class StepDataCollector:
             ttk.Label(s1_frame, text=placeholder_text).grid(row=0, column=3)
             ttk.Label(s1_frame, text=placeholder_text).grid(row=1, column=3)
             ttk.Label(s1_frame, text=placeholder_text).grid(row=2, column=3)
-            ttk.Label(s1_frame, text="Count Error:").grid(
+            ttk.Label(s1_frame, text="Count Error (MAE):").grid(
                 row=0,
                 column=4,
                 padx=5,
@@ -1458,7 +1487,7 @@ class StepDataCollector:
             ).grid(row=0, column=5, padx=5, pady=2, sticky="w")
             # ).grid(row=4, column=1, padx=5, pady=2, sticky="w")
 
-            ttk.Label(s1_frame, text="MSE:").grid(
+            ttk.Label(s1_frame, text="MSE (Penalty):").grid(
                 # row=5, column=0, padx=5, pady=2, sticky="w"
                 row=1,
                 column=4,
@@ -1474,10 +1503,17 @@ class StepDataCollector:
                 pady=2,
                 sticky="w",
             )
+            
+            ttk.Label(s1_frame, text="MSE (Count):").grid(
+                row=2, column=4, padx=5, pady=2, sticky="w"
+            )
+            ttk.Label(s1_frame, text=f"{metrics1['count_mse']}").grid(
+                row=2, column=5, padx=5, pady=2, sticky="w"
+            )
 
             ttk.Label(s1_frame, text="Exec. Time:").grid(
                 # row=6, column=0, padx=5, pady=2, sticky="w"
-                row=2,
+                row=3,
                 column=4,
                 padx=5,
                 pady=2,
@@ -1486,7 +1522,7 @@ class StepDataCollector:
             ttk.Label(
                 s1_frame,
                 text=f"{results['sensor1'][algorithm_name]['execution_time']:.4f} s",
-            ).grid(row=2, column=5, padx=5, pady=2, sticky="w")
+            ).grid(row=3, column=5, padx=5, pady=2, sticky="w")
             # ).grid(row=6, column=1, padx=5, pady=2, sticky="w")
 
             # Sensor 2 metrics
@@ -1527,7 +1563,7 @@ class StepDataCollector:
             ttk.Label(s2_frame, text=placeholder_text).grid(row=0, column=3)
             ttk.Label(s2_frame, text=placeholder_text).grid(row=1, column=3)
             ttk.Label(s2_frame, text=placeholder_text).grid(row=2, column=3)
-            ttk.Label(s2_frame, text="Count Error:").grid(
+            ttk.Label(s2_frame, text="Count Error (MAE):").grid(
                 row=0,
                 column=4,
                 padx=5,
@@ -1541,7 +1577,7 @@ class StepDataCollector:
             ).grid(row=0, column=5, padx=5, pady=2, sticky="w")
             # ).grid(row=4, column=1, padx=5, pady=2, sticky="w")
 
-            ttk.Label(s2_frame, text="MSE:").grid(
+            ttk.Label(s2_frame, text="MSE (Penalty):").grid(
                 # row=5, column=0, padx=5, pady=2, sticky="w"
                 row=1,
                 column=4,
@@ -1557,10 +1593,17 @@ class StepDataCollector:
                 pady=2,
                 sticky="w",
             )
+            
+            ttk.Label(s2_frame, text="MSE (Count):").grid(
+                row=2, column=4, padx=5, pady=2, sticky="w"
+            )
+            ttk.Label(s2_frame, text=f"{metrics1['count_mse']}").grid(
+                row=2, column=5, padx=5, pady=2, sticky="w"
+            )
 
             ttk.Label(s2_frame, text="Exec. Time:").grid(
                 # row=6, column=0, padx=5, pady=2, sticky="w"
-                row=2,
+                row=3,
                 column=4,
                 padx=5,
                 pady=2,
@@ -1569,7 +1612,7 @@ class StepDataCollector:
             ttk.Label(
                 s2_frame,
                 text=f"{results['sensor2'][algorithm_name]['execution_time']:.4f} s",
-            ).grid(row=2, column=5, padx=5, pady=2, sticky="w")
+            ).grid(row=3, column=5, padx=5, pady=2, sticky="w")
             # ).grid(row=6, column=1, padx=5, pady=2, sticky="w")
 
             # Configure grid weights
@@ -1611,11 +1654,13 @@ class StepDataCollector:
             "S1 F1",
             "S1 Error%",
             "S1 MSE",
+            # "S1 Count MSE",
             "S2 Precision",
             "S2 Recall",
             "S2 F1",
             "S2 Error%",
             "S2 MSE",
+            # "S2 Count MSE",
         )
         tree = ttk.Treeview(
             summary_frame,
@@ -1652,11 +1697,13 @@ class StepDataCollector:
                     f"{metrics1['f1_score']:.4f}",
                     f"{metrics1['step_count_error_percent']:.1f}%",
                     f"{metrics1['mse']:.4f}",
+                    # f"{metrics1['count_mse']}",
                     f"{metrics2['precision']:.4f}",
                     f"{metrics2['recall']:.4f}",
                     f"{metrics2['f1_score']:.4f}",
                     f"{metrics2['step_count_error_percent']:.1f}%",
                     f"{metrics2['mse']:.4f}",
+                    # f"{metrics2['count_mse']}",
                 ),
                 tags=(tag,),
             )

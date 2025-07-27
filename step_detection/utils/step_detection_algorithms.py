@@ -406,7 +406,7 @@ def peak_detection_algorithm(
     accel_data, fs, window_size=0.1, threshold=1.0, min_time_between_steps=0.3
 ):
     """
-    Step detection using peak detection with fixed threshold - FIXED VERSION.
+    Step detection using peak detection with fixed threshold
 
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -424,7 +424,7 @@ def peak_detection_algorithm(
         accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
     )
 
-    # Apply safe moving average filter - FIXED
+    # Apply safe moving average filter
     filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
 
     # Find peaks
@@ -446,7 +446,7 @@ def zero_crossing_algorithm(
     accel_data, fs, window_size=0.1, min_time_between_steps=0.3
 ):
     """
-    Step detection using zero-crossing method - IMPROVED VERSION.
+    Step detection using zero-crossing method
 
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -458,7 +458,7 @@ def zero_crossing_algorithm(
     - detected_steps: Array of detected step times
     - filtered_signal: Filtered acceleration signal
     """
-    # Use acceleration magnitude instead of just Z-axis - FIXED
+    # Use acceleration magnitude instead of just Z-axis
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
 
     # Remove mean to center around zero
@@ -586,7 +586,7 @@ def adaptive_threshold_algorithm(
     accel_data, fs, window_size=0.1, sensitivity=0.6, min_time_between_steps=0.3
 ):
     """
-    Step detection using adaptive thresholding - FIXED VERSION.
+    Step detection using adaptive thresholding
 
     Parameters:
     - accel_data: Accelerometer data (3D array [x, y, z])
@@ -605,7 +605,7 @@ def adaptive_threshold_algorithm(
         accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
     )
 
-    # Apply safe moving average filter - FIXED
+    # Apply safe moving average filter
     filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
 
     # Calculate the adaptive threshold using a longer window
@@ -648,7 +648,7 @@ def shoe_algorithm(
     gyro_data,
     fs,
     window_size=0.1,
-    threshold=0.8,
+    threshold=0.5,
     min_time_between_steps=0.3,
 ):
     """
@@ -660,7 +660,7 @@ def shoe_algorithm(
     - gyro_data: Gyroscope data (3D array [x, y, z])
     - fs: Sampling frequency in Hz
     - window_size: Size of the moving average window in seconds
-    - threshold: Threshold parameter for step detection (lowered)
+    - threshold: Threshold parameter for step detection
     - min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
@@ -697,8 +697,8 @@ def shoe_algorithm(
     # Combine the signals (simple weighted sum)
     combined_signal = 0.7 * norm_accel + 0.3 * norm_gyro
 
-    # Lower threshold for better detection - FIXED
-    adaptive_threshold = threshold * 0.5  # Use 0.4 instead of 0.8
+    # adaptive_threshold = threshold # * 0.5  # Use 0.4 instead of 0.8
+    adaptive_threshold = threshold if threshold < 0.4 else 0.4
 
     # print(f"SHOE: Combined signal range: {np.min(combined_signal):.3f} to {np.max(combined_signal):.3f}")
     # print(f"SHOE: Using threshold: {adaptive_threshold:.3f}")
@@ -725,42 +725,7 @@ def shoe_algorithm(
 # --------------------------------
 # Evaluation Functions
 # --------------------------------
-# def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.2):
-#     """
-#     Calculate Mean Squared Error between detected and ground truth steps.
-#     """
-#     if len(ground_truth_steps) == 0:
-#         return float("inf") if len(detected_steps) > 0 else 0.0
-
-#     if len(detected_steps) == 0:
-#         return np.mean(np.square(ground_truth_steps))
-
-#     mse = 0.0
-#     matched_gt = set()
-
-#     for detected in detected_steps:
-#         min_error = float("inf")
-#         best_match = -1
-
-#         for i, gt_step in enumerate(ground_truth_steps):
-#             if i not in matched_gt:
-#                 error = abs(detected - gt_step)
-#                 if error <= tolerance and error < min_error:
-#                     min_error = error
-#                     best_match = i
-
-#         if best_match != -1:
-#             mse += min_error**2
-#             matched_gt.add(best_match)
-#         else:
-#             mse += tolerance**2
-
-#     for i, gt_step in enumerate(ground_truth_steps):
-#         if i not in matched_gt:
-#             mse += tolerance**2
-
-#     return mse / max(len(detected_steps), len(ground_truth_steps))
-def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.2):
+def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.3):
     """
     Calculate Mean Squared Error between detected and ground truth steps.
     For each ground truth step, finds the closest detected step and applies
@@ -780,7 +745,7 @@ def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.2):
     return np.mean(squared_errors)
 
 
-def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
+def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
     """
     Evaluate the performance of a step detection algorithm.
 
@@ -859,7 +824,15 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
         else 0
     )
 
+    # MSE with penalty
     mse = calculate_mse(detected_steps, ground_truth_steps, tolerance)
+    
+    # Simple count MAE
+    count_mse = (len(detected_steps) - len(ground_truth_steps)) ** 2
+    # count_mae = abs(len(detected_steps) - len(ground_truth_steps))
+    # count_rmse = abs(len(detected_steps) - len(ground_truth_steps))
+    # count_mse_norm = ((len(detected_steps) - len(ground_truth_steps)) ** 2) / ((len(ground_truth_steps) ** 2) if len(ground_truth_steps) > 0 else 1)
+
 
     return {
         "true_positives": true_positives,
@@ -873,6 +846,7 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.2):
         "step_count_error": step_count_error,
         "step_count_error_percent": step_count_error_percent,
         'mse': mse,
+        'count_mse': count_mse,
     }
 
 
