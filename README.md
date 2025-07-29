@@ -84,6 +84,8 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Minor improvements and new metrics](#minor-improvements-and-new-metrics)
 
+  - [Added UDP support](#added-udp-support)
+
 <br/>
 <br/>
 
@@ -386,6 +388,20 @@ I also added mouse bindings to improve experiment workflow. During data collecti
   <img src="./step_detection/analysis/detection_metrics.png" alt="New metrics" height="120" loading="lazy"/>
 
 </div>
+
+<br/><br/>
+
+### Added UDP support
+
+Added UDP communication protocol to dramatically improve sensor data collection performance, when compared to HTTP: from $`[1, 5] Hz \to >100 Hz`$ sampling rates (over 25x faster!!). Some packets may be lost in transmission, but I'm willing to live with that.
+
+- HTTP protocol was the primary bottleneck limiting sampling rates
+
+- UDP eliminates HTTP overhead and provides consistent low-latency streaming
+
+- GUI automatically uses UDP with HTTP fallback for compatibility
+
+Now I can continue the research and collect data without worrying about the network latency.
 
 <br/><br/>
 

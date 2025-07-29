@@ -67,6 +67,7 @@ class WiFiConnection:
         cls.wlan = network.WLAN(network.STA_IF)
         # activate the network interface
         cls.wlan.active(True)
+        cls.wlan.config(pm=0xA11140)
         # connect to wifi network
         cls.wlan.connect(NetworkCredentials.ssid, NetworkCredentials.password)
         cls.status = network.STAT_CONNECTING

@@ -1,13 +1,21 @@
-# full demo with web control panel
-# combines multi core and multi tasking
+"""
+Main program file
+
+Here we:
+    - set up the WiFi connection (Access Point or Station mode)
+    - start the web server,
+    - start the OLED update task (to display the IMU data live IF the screen is on),
+    - start the UDP server.
+"""
 
 # import uasyncio as asyncio # type: ignore
 import asyncio
 
-import machine # type: ignore
+import machine  # type: ignore
 import gc
 
-from classes import WiFiConnection, RequestHandler, IoHandler
+from classes import WiFiConnection, RequestHandler, IoHandler, UDPHandler
+
 
 gc.enable()
 gc.collect()
@@ -16,7 +24,10 @@ gc.collect()
 if not WiFiConnection.start_ap_mode():
     raise RuntimeError("Setting up Access Point failed")
 
-# for prop in WiFiConnection().fullConfig:
+# if not WiFiConnection.start_station_mode():
+#     raise RuntimeError("Setting up Station mode failed")
+
+# for prop in WiFiConnection().fullConfig:  # type: ignore
 #     print(f"{prop}\n")
 
 
@@ -24,10 +35,7 @@ async def main() -> None:
     """
     Main function of the program.
 
-    Initializes the asynchronous web server and OLED update task.
-
-    This function runs an infinite loop that calls the garbage collector
-    every 1000 iterations to free up unused memory.
+    Initializes the asynchronous web server and OLED update task and UDP server.
 
     Args:
         None
@@ -35,25 +43,33 @@ async def main() -> None:
     Returns:
         None
     """
-    # Start web server
+    # Start HTTP server (keep existing, just in case?)
     handler = RequestHandler()
-    asyncio.create_task(asyncio.start_server(handler.handle_request, "0.0.0.0", 80))  # type: ignore
+    asyncio.create_task(
+        asyncio.start_server(handler.handle_request, host="0.0.0.0", port=80, backlog=1)
+    )
 
     # Start OLED update
     asyncio.create_task(IoHandler.update_oled())
 
-    gc.collect()
+    # UDP handler task
+    udp_handler = UDPHandler()
+    asyncio.create_task(udp_handler.handle_request())
 
-    counter = 0
+    # counter = 0
+    # while True:
+    #     # if counter % 1000 == 0:
+    #     if counter == 1000:
+    #         gc.collect()
+    #         # print(f"Allocated RAM: {gc.mem_alloc()}\nFree RAM: {gc.mem_free()}\n")  # type: ignore
+    #         counter = 0
+
+    #     counter += 1
+    #     await asyncio.sleep(0.01)
+
     while True:
-        # if counter % 1000 == 0:
-        if counter == 1000:
-            gc.collect()
-            # print(f"Allocated RAM: {gc.mem_alloc()}\nFree RAM: {gc.mem_free()}\n")  # type: ignore
-            counter = 0
-            
-        counter += 1
-        await asyncio.sleep(0)
+        gc.collect()
+        await asyncio.sleep(99999)
 
 
 if __name__ == "__main__":
@@ -62,30 +78,30 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         from time import sleep
-        
+
         print("Program interrupted by user.")
-        
+
         IoHandler.oled.fill(0)  # Clear the display
         IoHandler.oled.text("KeyboardInterrupt", 0, 0)
         IoHandler.oled.text("Stopped", 35, 30)
         IoHandler.oled.show()
         sleep(2)
         IoHandler.oled.poweroff()
-        
+
         machine.reset()
-    
+
     except Exception as e:
         from time import sleep
 
         print(f"Error: {e}")
-        
+
         IoHandler.oled.fill(0)  # Clear the display
         IoHandler.oled.text("Exception", 0, 0)
         IoHandler.oled.text("Error", 45, 30)
         IoHandler.oled.show()
         sleep(2)
         IoHandler.oled.poweroff()
-        
+
         machine.reset()
 
     finally:

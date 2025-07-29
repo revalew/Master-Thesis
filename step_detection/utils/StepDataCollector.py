@@ -11,6 +11,12 @@ import threading
 import os
 from datetime import datetime
 
+from typing import Any
+
+# UDP
+import socket
+import struct
+
 from .step_detection_algorithms import (
     peak_detection_algorithm,
     zero_crossing_algorithm,
@@ -23,15 +29,28 @@ from .step_detection_algorithms import (
     # compare_sensors
 )
 
+# Just in case - prevent anyone from recording for more than 5 minutes
+MAX_RECORDING_TIME = 300  # seconds
+
 
 class StepDataCollector:
-    def __init__(self, master, api_url: str = "http://192.168.4.1/api") -> None:
+    def __init__(
+        self,
+        master,
+        api_url: str = "http://192.168.4.1/api",
+        use_udp: bool = True,
+        udp_port: int = 12345,
+        target_rate_hz: int = 50,
+    ) -> None:
         """
         Constructor for the StepDataCollector class.
 
         Args:
             master: The root object of the Tkinter application.
             api_url (str): The URL of the API to query for data. Defaults to "http://192.168.4.1/api".
+            use_udp (bool): Whether to use UDP for data transmission. Defaults to True.
+            udp_port (int): The port to use for UDP communication. Defaults to 12345.
+            target_rate_hz (int): The target sampling rate in Hz. Defaults to 100.
         """
         self.master = master
         self.master.title("Step Data Collector")
@@ -42,8 +61,11 @@ class StepDataCollector:
 
         self.recording = False
         self.api_url = api_url
+        self.use_udp = use_udp
+        self.udp_port = udp_port
+        self.target_rate_hz = target_rate_hz
 
-        # HTTP Session for keep-alive connections
+        # HTTP Session for keep-alive connections (keep for compatibility, but use UDP instead)
         self.session = requests.Session()  # type: ignore
         # Configure connection pooling and timeouts
         adapter = requests.adapters.HTTPAdapter(  # type: ignore
@@ -52,6 +74,15 @@ class StepDataCollector:
             max_retries=0,  # No retries for speed
         )
         self.session.mount("http://", adapter)
+
+        # UDP Socket setup
+        if self.use_udp:
+            self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_sock.settimeout(0.1)
+            self.server_addr = (
+                self.api_url.split("//")[1].split("/")[0],
+                self.udp_port,
+            )
 
         self.data = {
             "time": [],
@@ -88,7 +119,7 @@ class StepDataCollector:
 
         self.update_status("Ready. Connect to your Pico device to begin.")
 
-    def on_closing(self):
+    def on_closing(self) -> None:
         """Handle application closing properly"""
         print("Closing application...")
 
@@ -99,7 +130,9 @@ class StepDataCollector:
             if hasattr(self, "recording_thread") and self.recording_thread.is_alive():
                 self.recording_thread.join(timeout=2.0)
 
-        # Close HTTP session
+        if hasattr(self, "udp_sock"):
+            self.udp_sock.close()
+
         if hasattr(self, "session"):
             self.session.close()
 
@@ -110,7 +143,7 @@ class StepDataCollector:
 
         print("Application closed successfully")
 
-    def create_widgets(self):
+    def create_widgets(self) -> None:
         # Create main frame with padding
         main_frame = ttk.Frame(self.master, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -336,7 +369,8 @@ class StepDataCollector:
         # self.master.bind("<Button-5>", lambda event: self.mark_step())  # Scroll down -> mark step (Linux)
         # self.master.bind("<MouseWheel>", lambda event: self.mark_step())  # Scroll wheel (Windows)
 
-    def create_plots(self):
+    def create_plots(self) -> None:
+        # Create subplots
         self.fig, self.axes = plt.subplots(3, 1, figsize=(12, 10), dpi=100)
         self.fig.tight_layout(pad=4.0)
 
@@ -395,11 +429,40 @@ class StepDataCollector:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-    def check_connection(self):
+    def check_connection(self) -> bool:
         """Test connection to the Pico API"""
         self.api_url = self.url_entry.get()
         self.update_status(f"Connecting to {self.api_url}...")
 
+        if self.use_udp:
+            self.server_addr = (
+                self.api_url.split("//")[1].split("/")[0],
+                self.udp_port,
+            )
+
+            try:
+                data = self.read_sensors_udp()
+                if data and "status" in data and data["status"] == "OK":
+                    self.update_status(
+                        f"Connected via UDP! Battery: {data['battery']['percentage']:.1f}%"
+                    )
+                    messagebox.showinfo(
+                        "Connection",
+                        "Successfully connected via UDP to the Pico device!",
+                    )
+                    self.record_btn.config(state=tk.NORMAL)
+                    return True
+
+                else:
+                    # Fallback to HTTP
+                    self.use_udp = False
+                    self.update_status("UDP failed, trying HTTP...")
+
+            except Exception as e:
+                self.use_udp = False
+                self.update_status(f"UDP failed ({str(e)}), trying HTTP...")
+
+        # else:
         try:
             # response = requests.get(f"{self.api_url}?action=getBatteryInfo", timeout=3)
             response = self.session.get(
@@ -428,11 +491,22 @@ class StepDataCollector:
         except requests.exceptions.RequestException as e:  # type: ignore
             self.update_status(f"Connection failed: {str(e)}")
             messagebox.showerror(
-                "Connection Error", f"Failed to connect to the Pico device:\n{str(e)}"
+                "Connection Error",
+                f"Failed to connect to the Pico device:\n{str(e)}",
             )
             return False
 
-    def toggle_recording(self):
+    def toggle_recording(self) -> None:
+        """Toggle recording state"""
+        self.api_url = self.url_entry.get()
+        self.update_status(f"Connecting to {self.api_url}...")
+
+        if self.use_udp:
+            self.server_addr = (
+                self.api_url.split("//")[1].split("/")[0],
+                self.udp_port,
+            )
+
         if not self.recording:
             self.recording = True
             self.record_btn.config(text="Stop Recording")
@@ -500,7 +574,7 @@ class StepDataCollector:
             #     target=self.record_data, daemon=True
             # )
             self.recording_thread = threading.Thread(
-                target=lambda: self.record_data(update_interval=0.005), daemon=True
+                target=lambda: self.record_data(), daemon=True
             )
             self.recording_thread.start()
 
@@ -520,19 +594,18 @@ class StepDataCollector:
 
             self.update_status("Recording stopped.")
 
-    def record_data(self, update_interval: float = 0.005):
+    def record_data(self, update_interval: int | float | None = None) -> None:
         """Background thread to record data from the Pico"""
+        if update_interval is None:
+            update_interval = 1.0 / self.target_rate_hz
+
+        next_sample = time.time()
+
         # last_update_time = time.time()
         sample_count = 0
 
         while self.recording:
             current_time = time.time()
-            elapsed_time = current_time - self.recording_start_time
-
-            # Update recording time display only every 10 samples
-            if sample_count % 10 == 0:
-                mins, secs = divmod(int(elapsed_time), 60)
-                self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
 
             # # Auto-mark steps if enabled
             # if (
@@ -544,15 +617,22 @@ class StepDataCollector:
             #         self.mark_step()
             #     last_update_time = current_time
 
-            try:
-                # response = requests.get(f"{self.api_url}?action=getAllData", timeout=1)
-                response = self.session.get(
-                    f"{self.api_url}?action=getAllData", timeout=3
-                )
+            if current_time >= next_sample:
+                try:
+                    if self.use_udp:
+                        data = self.read_sensors_udp()
 
-                if response.status_code == 200:
-                    data = response.json()
-                    if "status" in data and data["status"] == "OK":
+                    else:
+                        data = self.read_sensors()  # Fallback to HTTP session
+
+                    if data and "status" in data and data["status"] == "OK":
+                        elapsed_time = current_time - self.recording_start_time
+
+                        # Update recording time display only every 10 samples
+                        if sample_count % 10 == 0:
+                            mins, secs = divmod(int(elapsed_time), 60)
+                            self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
+
                         # if sample_count % 5 == 0:
                         #     # Update UI displays
                         #     self.accel1_var.set(
@@ -564,7 +644,7 @@ class StepDataCollector:
                         #     self.mag1_var.set(
                         #         f"X: {data['sensor1']['magnetic']['X']:.2f}, Y: {data['sensor1']['magnetic']['Y']:.2f}, Z: {data['sensor1']['magnetic']['Z']:.2f}"
                         #     )
-
+                        #
                         #     self.accel2_var.set(
                         #         f"X: {data['sensor2']['acceleration']['X']:.2f}, Y: {data['sensor2']['acceleration']['Y']:.2f}, Z: {data['sensor2']['acceleration']['Z']:.2f}"
                         #     )
@@ -574,10 +654,11 @@ class StepDataCollector:
                         #     self.mag2_var.set(
                         #         f"X: {data['sensor2']['magnetic']['X']:.2f}, Y: {data['sensor2']['magnetic']['Y']:.2f}, Z: {data['sensor2']['magnetic']['Z']:.2f}"
                         #     )
-
+                        #
                         #     self.voltage_var.set(f"{data['battery']['voltage']:.2f} V")
                         #     self.current_var.set(f"{data['battery']['current']:.3f} A")
                         #     self.battery_var.set(f"{data['battery']['percentage']:.1f}%")
+                        #
 
                         # Store data
                         self.data["time"].append(elapsed_time)
@@ -656,22 +737,105 @@ class StepDataCollector:
                     else:
                         self.update_status("Error: Invalid data format.")
                         print("Error: Invalid data format.")
-                else:
-                    print(f"Error: HTTP {response.status_code}: {response.text}")
-                    self.update_status(
-                        f"Error: HTTP {response.status_code}: {response.text}"
-                    )
 
-            except requests.exceptions.RequestException as e:  # type: ignore
-                if sample_count > 0:  # Only print rate if we have samples
-                    print(
-                        f"Sample {sample_count}, Duration: {elapsed_time:.3f}s, Rate: {sample_count/elapsed_time:.1f}Hz"
-                    )
-                self.update_status(f"Error reading data: {str(e)}")
+                    next_sample += update_interval
 
-            time.sleep(update_interval)
+                    # Safety limit
+                    if (time.time() - self.recording_start_time) > MAX_RECORDING_TIME:
+                        self.update_status(
+                            f"Max recording time ({MAX_RECORDING_TIME} s) reached, stopping..."
+                        )
+                        print(
+                            f"\nMax recording time ({MAX_RECORDING_TIME} s) reached, stopping..."
+                        )
+                        self.recording = False
+                        break
 
-    def update_plots(self):
+                except Exception as e:
+                    self.update_status(f"Error reading data: {str(e)}")
+                    print(f"Error reading data: {str(e)}")
+                    if sample_count > 0:  # Only print rate if we have samples
+                        print(
+                            f"Sample {sample_count}, Duration: {elapsed_time:.3f}s, Rate: {sample_count/elapsed_time:.1f}Hz"
+                        )
+
+            else:
+                time.sleep(0.001)  # 1ms sleep to prevent busy waiting
+                # time.sleep(update_interval)
+
+    def read_sensors(self) -> dict[str, Any]:
+        """Read sensor data via HTTP protocol"""
+        try:
+            # response = requests.get(f"{self.api_url}?action=getAllData", timeout=1)
+            response = self.session.get(f"{self.api_url}?action=getAllData", timeout=3)
+
+            if response.status_code == 200:
+                data = response.json()
+                return data
+
+            else:
+                print(f"Error: HTTP {response.status_code}: {response.text}")
+                self.update_status(
+                    f"Error: HTTP {response.status_code}: {response.text}"
+                )
+                return {"status": "Error", "message": response.text}
+
+        except requests.exceptions.RequestException as e:  # type: ignore
+            self.update_status(f"Error reading data: {str(e)}")
+            raise e
+
+    def read_sensors_udp(self) -> dict[str, Any]:
+        """
+        Read sensor data via UDP protocol
+
+        Retrieves the data from Pico in binary format, because it has to be fast af boy. Also insert the TCP / UDP joke
+
+        `<f18f3f` (1 float timestamp + 18 floats sensor data + 3 floats battery)
+
+        | Symbol | Meaning | Bytes |
+        |--------|-----------|-------------|
+        | `<` | **Little-endian** byte order | - |
+        | `f` | **1x float** (32-bit) | 4 bytes |
+        | `18f` | **18x float** (32-bit each) | 72 bytes |
+        | `3f` | **3x float** (32-bit each) | 12 bytes |
+
+        Returns:
+            dict[str, Any]: Sensor data
+        """
+        try:
+            self.udp_sock.sendto(b"GET", self.server_addr)
+            data, _ = self.udp_sock.recvfrom(1024)
+
+            # <f18f3f (1 float timestamp + 18 floats sensor data + 3 floats battery)
+            values = struct.unpack("<f18f3f", data)
+
+            return {
+                "status": "OK",
+                "sensor1": {
+                    "acceleration": {"X": values[1], "Y": values[2], "Z": values[3]},
+                    "gyro": {"X": values[4], "Y": values[5], "Z": values[6]},
+                    "magnetic": {"X": values[7], "Y": values[8], "Z": values[9]},
+                },
+                "sensor2": {
+                    "acceleration": {"X": values[10], "Y": values[11], "Z": values[12]},
+                    "gyro": {"X": values[13], "Y": values[14], "Z": values[15]},
+                    "magnetic": {"X": values[16], "Y": values[17], "Z": values[18]},
+                },
+                "battery": {
+                    "voltage": values[19],
+                    "current": values[20],
+                    "percentage": values[21],
+                },
+            }
+
+        except Exception as e:
+            self.update_status(f"Error reading data: {str(e)}")
+            print(f"Error reading data: {str(e)}")
+            # return None
+            # return {"status": "Error", "message": str(e)}
+            raise e
+
+    def update_plots(self) -> None:
         """Update the data plots"""
         if len(self.data["time"]) == 0:
             return
@@ -776,7 +940,7 @@ class StepDataCollector:
         except Exception as e:
             print(f"Error updating plots: {e}")
 
-    def mark_step(self):
+    def mark_step(self) -> None:
         """Mark a step in the data"""
         if self.recording:
             current_time = time.time()
@@ -792,7 +956,7 @@ class StepDataCollector:
             except Exception as e:
                 print(f"Error updating plots after step mark: {e}")
 
-    def toggle_auto_counting(self):
+    def toggle_auto_counting(self) -> None:
         """Toggle automatic step counting"""
         if not self.ground_truth_counting:
             self.ground_truth_counting = True
@@ -803,7 +967,7 @@ class StepDataCollector:
             self.toggle_count_btn.config(text="Start Auto Counting")
             self.update_status("Automatic step counting disabled.")
 
-    def save_data(self):
+    def save_data(self) -> None:
         """Save the recorded data to CSV files"""
         if len(self.data["time"]) == 0:
             messagebox.showwarning(
@@ -894,9 +1058,11 @@ class StepDataCollector:
         self.update_status(f"Data saved to {recording_dir}")
         messagebox.showinfo("Data Saved", f"Recording data saved to {recording_dir}")
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Load previously recorded data"""
-        load_dir = filedialog.askdirectory(title="Select Recording Directory to Load")
+        load_dir = filedialog.askdirectory(
+            title="Select Recording Directory to Load", initialdir="./analysis"
+        )
         if not load_dir:
             return
 
@@ -987,7 +1153,7 @@ class StepDataCollector:
             self.update_status(f"Error loading data: {str(e)}")
             messagebox.showerror("Load Error", f"Failed to load data:\n{str(e)}")
 
-    def analyze_data(self):
+    def analyze_data(self) -> None:
         """Analyze the recorded data with step detection algorithms"""
         if len(self.data["time"]) == 0 or len(self.ground_truth_steps) == 0:
             messagebox.showwarning(
@@ -1759,7 +1925,7 @@ class StepDataCollector:
 
         self.update_status("Analysis complete!")
 
-    def update_status(self, message):
+    def update_status(self, message) -> None:
         """Update the status bar with a message"""
         self.status_var.set(message)
         self.master.update_idletasks()

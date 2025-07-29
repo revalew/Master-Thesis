@@ -27,6 +27,7 @@ __all__ = [
     "RequestParser",
     "ResponseBuilder",
     "DebouncedInput",
+    "UDPHandler",
 ]
 
 from .WiFiConnection import WiFiConnection
@@ -42,3 +43,5 @@ from .RequestParser import RequestParser
 from .ResponseBuilder import ResponseBuilder
 
 from .DebouncedInput import DebouncedInput
+
+from .UDPHandler import UDPHandler
