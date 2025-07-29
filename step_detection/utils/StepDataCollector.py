@@ -1168,15 +1168,18 @@ class StepDataCollector:
                 "threshold": 0.01,
                 "min_time_between_steps": 0.3,
             },
-            "zero_crossing": {"window_size": 1.0, "min_time_between_steps": 0.3},
+            "zero_crossing": {
+                "window_size": 0.05,
+                "min_time_between_steps": 0.3
+            },
             "spectral_analysis": {
                 "window_size": 5.0,
                 "overlap": 0.3,
                 "step_freq_range": (1.0, 3.5),
             },
             "adaptive_threshold": {
-                "window_size": 1.0,
-                "sensitivity": 0.2,
+                "window_size": 0.5,
+                "sensitivity": 0.01,
                 "min_time_between_steps": 0.3,
             },
             "shoe": {
