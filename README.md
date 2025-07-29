@@ -393,7 +393,7 @@ I also added mouse bindings to improve experiment workflow. During data collecti
 
 ### Added UDP support
 
-Added UDP communication protocol to dramatically improve sensor data collection performance, when compared to HTTP: from $`[1, 5] Hz \to >100 Hz`$ sampling rates (over 25x faster!!). Some packets may be lost in transmission, but I'm willing to live with that.
+Added UDP communication protocol to dramatically improve sensor data collection performance, when compared to HTTP: from $`[1, 5] Hz \; \to \; \gg 100 Hz`$ sampling rates (over 25x faster!!). Some packets may be lost in transmission, but I'm willing to live with that.
 
 - HTTP protocol was the primary bottleneck limiting sampling rates
 
