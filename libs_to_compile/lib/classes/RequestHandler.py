@@ -30,7 +30,7 @@ class RequestHandler:
                 gc.collect()
 
                 if action == "getAllData":
-                    cached_data = IoHandler.get_all_sensor_data_cached()
+                    cached_data = IoHandler.get_all_sensor_data()
     
                     response_obj = {
                         "status": "OK",

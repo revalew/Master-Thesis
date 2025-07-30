@@ -47,9 +47,8 @@ class UDPHandler:
         while True:
             try:
                 data, addr = self.udp_sock.recvfrom(64)
-                # print({"data": data, "addr": addr})
+
                 if data == b"GET":
-                    # sensor_data = IoHandler.get_all_sensor_data_direct()
                     (
                         wav_a_1,
                         wav_a_2,
@@ -75,7 +74,6 @@ class UDPHandler:
                     ) = IoHandler.get_all_sensor_data_direct()
 
                     # Pack to binary (much faster than JSON)
-                    # response = struct.pack("<f18f3f", 0.0, *sensor_data)
                     response = struct.pack(
                         "<f18f3f",
                         0.0,
@@ -102,7 +100,9 @@ class UDPHandler:
                         ups_percentage,
                     )
 
-                    # sensor_data = IoHandler.get_all_sensor_data_cached()
+                    # sensor_data = IoHandler.get_all_sensor_data()
+
+                    # Pack to binary (much faster than JSON)
                     # response = struct.pack(
                     #     "<f18f3f",
                     #     # timestamp

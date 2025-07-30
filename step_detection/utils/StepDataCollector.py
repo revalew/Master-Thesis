@@ -570,12 +570,12 @@ class StepDataCollector:
 
             # Start recording thread
             self.recording_start_time = time.time()
-            # self.recording_thread = threading.Thread(
-            #     target=self.record_data, daemon=True
-            # )
             self.recording_thread = threading.Thread(
-                target=lambda: self.record_data(), daemon=True
+                target=self.record_data, daemon=True
             )
+            # self.recording_thread = threading.Thread(
+            #     target=lambda: self.record_data(), daemon=True
+            # )
             self.recording_thread.start()
 
             self.update_status("Recording started.")

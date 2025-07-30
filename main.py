@@ -31,6 +31,12 @@ if not WiFiConnection.start_ap_mode():
 #     print(f"{prop}\n")
 
 
+# Configure sensor INTERNAL sample rates BEFORE starting async tasks
+# print_config = False
+# IoHandler.set_sample_rate(sample_rate=50, print_config=print_config)
+# IoHandler.set_sample_rate(sample_rate=1000, print_config=print_config)
+
+
 async def main() -> None:
     """
     Main function of the program.
@@ -48,17 +54,6 @@ async def main() -> None:
     asyncio.create_task(
         asyncio.start_server(handler.handle_request, host="0.0.0.0", port=80, backlog=1)
     )
-
-    # Configure sensor INTERNAL sample rates BEFORE starting async tasks
-    print_config = False
-    # IoHandler.set_sample_rate(sample_rate=10, print_config=print_config) # 10 Hz
-    # IoHandler.set_sample_rate(sample_rate=20, print_config=print_config) # 20 Hz
-    # IoHandler.set_sample_rate(sample_rate=50, print_config=print_config)  # 50 Hz
-    IoHandler.set_sample_rate(sample_rate=100, print_config=print_config) # 100 Hz
-    # IoHandler.set_sample_rate(sample_rate=200, print_config=print_config) # 200 Hz
-    # IoHandler.set_sample_rate(sample_rate=400, print_config=print_config) # 400 Hz
-    # IoHandler.set_sample_rate(sample_rate=800, print_config=print_config) # 800 Hz
-    # IoHandler.set_sample_rate(sample_rate=1000, print_config=print_config) # 1000 Hz
 
     # Start OLED update
     asyncio.create_task(IoHandler.update_oled())

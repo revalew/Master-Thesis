@@ -130,13 +130,6 @@ class IoHandler:
     ########################################
     # Cache
     ########################################
-    _last_sensor_read = 0.0
-    # _sensor_cache_duration = 0.1  # 100ms cache = max 10Hz
-    # _sensor_cache_duration = 0.04  # 40ms cache = max 25Hz
-    # _sensor_cache_duration = 0.02  # 20ms cache = max 50Hz
-    # _sensor_cache_duration = 0.01  # 10ms cache = max 100Hz
-    _sensor_cache_duration = 0.005  # 5ms cache = max 200Hz
-    # _sensor_cache_duration = 0.002  # 2ms = max 500Hz
     _cached_data = {
         "sensor1": {"accel": (0, 0, 0), "gyro": (0, 0, 0), "mag": (0, 0, 0)},
         "sensor2": {"accel": (0, 0, 0), "gyro": (0, 0, 0), "mag": (0, 0, 0)},
@@ -160,31 +153,9 @@ class IoHandler:
         pass
 
     @classmethod
-    def set_sample_rate(cls, sample_rate: int = 50, print_config: bool = False) -> None:
+    def set_sample_rate(cls, sample_rate: int = 0, print_config: bool = False) -> None:
         """
-        FREQUENCY SUMMARY:
-
-        100 Hz Option:
-            - Waveshare:
-                - Accel ~102 Hz,
-                - Gyro 100 Hz,
-                - Mag 100 Hz
-
-            - Adafruit:
-                - Accel 104 Hz,
-                - Gyro 104 Hz,
-                - Mag 80 Hz
-
-        50 Hz Option:
-            - Waveshare:
-                - Accel ~49 Hz,
-                - Gyro 50 Hz,
-                - Mag 50 Hz
-
-            - Adafruit:
-                - Accel 52 Hz,
-                - Gyro 52 Hz,
-                - Mag 40 Hz
+        Set INTERNAL sampling rate of the sensors
 
         Args:
             sample_rate (int): The sample rate to set for the IMUs.
@@ -192,6 +163,20 @@ class IoHandler:
         Returns:
             None
         """
+        if sample_rate == 0:
+            ########################################
+            # Print initialized text
+            ########################################
+            # print("IoHandler initialized")
+            cls.oled.fill(0)  # Clear the display
+            cls.oled.text("IoHandler", 0, 25)
+            cls.oled.text("initialized...", 0, 35)
+            cls.oled.show()
+            time.sleep(2)
+            cls.oled.poweroff()
+
+            return
+
         if sample_rate == 100:
             setting = "=== SENSOR FREQUENCIES SET TO ~100 Hz ==="
 
@@ -249,121 +234,6 @@ class IoHandler:
             # Magnetometer LIS3MDL
             data_rate = MagRate.RATE_40_HZ  # type: ignore # 40 Hz (closest to 50 Hz)
             data_rate_str = "MagRate.RATE_40_HZ"
-
-        elif sample_rate == 10:
-            setting = "=== SENSOR FREQUENCIES SET TO ~10 Hz ==="
-
-            # === WAVESHARE IMU (ICM20948) - 10 Hz ===
-            # Accelerometer: 1125/(1+divisor) = 10 -> divisor = 111.5 -> 111 (gives 10.045 Hz)
-            accelerometer_data_rate_divisor = 111  # ~10.045 Hz
-
-            # Gyro: 1100/(1+divisor) = 10 -> divisor = 109 (gives 10 Hz)
-            gyro_data_rate_divisor = 109  # 10 Hz
-
-            # Magnetometer
-            magnetometer_data_rate = MagDataRate.RATE_10HZ  # type: ignore
-            magnetometer_data_rate_str = "MagDataRate.RATE_10HZ"
-
-            # === ADAFRUIT IMU - 12.5 Hz (closest to 10 Hz) ===
-            accelerometer_data_rate = Rate.RATE_12_5_HZ  # type: ignore
-            gyro_data_rate = Rate.RATE_12_5_HZ  # type: ignore
-            accel_gyro_rate_str = "Rate.RATE_12_5_HZ"
-
-            # Magnetometer LIS3MDL - 10 Hz exact match
-            data_rate = MagRate.RATE_10_HZ  # type: ignore
-            data_rate_str = "MagRate.RATE_10_HZ"
-
-        elif sample_rate == 20:
-            setting = "=== SENSOR FREQUENCIES SET TO ~20 Hz ==="
-
-            # === WAVESHARE IMU (ICM20948) - 20 Hz ===
-            # Accelerometer: 1125/(1+divisor) = 20 -> divisor = 55.25 -> 55 (gives 20.45 Hz)
-            accelerometer_data_rate_divisor = 55  # ~20.45 Hz
-
-            # Gyro: 1100/(1+divisor) = 20 -> divisor = 54 (gives 20.0 Hz)
-            gyro_data_rate_divisor = 54  # 20 Hz
-
-            # Magnetometer
-            magnetometer_data_rate = MagDataRate.RATE_20HZ  # type: ignore
-            magnetometer_data_rate_str = "MagDataRate.RATE_20HZ"
-
-            # === ADAFRUIT IMU - 26 Hz (closest to 20 Hz) ===
-            accelerometer_data_rate = Rate.RATE_26_HZ  # type: ignore
-            gyro_data_rate = Rate.RATE_26_HZ  # type: ignore
-            accel_gyro_rate_str = "Rate.RATE_26_HZ"
-
-            # Magnetometer LIS3MDL - 20 Hz exact match
-            data_rate = MagRate.RATE_20_HZ  # type: ignore
-            data_rate_str = "MagRate.RATE_20_HZ"
-
-        elif sample_rate == 200:
-            setting = "=== SENSOR FREQUENCIES SET TO ~200 Hz ==="
-
-            # === WAVESHARE IMU (ICM20948) - 200 Hz ===
-            # Accelerometer: 1125/(1+divisor) = 200 -> divisor = 4.625 -> 5 (gives 187.5 Hz)
-            accelerometer_data_rate_divisor = 5  # ~187.5 Hz
-
-            # Gyro: 1100/(1+divisor) = 200 -> divisor = 4.5 -> 4 (gives 220 Hz)
-            gyro_data_rate_divisor = 4  # 220 Hz
-
-            # Magnetometer - max available is 100 Hz
-            magnetometer_data_rate = MagDataRate.RATE_100HZ  # type: ignore
-            magnetometer_data_rate_str = "MagDataRate.RATE_100HZ (MAX)"
-
-            # === ADAFRUIT IMU - 208 Hz ===
-            accelerometer_data_rate = Rate.RATE_208_HZ  # type: ignore
-            gyro_data_rate = Rate.RATE_208_HZ  # type: ignore
-            accel_gyro_rate_str = "Rate.RATE_208_HZ"
-
-            # Magnetometer LIS3MDL - 155 Hz (highest practical)
-            data_rate = MagRate.RATE_155_HZ  # type: ignore
-            data_rate_str = "MagRate.RATE_155_HZ"
-
-        elif sample_rate == 400:
-            setting = "=== SENSOR FREQUENCIES SET TO ~400 Hz ==="
-
-            # === WAVESHARE IMU (ICM20948) - 400 Hz ===
-            # Accelerometer: 1125/(1+divisor) = 400 -> divisor = 1.8125 -> 2 (gives 375 Hz)
-            accelerometer_data_rate_divisor = 2  # ~375 Hz
-
-            # Gyro: 1100/(1+divisor) = 400 -> divisor = 1.75 -> 2 (gives 366.67 Hz)
-            gyro_data_rate_divisor = 2  # 366.67 Hz
-
-            # Magnetometer - max available is 100 Hz
-            magnetometer_data_rate = MagDataRate.RATE_100HZ  # type: ignore
-            magnetometer_data_rate_str = "MagDataRate.RATE_100HZ (MAX)"
-
-            # === ADAFRUIT IMU - 416 Hz ===
-            accelerometer_data_rate = Rate.RATE_416_HZ  # type: ignore
-            gyro_data_rate = Rate.RATE_416_HZ  # type: ignore
-            accel_gyro_rate_str = "Rate.RATE_416_HZ"
-
-            # Magnetometer LIS3MDL - 300 Hz
-            data_rate = MagRate.RATE_300_HZ  # type: ignore
-            data_rate_str = "MagRate.RATE_300_HZ"
-
-        elif sample_rate == 800:
-            setting = "=== SENSOR FREQUENCIES SET TO ~800 Hz ==="
-
-            # === WAVESHARE IMU (ICM20948) - 800 Hz ===
-            # Accelerometer: 1125/(1+divisor) = 800 -> divisor = 0.41 -> 0 (gives 1125 Hz MAX)
-            accelerometer_data_rate_divisor = 0  # 1125 Hz (MAX)
-
-            # Gyro: 1100/(1+divisor) = 800 -> divisor = 0.375 -> 0 (gives 1100 Hz MAX)
-            gyro_data_rate_divisor = 0  # 1100 Hz (MAX)
-
-            # Magnetometer - max available is 100 Hz
-            magnetometer_data_rate = MagDataRate.RATE_100HZ  # type: ignore
-            magnetometer_data_rate_str = "MagDataRate.RATE_100HZ (MAX)"
-
-            # === ADAFRUIT IMU - 833 Hz ===
-            accelerometer_data_rate = Rate.RATE_833_HZ  # type: ignore
-            gyro_data_rate = Rate.RATE_833_HZ  # type: ignore
-            accel_gyro_rate_str = "Rate.RATE_833_HZ"
-
-            # Magnetometer LIS3MDL - 560 Hz
-            data_rate = MagRate.RATE_560_HZ  # type: ignore
-            data_rate_str = "MagRate.RATE_560_HZ"
 
         elif sample_rate == 1000:
             setting = "=== SENSOR FREQUENCIES SET TO ~1000 Hz ==="
@@ -424,7 +294,7 @@ class IoHandler:
             print(
                 f"\nmagnetometer_data_rate: {cls.mag_ada.data_rate} ({data_rate_str})"
             )
-        
+
         ########################################
         # Print initialized text
         ########################################
@@ -454,6 +324,16 @@ class IoHandler:
         Returns:
             None
         """
+        ########################################
+        # Print initialized text
+        ########################################
+        cls.oled.fill(0)  # Clear the display
+        cls.oled.text("IoHandler", 0, 25)
+        cls.oled.text("initialized...", 0, 35)
+        cls.oled.show()
+        await asyncio.sleep(2)
+        cls.oled.poweroff()
+        
         sleepTime = 0.5  # Repeat task every X seconds
         while True:
             if not cls.screen_on:  # If the screen is off display nothing
@@ -603,17 +483,9 @@ class IoHandler:
         )
 
     @classmethod
-    def get_all_sensor_data_cached(cls):
-        """Get all sensor data with caching for better performance"""
-        current_time = time.time()
-
-        # Check if cache is still valid
-        if (current_time - cls._last_sensor_read) < cls._sensor_cache_duration:
-            return cls._cached_data
-
-        # Update cache
+    def get_all_sensor_data(cls):
+        """Get all sensor data"""
         try:
-            # Read all sensors
             cls._cached_data["sensor1"]["accel"] = cls.get_accel_reading("wav")
             cls._cached_data["sensor1"]["gyro"] = cls.get_gyro_reading("wav")
             cls._cached_data["sensor1"]["mag"] = cls.get_magnetic_reading("wav")
@@ -628,8 +500,6 @@ class IoHandler:
             cls._cached_data["battery"]["percentage"] = battery_percentage
             cls._cached_data["battery"]["voltage"] = battery_voltage
             cls._cached_data["battery"]["current"] = battery_current
-
-            cls._last_sensor_read = current_time
 
         except Exception as e:
             print(f"Sensor read error: {e}")

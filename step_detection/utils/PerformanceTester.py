@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 # CONFIGURATION
-# API_URL = "http://192.168.4.1/api" # AP mode
-API_URL = "http://10.9.8.119/api" # STA mode
+API_URL = "http://192.168.4.1/api"  # AP mode
+# API_URL = "http://10.9.8.119/api" # STA mode
 RECORDING_NAME = "performance_test_001"
 SAVE_PATH = "../analysis/test_recordings"
-TARGET_RATE_HZ = 100  # Target sampling rate
+TARGET_RATE_HZ = 25  # Target sampling rate
 REQUEST_TIMEOUT = 0.5  # Seconds
 MAX_RECORDING_TIME = 17  # Seconds
 
@@ -32,11 +32,14 @@ class PerformanceTester:
             pool_connections=1, pool_maxsize=1, max_retries=0
         )
         self.session.mount("http://", adapter)
-        
+
         # UDP socket
         self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_sock.settimeout(0.1)
-        self.server_addr = (API_URL.split('//')[1].split('/')[0], 12345)  # Extract IP from URL
+        self.server_addr = (
+            API_URL.split("//")[1].split("/")[0],
+            12345,
+        )  # Extract IP from URL
 
         self.recording = False
         self.data = {
@@ -72,21 +75,34 @@ class PerformanceTester:
 
     def test_connection(self):
         try:
-            response = self.session.get(
-                f"{API_URL}?action=getBatteryInfo", timeout=REQUEST_TIMEOUT
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if "status" in data and data["status"] == "OK":
-                    print(
-                        f"✓ Connected to Pico. Battery: {data['battery_percentage']:.1f}%"
-                    )
-                    return True
-            print("✗ Invalid response from Pico")
-            return False
+            self.udp_sock.sendto(b"GET", self.server_addr)
+            data, _ = self.udp_sock.recvfrom(1024)
+
+            values = struct.unpack("<f18f3f", data)
+
+            print(f"✓ Connected to Pico. Battery: {values[21]:.1f}%")
+
+            return True
+        
         except Exception as e:
             print(f"✗ Connection failed: {e}")
             return False
+        # try:
+        #     response = self.session.get(
+        #         f"{API_URL}?action=getBatteryInfo", timeout=REQUEST_TIMEOUT
+        #     )
+        #     if response.status_code == 200:
+        #         data = response.json()
+        #         if "status" in data and data["status"] == "OK":
+        #             print(
+        #                 f"✓ Connected to Pico. Battery: {data['battery_percentage']:.1f}%"
+        #             )
+        #             return True
+        #     print("✗ Invalid response from Pico")
+        #     return False
+        # except Exception as e:
+        #     print(f"✗ Connection failed: {e}")
+        #     return False
 
     # def read_sensors(self):
     #     try:
@@ -101,27 +117,29 @@ class PerformanceTester:
     def read_sensors(self):
         try:
             # Send UDP request
-            self.udp_sock.sendto(b'GET', self.server_addr)
+            self.udp_sock.sendto(b"GET", self.server_addr)
             data, _ = self.udp_sock.recvfrom(1024)
-            
+
             # Unpack binary data
-            values = struct.unpack('<f18f3f', data)
-            
+            values = struct.unpack("<f18f3f", data)
+
             return {
                 "status": "OK",
                 "sensor1": {
                     "acceleration": {"X": values[1], "Y": values[2], "Z": values[3]},
                     "gyro": {"X": values[4], "Y": values[5], "Z": values[6]},
-                    "magnetic": {"X": values[7], "Y": values[8], "Z": values[9]}
+                    "magnetic": {"X": values[7], "Y": values[8], "Z": values[9]},
                 },
                 "sensor2": {
                     "acceleration": {"X": values[10], "Y": values[11], "Z": values[12]},
                     "gyro": {"X": values[13], "Y": values[14], "Z": values[15]},
-                    "magnetic": {"X": values[16], "Y": values[17], "Z": values[18]}
+                    "magnetic": {"X": values[16], "Y": values[17], "Z": values[18]},
                 },
                 "battery": {
-                    "voltage": values[19], "current": values[20], "percentage": values[21]
-                }
+                    "voltage": values[19],
+                    "current": values[20],
+                    "percentage": values[21],
+                },
             }
         except:
             return None
@@ -177,11 +195,11 @@ class PerformanceTester:
         print(f"Actual rate: {actual_rate:.2f} Hz")
         print(f"Steps marked: {len(self.step_times)}")
 
-        if self.sample_count > 0:
-            self.save_data()
-            print("Data saved successfully")
-        else:
-            print("No data to save")
+        # if self.sample_count > 0:
+        #     self.save_data()
+        #     print("Data saved successfully")
+        # else:
+        #     print("No data to save")
 
     def recording_loop(self):
         interval = 1.0 / TARGET_RATE_HZ
