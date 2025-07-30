@@ -419,6 +419,20 @@ Actual sampling rate is $`\thickapprox [22, 23] Hz`$ due to network limitations,
 
 - Universal parameter sets SHOULD work across different sensor mounting points (SHOULD, that's a good word)
 
+<br/>
+
+<div align='center'>
+  
+  <img src="./step_detection/analysis/UDP_test_22Hz/udp_plots.png" alt="UDP plots" height="160" loading="lazy"/>
+
+</div>
+
+<div align='center'>
+
+  <img src="./step_detection/analysis/UDP_test_22Hz/udp_summary.png" alt="Summary metrics and rankings" width="375" height="260" loading="lazy"/>
+
+</div>
+
 <br/><br/>
 
 ### ...

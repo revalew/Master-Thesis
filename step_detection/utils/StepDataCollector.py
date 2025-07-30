@@ -1161,14 +1161,13 @@ class StepDataCollector:
             )
             return
 
-
         # General tuning guidelines (tailored for 22Hz):
         # - Too many false positives: INCREASE threshold/sensitivity, INCREASE min_time_between_steps
         # - Missing steps: DECREASE threshold/sensitivity, DECREASE min_time_between_steps
         # - Noisy results: INCREASE window_size for all algorithms
         # - Delayed response: DECREASE window_size for all algorithms
         # - For lower sampling rates (like 22Hz): INCREASE all window_size parameters
-        
+
         # PARAMETER RANGES (22Hz optimized):
         # window_size: 0.3-2.0s (22Hz needs longer windows than 100Hz)
         # min_time_between_steps: 0.25-0.6s (physiological limits: slow=0.6s, fast=0.25s)
@@ -1176,44 +1175,47 @@ class StepDataCollector:
         # hysteresis_band: 0.1-0.8 m/s² (clean data=0.1, noisy=0.8)
         # overlap: 0.5-0.8 (higher overlap=smoother but slower)
         # step_freq_range: (0.5-3.0) Hz (typical walking: 0.8-2.5 Hz)
-        
+
         # WALKING SCENARIOS:
         # Slow walking (elderly): min_time_between_steps=0.5-0.6, decrease all thresholds by 20%
         # Normal walking: use default values below
         # Fast walking/running: min_time_between_steps=0.25-0.3, increase thresholds by 20%
-        
+
         # ALGORITHM-SPECIFIC TIPS:
         # Peak Detection: Most robust, good starting point. If oversensitive, increase threshold to 1.0-1.2
         # Zero Crossing: Best for clean signals. If chattering, increase hysteresis_band to 0.4-0.5
         # Spectral Analysis: Good for steady walking. Increase window_size to 8-10s for better freq resolution
         # Adaptive Threshold: Best accuracy but sensitive to noise. Lower sensitivity (0.3-0.4) for noisy data
         # SHOE: Best for complex movements. Increase threshold to 0.7-0.8 if too many false detections
-        
+
         param_sets = {
             "peak_detection": {
-                "window_size": 1.0,                 # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
-                "threshold": 0.8,                   # Adaptive threshold multiplier. INCREASE to reduce false positives, DECREASE to catch more steps
-                "min_time_between_steps": 0.4,      # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+                "window_size": 0.6,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "threshold": 0.5,  # Adaptive threshold multiplier. INCREASE to reduce false positives, DECREASE to catch more steps
+                "min_time_between_steps": 0.35,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
             },
             "zero_crossing": {
-                "window_size": 0.5,                 # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
-                "min_time_between_steps": 0.4,      # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
-                "hysteresis_band": 0.3,             # Hysteresis threshold (m/s²). INCREASE to reduce noise sensitivity, DECREASE to catch weak steps
+                "window_size": 0.5,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "min_time_between_steps": 0.4,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+                "hysteresis_band": 0.3,  # Hysteresis threshold (m/s²). INCREASE to reduce noise sensitivity, DECREASE to catch weak steps
             },
             "spectral_analysis": {
-                "window_size": 6.0,                 # STFT window (seconds). INCREASE for better freq resolution, DECREASE for better time resolution
-                "overlap": 0.7,                     # STFT overlap (0-1). INCREASE for smoother results, DECREASE for faster processing
-                "step_freq_range": (0.6, 2.5),      # Walking frequency range (Hz). ADJUST based on expected walking speed
+                "window_size": 8.0,  # STFT window (seconds). INCREASE for better freq resolution, DECREASE for better time resolution
+                "overlap": 0.8,  # STFT overlap (0-1). INCREASE for smoother results, DECREASE for faster processing
+                "step_freq_range": (
+                    0.8,
+                    2.0,
+                ),  # Walking frequency range (Hz). ADJUST based on expected walking speed
             },
             "adaptive_threshold": {
-                "window_size": 0.8,                 # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
-                "sensitivity": 0.5,                 # Threshold sensitivity (0-1). INCREASE to catch more steps, DECREASE to reduce false positives
-                "min_time_between_steps": 0.4,      # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+                "window_size": 0.8,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "sensitivity": 0.5,  # Threshold sensitivity (0-1). INCREASE to catch more steps, DECREASE to reduce false positives
+                "min_time_between_steps": 0.4,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
             },
             "shoe": {
-                "window_size": 0.5,                 # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
-                "threshold": 0.6,                   # Stance detection threshold. INCREASE to be more selective, DECREASE to detect more stance phases
-                "min_time_between_steps": 0.4,      # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+                "window_size": 0.3,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "threshold": 9.0,  # Stance detection threshold. INCREASE to be more selective, DECREASE to detect more stance phases
+                "min_time_between_steps": 0.35,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
             },
         }
 

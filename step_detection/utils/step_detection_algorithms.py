@@ -93,6 +93,7 @@ def peak_detection_algorithm(
             )
             # Fallback to simple std
             adaptive_threshold = np.std(centered_signal) * threshold
+
         else:
             adaptive_threshold = running_std.values * threshold
 
@@ -101,6 +102,7 @@ def peak_detection_algorithm(
         adaptive_threshold = np.std(centered_signal) * threshold
 
     min_distance = max(1, int(min_time_between_steps * fs))
+
     try:
         peaks, _ = signal.find_peaks(
             centered_signal,
@@ -109,6 +111,7 @@ def peak_detection_algorithm(
             prominence=0.2,
         )
         detected_steps = peaks / fs
+
     except Exception as e:
         print(f"Peak detection error: {e}")
         detected_steps = np.array([])
@@ -154,6 +157,7 @@ def zero_crossing_algorithm(
 
         if not above_threshold and value > hysteresis_band:
             above_threshold = True
+
         elif above_threshold and value < -hysteresis_band:
             above_threshold = False
 
@@ -163,6 +167,7 @@ def zero_crossing_algorithm(
                 inhibit_counter = inhibit_samples
 
     detected_steps = np.array(crossings) / fs
+
     return detected_steps, filtered_signal
 
 
@@ -214,13 +219,19 @@ def spectral_analysis_algorithm(
 
         median_step_frequency = np.median(step_freqs)
         signal_duration = len(accel_mag) / fs
-        total_steps = int(median_step_frequency * signal_duration * 2)
+
+        # The x2 multiplier assumes stride frequency = step frequency / 2
+        # But this may not be true for 22Hz sampling or pocket mounting
+        # total_steps = int(median_step_frequency * signal_duration * 2)
+        # total_steps = int(median_step_frequency * signal_duration * 1.2)
+        total_steps = int(median_step_frequency * signal_duration)
 
         if total_steps > 0:
             step_interval = signal_duration / total_steps
             detected_steps = np.arange(
                 step_interval / 2, signal_duration, step_interval
             )
+
         else:
             detected_steps = np.array([])
 
@@ -275,6 +286,7 @@ def adaptive_threshold_algorithm(
             threshold_value = (
                 np.mean(step_amplitudes) * sensitivity if step_amplitudes else 1.0
             )
+
         else:
             recent_amplitudes = step_amplitudes[-window_samples // 2 :]
             threshold_value = np.mean(recent_amplitudes) * sensitivity
@@ -325,10 +337,12 @@ def shoe_algorithm(
     filtered_accel = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
     filtered_gyro = safe_savgol_filter(gyro_mag, window_size, fs, polyorder=3)
 
+    # Normalize both signals
     if np.max(filtered_accel) > np.min(filtered_accel):
         norm_accel = (filtered_accel - np.min(filtered_accel)) / (
             np.max(filtered_accel) - np.min(filtered_accel)
         )
+
     else:
         norm_accel = np.ones_like(filtered_accel) * 0.5
 
@@ -336,6 +350,7 @@ def shoe_algorithm(
         norm_gyro = (filtered_gyro - np.min(filtered_gyro)) / (
             np.max(filtered_gyro) - np.min(filtered_gyro)
         )
+
     else:
         norm_gyro = np.ones_like(filtered_gyro) * 0.5
 
@@ -345,11 +360,22 @@ def shoe_algorithm(
     stance_phases = []
 
     if len(combined_signal) < window_samples:
-        print(
-            f"SHOE: Signal too short ({len(combined_signal)}) for window ({window_samples})"
-        )
-        return np.array([]), combined_signal
+        # print(f"SHOE: Signal too short, using peak detection fallback")
+        # Fallback to peak detection
+        min_distance = max(1, int(min_time_between_steps * fs))
+        try:
+            peaks, _ = signal.find_peaks(
+                combined_signal, height=0.5, distance=min_distance, prominence=0.1
+            )
+            detected_steps = peaks / fs
 
+        except Exception as e:
+            print(f"SHOE fallback error: {e}")
+            detected_steps = np.array([])
+
+        return detected_steps, combined_signal
+
+    # Try stance phase detection first
     try:
         for i in range(
             0, len(combined_signal) - window_samples, max(1, window_samples // 2)
@@ -371,13 +397,37 @@ def shoe_algorithm(
                     last_stance = stance
 
             detected_steps = np.array(filtered_stances) / fs
+            # print(f"SHOE: Used stance phase detection, found {len(detected_steps)} steps")
+
         else:
-            print(f"SHOE: No stance phases detected with threshold {threshold}")
-            detected_steps = np.array([])
+            # print(f"SHOE: No stance phases found, using peak detection fallback")
+            try:
+                peaks, _ = signal.find_peaks(
+                    combined_signal,
+                    height=0.5,  # Fixed threshold for fallback
+                    distance=min_distance,
+                    prominence=0.1,
+                )
+                detected_steps = peaks / fs
+                # print(f"SHOE: Peak detection fallback found {len(detected_steps)} steps")
+
+            except Exception as e:
+                print(f"SHOE fallback error: {e}")
+                detected_steps = np.array([])
 
     except Exception as e:
-        print(f"SHOE algorithm error: {e}")
-        detected_steps = np.array([])
+        print(f"SHOE stance detection error: {e}, using fallback")
+        # Emergency fallback
+        min_distance = max(1, int(min_time_between_steps * fs))
+        try:
+            peaks, _ = signal.find_peaks(
+                combined_signal, height=0.5, distance=min_distance, prominence=0.1
+            )
+            detected_steps = peaks / fs
+
+        except Exception as e:
+            print(f"SHOE emergency fallback error: {e}")
+            detected_steps = np.array([])
 
     return detected_steps, combined_signal
 
