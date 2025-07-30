@@ -86,6 +86,8 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Added UDP support](#added-udp-support)
 
+  - [Algorithm Improvements](#algorithm-improvements)
+
 <br/>
 <br/>
 
@@ -393,7 +395,7 @@ I also added mouse bindings to improve experiment workflow. During data collecti
 
 ### Added UDP support
 
-Added UDP communication protocol to dramatically improve sensor data collection performance, when compared to HTTP: from $`[1, 5] Hz \; \to \; \gg 100 Hz`$ sampling rates (over 25x faster!!). Some packets may be lost in transmission, but I'm willing to live with that.
+Added UDP communication protocol to dramatically improve sensor data collection performance, when compared to HTTP: from $`[1, 5] Hz \; \to \; \gg 100 Hz`$ sampling rates (over $`\mathbf{25x}`$ faster!!). Some packets may be lost in transmission, but I'm willing to live with that.
 
 - HTTP protocol was the primary bottleneck limiting sampling rates
 
@@ -401,7 +403,21 @@ Added UDP communication protocol to dramatically improve sensor data collection 
 
 - GUI automatically uses UDP with HTTP fallback for compatibility
 
-Now I can continue the research and collect data without worrying about the network latency.
+Now I can continue the research and collect data without worrying about the network latency (CHECK OUT THE NEXT UPDATE - this did not age well).
+
+<br/><br/>
+
+### Algorithm Improvements
+
+Actual sampling rate is $`\thickapprox [22, 23] Hz`$ due to network limitations, not the intended $`[50, 100] Hz`$. Those are the limitations of the Pico + UDP limitation + obviously Micropython and skill issues... I'm tired boss... I don't have time and energy to optimize for higher sampling rates. $`23 Hz`$ is the best I can do, **AND** it's $`\mathbf{23x}`$ times better than the $`1 Hz`$ (ultimately $`[4, 5] Hz`$), which I was able to get with the HTTP protocol.
+
+- Step detection algorithms optimized for **22Hz sampling rate**
+
+- Removed caching due to data quality issues - direct UDP communication only (TRUE $`23 Hz`$ sampling rate and not fake $`50 Hz`$, which doubled every possible sample and fetched new data at most every $`0.7 s`$)
+
+- Added comprehensive parameter tuning guides: [Tuning Guide](./step_detection/TUNING_PARAMS_GUIDE.md) and [Scenario Configs](./step_detection/SCENARIO_SPECIFIC_PARAMS.md)
+
+- Universal parameter sets SHOULD work across different sensor mounting points (SHOULD, that's a good word)
 
 <br/><br/>
 

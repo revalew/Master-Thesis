@@ -61,34 +61,53 @@ def peak_detection_algorithm(
     accel_data, fs, window_size=0.1, threshold=1.0, min_time_between_steps=0.3
 ):
     """
-    Step detection using peak detection with fixed threshold
+    Step detection using peak detection with adaptive threshold
 
-    Parameters:
-    - accel_data: Accelerometer data (3D array [x, y, z])
-    - fs: Sampling frequency in Hz
-    - window_size: Size of the moving average window in seconds
-    - threshold: Threshold for peak detection
-    - min_time_between_steps: Minimum time between consecutive steps in seconds
+    Args:
+        - accel_data: Accelerometer data (3D array [x, y, z])
+        - fs: Sampling frequency in Hz
+        - window_size: Size of the moving average window in seconds
+        - threshold: Threshold for peak detection
+        - min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-    - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration magnitude signal
+        - detected_steps: Array of detected step times
+        - filtered_signal: Filtered acceleration magnitude signal
     """
-    # Calculate the magnitude of acceleration (removing gravity)
-    accel_mag = np.sqrt(
-        accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
-    )
+    accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
 
-    # Apply safe moving average filter
-    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
+    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
+    gravity_baseline = np.median(filtered_signal)
+    centered_signal = filtered_signal - gravity_baseline
 
-    # Find peaks
+    window_samples = max(int(2.0 * fs), 20)
+
+    try:
+        running_std = (
+            pd.Series(centered_signal).rolling(window_samples, min_periods=1).std()
+        )
+
+        if len(running_std) != len(centered_signal):
+            print(
+                f"Length mismatch: signal={len(centered_signal)}, std={len(running_std)}"
+            )
+            # Fallback to simple std
+            adaptive_threshold = np.std(centered_signal) * threshold
+        else:
+            adaptive_threshold = running_std.values * threshold
+
+    except Exception as e:
+        print(f"Rolling std error: {e}, using fallback")
+        adaptive_threshold = np.std(centered_signal) * threshold
+
     min_distance = max(1, int(min_time_between_steps * fs))
     try:
         peaks, _ = signal.find_peaks(
-            filtered_signal, height=threshold, distance=min_distance
+            centered_signal,
+            height=adaptive_threshold,
+            distance=min_distance,
+            prominence=0.2,
         )
-        # Convert peak indices to times
         detected_steps = peaks / fs
     except Exception as e:
         print(f"Peak detection error: {e}")
@@ -98,64 +117,52 @@ def peak_detection_algorithm(
 
 
 def zero_crossing_algorithm(
-    accel_data, fs, window_size=0.1, min_time_between_steps=0.3
+    accel_data, fs, window_size=0.1, min_time_between_steps=0.3, hysteresis_band=0.3
 ):
     """
-    Step detection using zero-crossing method
+    Step detection using zero-crossing method with hysteresis
 
-    Parameters:
-    - accel_data: Accelerometer data (3D array [x, y, z])
-    - fs: Sampling frequency in Hz
-    - window_size: Size of the moving average window in seconds
-    - min_time_between_steps: Minimum time between consecutive steps in seconds
+    Args:
+        - accel_data: Accelerometer data (3D array [x, y, z])
+        - fs: Sampling frequency in Hz
+        - window_size: Size of the moving average window in seconds
+        - min_time_between_steps: Minimum time between consecutive steps in seconds
+        - hysteresis_band: Hysteresis band in Hz. Default is 0.3
 
     Returns:
-    - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration signal
+        - detected_steps: Array of detected step times
+        - filtered_signal: Filtered acceleration signal
     """
-    # Use acceleration magnitude instead of just Z-axis
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
+    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
 
-    # Remove mean to center around zero
-    accel_centered = accel_mag - np.mean(accel_mag)
+    gravity_reference = np.median(filtered_signal)
+    signal_centered = filtered_signal - gravity_reference
 
-    # Apply safe moving average filter
-    filtered_signal = safe_savgol_filter(accel_centered, window_size, fs, polyorder=2)
-
-    # Find ALL zero crossings (both positive and negative slope)
-    sign_changes = np.diff(np.signbit(filtered_signal))
-    zero_crossings = np.where(sign_changes)[0]
-
-    # print(f"Zero crossings found: {len(zero_crossings)} total crossings")
-
-    if len(zero_crossings) == 0:
-        return np.array([]), filtered_signal
-
-    # Keep only positive slope zero crossings (signal going from negative to positive)
-    pos_slope_crossings = []
-    for crossing in zero_crossings:
-        if crossing + 1 < len(filtered_signal):
-            if filtered_signal[crossing] <= 0 and filtered_signal[crossing + 1] > 0:
-                pos_slope_crossings.append(crossing)
-
-    # print(f"Positive slope crossings: {len(pos_slope_crossings)}")
-
-    # Apply minimum time between steps
     min_samples = max(1, int(min_time_between_steps * fs))
+    inhibit_samples = max(5, int(0.1 * fs))
 
-    # Filter out crossings that are too close
-    filtered_crossings = []
-    if len(pos_slope_crossings) > 0:
-        filtered_crossings = [pos_slope_crossings[0]]
-        for crossing in pos_slope_crossings[1:]:
-            if crossing - filtered_crossings[-1] >= min_samples:
-                filtered_crossings.append(crossing)
+    crossings = []
+    last_crossing = -min_samples
+    above_threshold = False
+    inhibit_counter = 0
 
-    # print(f"Final filtered crossings: {len(filtered_crossings)}")
+    for i, value in enumerate(signal_centered):
+        if inhibit_counter > 0:
+            inhibit_counter -= 1
+            continue
 
-    # Convert to numpy array and to times
-    detected_steps = np.array(filtered_crossings) / fs
+        if not above_threshold and value > hysteresis_band:
+            above_threshold = True
+        elif above_threshold and value < -hysteresis_band:
+            above_threshold = False
 
+            if (i - last_crossing) >= min_samples:
+                crossings.append(i)
+                last_crossing = i
+                inhibit_counter = inhibit_samples
+
+    detected_steps = np.array(crossings) / fs
     return detected_steps, filtered_signal
 
 
@@ -163,74 +170,61 @@ def spectral_analysis_algorithm(
     accel_data, fs, window_size=5.0, overlap=0.5, step_freq_range=(1.0, 2.5)
 ):
     """
-    Step detection using spectral analysis.
+    Step detection using STFT spectral analysis
 
-    Parameters:
-    - accel_data: Accelerometer data (3D array [x, y, z])
-    - fs: Sampling frequency in Hz
-    - window_size: Size of FFT window in seconds
-    - overlap: Overlap between consecutive windows (0-1)
-    - step_freq_range: Range of expected step frequencies in Hz
+    Args:
+        - accel_data: Accelerometer data (3D array [x, y, z])
+        - fs: Sampling frequency in Hz
+        - window_size: Size of FFT window in seconds
+        - overlap: Overlap between consecutive windows (0-1)
+        - step_freq_range: Range of expected step frequencies in Hz
 
     Returns:
-    - detected_steps: Array of detected step times
-    - step_freqs: Array of step frequencies
+        - detected_steps: Array of detected step times
+        - step_freqs: Array of step frequencies
     """
-    # Calculate the magnitude of acceleration (removing gravity)
-    accel_mag = np.sqrt(
-        accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
-    )
+    accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
+
+    if len(accel_mag) < 3.0 * fs:
+        return np.array([]), np.array([])
 
     # Parameters for the STFT
-    nperseg = int(window_size * fs)
+    nperseg = min(int(window_size * fs), len(accel_mag) // 2)
     noverlap = int(nperseg * overlap)
 
-    # Ensure valid parameters
-    if nperseg >= len(accel_mag):
-        nperseg = len(accel_mag) // 2
+    if nperseg < 32:
+        nperseg = 32
     if noverlap >= nperseg:
         noverlap = nperseg // 2
 
     try:
-        # Compute STFT
-        f, t, Zxx = signal.stft(accel_mag, fs=fs, nperseg=nperseg, noverlap=noverlap)
+        f, t, Zxx = signal.stft(
+            accel_mag, fs=fs, nperseg=nperseg, noverlap=noverlap, window="hann"
+        )
 
-        # Find the frequency bin indices corresponding to the step frequency range
-        freq_min_idx = np.argmin(np.abs(f - step_freq_range[0]))
-        freq_max_idx = np.argmin(np.abs(f - step_freq_range[1]))
+        freq_mask = (f >= step_freq_range[0]) & (f <= step_freq_range[1])
+        if not np.any(freq_mask):
+            return np.array([]), np.array([])
 
-        # For each time window, find the dominant frequency in the step frequency range
-        step_freqs = []
-        for i in range(Zxx.shape[1]):
-            # Get the power spectrum for this time window
-            power_spectrum = np.abs(Zxx[:, i])
+        gait_spectrum = np.abs(Zxx[freq_mask, :])
+        gait_freqs = f[freq_mask]
 
-            # Find the dominant frequency in the step frequency range
-            dom_freq_idx = freq_min_idx + np.argmax(
-                power_spectrum[freq_min_idx : freq_max_idx + 1]
-            )
-            step_freqs.append(f[dom_freq_idx])
+        dominant_freq_indices = np.argmax(gait_spectrum, axis=0)
+        step_freqs = gait_freqs[dominant_freq_indices]
 
-        # Calculate the number of steps in each window
-        # Number of steps = frequency (steps/sec) * window duration (sec)
-        # We use overlap to avoid double counting
-        effective_window_duration = window_size * (1 - overlap)
-        steps_per_window = np.array(step_freqs) * effective_window_duration
+        median_step_frequency = np.median(step_freqs)
+        signal_duration = len(accel_mag) / fs
+        total_steps = int(median_step_frequency * signal_duration * 2)
 
-        # Total number of steps is the sum of steps in each window
-        total_steps = int(np.sum(steps_per_window))
-
-        # We don't have exact step times from this method, so we'll distribute them evenly
-        # This is a limitation of the spectral approach
-        time_duration = accel_mag.size / fs
         if total_steps > 0:
-            # Distribute steps evenly
-            step_interval = time_duration / total_steps
-            detected_steps = np.arange(step_interval / 2, time_duration, step_interval)
+            step_interval = signal_duration / total_steps
+            detected_steps = np.arange(
+                step_interval / 2, signal_duration, step_interval
+            )
         else:
             detected_steps = np.array([])
 
-        return detected_steps, np.array(step_freqs)
+        return detected_steps, step_freqs
 
     except Exception as e:
         print(f"Spectral analysis error: {e}")
@@ -241,61 +235,64 @@ def adaptive_threshold_algorithm(
     accel_data, fs, window_size=0.1, sensitivity=0.6, min_time_between_steps=0.3
 ):
     """
-    Step detection using adaptive thresholding
+    Step detection using adaptive threshold with local minima detection
 
-    Parameters:
-    - accel_data: Accelerometer data (3D array [x, y, z])
-    - fs: Sampling frequency in Hz
-    - window_size: Size of the moving average window in seconds
-    - sensitivity: Sensitivity parameter (0-1) controlling the adaptive threshold
-    - min_time_between_steps: Minimum time between consecutive steps in seconds
+    Args:
+        - accel_data: Accelerometer data (3D array [x, y, z])
+        - fs: Sampling frequency in Hz
+        - window_size: Size of the moving average window in seconds
+        - sensitivity: Sensitivity parameter (0-1) controlling the adaptive threshold
+        - min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-    - detected_steps: Array of detected step times
-    - filtered_signal: Filtered acceleration magnitude signal
-    - adaptive_threshold: Array of adaptive threshold values
+        - detected_steps: Array of detected step times
+        - filtered_signal: Filtered acceleration magnitude signal
+        - adaptive_threshold: Array of adaptive threshold values
     """
-    # Calculate the magnitude of acceleration (removing gravity)
-    accel_mag = np.sqrt(
-        accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
-    )
+    accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
+    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
 
-    # Apply safe moving average filter
-    filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
-
-    # Calculate the adaptive threshold using a longer window
-    long_window = max(int(2.0 * fs), 10)  # 2-second window, minimum 10 samples
-
-    # Compute the running mean and standard deviation
-    running_mean = np.zeros_like(filtered_signal)
-    running_std = np.zeros_like(filtered_signal)
-
-    for i in range(len(filtered_signal)):
-        start_idx = max(0, i - long_window)
-        window_data = filtered_signal[start_idx : i + 1]
-        if len(window_data) > 0:
-            running_mean[i] = np.mean(window_data)
-            running_std[i] = np.std(window_data)
-        else:
-            running_mean[i] = np.mean(filtered_signal)
-            running_std[i] = np.std(filtered_signal)
-
-    # Adaptive threshold = mean + sensitivity * std
-    adaptive_threshold = running_mean + sensitivity * running_std
-
-    # Find peaks above the adaptive threshold
     min_distance = max(1, int(min_time_between_steps * fs))
+
     try:
-        peaks, _ = signal.find_peaks(
-            filtered_signal, height=adaptive_threshold, distance=min_distance
-        )
-        # Convert peak indices to times
-        detected_steps = peaks / fs
+        all_peaks, _ = signal.find_peaks(filtered_signal, distance=min_distance)
+
+        if len(all_peaks) == 0:
+            return np.array([]), filtered_signal, np.zeros_like(filtered_signal)
+
+        step_amplitudes = []
+        window_samples = max(int(1.0 * fs), 20)
+
+        for peak_idx in all_peaks:
+            start_idx = max(0, peak_idx - window_samples // 2)
+            end_idx = min(len(filtered_signal), peak_idx + window_samples // 2)
+            local_baseline = np.min(filtered_signal[start_idx:end_idx])
+
+            amplitude = filtered_signal[peak_idx] - local_baseline
+            step_amplitudes.append(amplitude)
+
+        if len(step_amplitudes) <= 10:
+            threshold_value = (
+                np.mean(step_amplitudes) * sensitivity if step_amplitudes else 1.0
+            )
+        else:
+            recent_amplitudes = step_amplitudes[-window_samples // 2 :]
+            threshold_value = np.mean(recent_amplitudes) * sensitivity
+
+        adaptive_threshold = np.full_like(filtered_signal, threshold_value)
+
+        valid_peaks = []
+        for i, peak_idx in enumerate(all_peaks):
+            if step_amplitudes[i] > threshold_value:
+                valid_peaks.append(peak_idx)
+
+        detected_steps = np.array(valid_peaks) / fs
+
+        return detected_steps, filtered_signal, adaptive_threshold
+
     except Exception as e:
         print(f"Adaptive threshold error: {e}")
-        detected_steps = np.array([])
-
-    return detected_steps, filtered_signal, adaptive_threshold
+        return np.array([]), filtered_signal, np.zeros_like(filtered_signal)
 
 
 def shoe_algorithm(
@@ -307,69 +304,77 @@ def shoe_algorithm(
     min_time_between_steps=0.3,
 ):
     """
-    Step detection using SHOE (Step Heading Offset Estimator) approach - IMPROVED VERSION.
-    This is a simplified version that uses both acceleration and gyroscope data.
+    Step detection using SHOE (Step Heading Offset Estimator) approach.
+    This is a Multi-sensor algorithm that uses both acceleration and gyroscope data. The algorithm is using stance phase detection
 
-    Parameters:
-    - accel_data: Accelerometer data (3D array [x, y, z])
-    - gyro_data: Gyroscope data (3D array [x, y, z])
-    - fs: Sampling frequency in Hz
-    - window_size: Size of the moving average window in seconds
-    - threshold: Threshold parameter for step detection
-    - min_time_between_steps: Minimum time between consecutive steps in seconds
+    Args:
+        - accel_data: Accelerometer data (3D array [x, y, z])
+        - gyro_data: Gyroscope data (3D array [x, y, z])
+        - fs: Sampling frequency in Hz
+        - window_size: Size of the moving average window in seconds
+        - threshold: Threshold parameter for step detection
+        - min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-    - detected_steps: Array of detected step times
-    - combined_signal: Combined and normalized signal
+        - detected_steps: Array of detected step times
+        - combined_signal: Combined and normalized signal
     """
-    # Calculate the magnitude of acceleration (removing gravity)
-    accel_mag = np.sqrt(
-        accel_data[0] ** 2 + accel_data[1] ** 2 + (accel_data[2] - 9.81) ** 2
-    )
-
-    # Calculate the magnitude of angular velocity
+    accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
     gyro_mag = np.sqrt(gyro_data[0] ** 2 + gyro_data[1] ** 2 + gyro_data[2] ** 2)
 
-    # Apply safe moving average filter to both signals
-    filtered_accel = safe_savgol_filter(accel_mag, window_size, fs, polyorder=2)
-    filtered_gyro = safe_savgol_filter(gyro_mag, window_size, fs, polyorder=2)
+    filtered_accel = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
+    filtered_gyro = safe_savgol_filter(gyro_mag, window_size, fs, polyorder=3)
 
-    # Normalize both signals to 0-1 range
     if np.max(filtered_accel) > np.min(filtered_accel):
         norm_accel = (filtered_accel - np.min(filtered_accel)) / (
             np.max(filtered_accel) - np.min(filtered_accel)
         )
     else:
-        norm_accel = np.ones_like(filtered_accel) * 0.5  # Flat signal gets 0.5
+        norm_accel = np.ones_like(filtered_accel) * 0.5
 
     if np.max(filtered_gyro) > np.min(filtered_gyro):
         norm_gyro = (filtered_gyro - np.min(filtered_gyro)) / (
             np.max(filtered_gyro) - np.min(filtered_gyro)
         )
     else:
-        norm_gyro = np.ones_like(filtered_gyro) * 0.5  # Flat signal gets 0.5
+        norm_gyro = np.ones_like(filtered_gyro) * 0.5
 
-    # Combine the signals (simple weighted sum)
     combined_signal = 0.7 * norm_accel + 0.3 * norm_gyro
 
-    # adaptive_threshold = threshold # * 0.5  # Use 0.4 instead of 0.8
-    adaptive_threshold = threshold if threshold < 0.4 else 0.4
+    window_samples = max(int(0.2 * fs), 5)
+    stance_phases = []
 
-    # print(f"SHOE: Combined signal range: {np.min(combined_signal):.3f} to {np.max(combined_signal):.3f}")
-    # print(f"SHOE: Using threshold: {adaptive_threshold:.3f}")
-    # print(f"SHOE: Values above threshold: {np.sum(combined_signal > adaptive_threshold)}")
-
-    # Find peaks in the combined signal
-    min_distance = max(1, int(min_time_between_steps * fs))
-    try:
-        peaks, properties = signal.find_peaks(
-            combined_signal, height=adaptive_threshold, distance=min_distance
+    if len(combined_signal) < window_samples:
+        print(
+            f"SHOE: Signal too short ({len(combined_signal)}) for window ({window_samples})"
         )
+        return np.array([]), combined_signal
 
-        # print(f"SHOE: Found {len(peaks)} peaks")
+    try:
+        for i in range(
+            0, len(combined_signal) - window_samples, max(1, window_samples // 2)
+        ):
+            accel_var = np.var(filtered_accel[i : i + window_samples])
+            gyro_mean = np.mean(np.abs(filtered_gyro[i : i + window_samples]))
 
-        # Convert peak indices to times
-        detected_steps = peaks / fs
+            if accel_var < (threshold * 0.5) and gyro_mean < (threshold * 0.3):
+                stance_phases.append(i + window_samples // 2)
+
+        min_distance = max(1, int(min_time_between_steps * fs))
+        if len(stance_phases) > 0:
+            filtered_stances = []
+            last_stance = -min_distance
+
+            for stance in stance_phases:
+                if stance - last_stance >= min_distance:
+                    filtered_stances.append(stance)
+                    last_stance = stance
+
+            detected_steps = np.array(filtered_stances) / fs
+        else:
+            print(f"SHOE: No stance phases detected with threshold {threshold}")
+            detected_steps = np.array([])
+
     except Exception as e:
         print(f"SHOE algorithm error: {e}")
         detected_steps = np.array([])

@@ -18,6 +18,8 @@ step_detection/
 ├── utils/                       # Module with the GUI app and algorithm implementations
 ├── requirements.txt             # Python dependencies
 ├── step_data_collector.py       # Main
+├── TUNING_PARAMS_GUIDE.md       # Parameter tuning guide
+├── SCENARIO_SPECIFIC_PARAMS.md  # Ready-to-use parameter sets
 └── README.md                    # This file
 ```
 
@@ -124,7 +126,7 @@ The following algorithms are implemented in [`./utils/step_detection_algorithms.
 
    - Detects steps by analyzing when the signal crosses the zero point
 
-   - Parameters: `window_size`, `min_time_between_steps`
+   - Parameters: `window_size`, `min_time_between_steps`, `hysteresis_band`
 
 3. **`Spectral Analysis`**
 
@@ -150,6 +152,44 @@ The following algorithms are implemented in [`./utils/step_detection_algorithms.
 
 <br/><br/>
 
+## Parameter Configuration
+
+<br/>
+
+You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1192-L1218) (method `analyze_data`, variable `param_sets`, lines `1192-1218`).
+
+<br/>
+
+### Quick Start
+
+For most applications, use the **Normal Walking** configuration from [`SCENARIO_SPECIFIC_PARAMS.md`](SCENARIO_SPECIFIC_PARAMS.md).
+
+<br/>
+
+### Detailed Guides
+
+- **[Parameter Tuning Guide](TUNING_PARAMS_GUIDE.md)** - Comprehensive parameter explanations and tuning strategies
+
+- **[Scenario-Specific Parameters](SCENARIO_SPECIFIC_PARAMS.md)** - Ready-to-use configurations for different test protocols:
+
+  - TUG Test (Timed Up and Go)
+
+  - Normal Walking  
+
+  - Fast Walking
+
+  - Running/Jogging
+
+  - Stairs Up/Down/Mixed
+
+<br/>
+
+### Universal Configuration Philosophy
+
+All parameter sets are designed to work **universally across different sensor mounting points** (pocket, wrist, arm, ankle) without requiring algorithm-specific adjustments.
+
+<br/><br/>
+
 ## Hardware Connection
 
 This analysis module connects to the Raspberry Pi Pico 2W hardware via HTTP API. For hardware setup instructions, see the [main project README](../README.md#how-to-connect-the-components).
@@ -162,9 +202,9 @@ This analysis module connects to the Raspberry Pi Pico 2W hardware via HTTP API.
 
 Based on analysis of collected data, typical performance metrics could be:
 
-- **Spectral Analysis**: Best overall F1-score
+- **Peak Detection**: Best universal performance across scenarios and mounting points
 
-- **Peak Detection**: Good balance of precision/recall
+- **Spectral Analysis**: Good for steady walking patterns
 
 - **Adaptive Threshold**: Robust to signal variations
 
@@ -185,6 +225,8 @@ See [`analysis/`](./analysis/) directory for detailed performance comparisons.
 - **GUI Issues**: Ensure Tkinter is available (usually included with Python)
 
 - **Plot Errors**: Check if Matplotlib is installed and application closes properly on `X` button click (threading issues)
+
+- **Parameter Issues**: See [Parameter Tuning Guide](TUNING_PARAMS_GUIDE.md) for troubleshooting specific algorithm behavior
 
 <br/><br/>
 
