@@ -108,8 +108,8 @@ class IoHandler:
     # _sensor_cache_duration = 0.1  # 100ms cache = max 10Hz
     # _sensor_cache_duration = 0.04  # 40ms cache = max 25Hz
     # _sensor_cache_duration = 0.02  # 20ms cache = max 50Hz
-    _sensor_cache_duration = 0.01  # 10ms cache = max 100Hz
-    # _sensor_cache_duration = 0.005  # 5ms cache = max 200Hz
+    # _sensor_cache_duration = 0.01  # 10ms cache = max 100Hz
+    _sensor_cache_duration = 0.005  # 5ms cache = max 200Hz
     # _sensor_cache_duration = 0.002  # 2ms = max 500Hz
     _cached_data = {
         "sensor1": {"accel": (0,0,0), "gyro": (0,0,0), "mag": (0,0,0)},

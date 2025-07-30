@@ -5,9 +5,6 @@ __all__ = [
     "adaptive_threshold_algorithm",
     "shoe_algorithm",
     "evaluate_algorithm",
-    "plot_algorithm_results",
-    "compare_algorithms",
-    "compare_sensors",
     "StepDataCollector",
 ]
 
@@ -18,9 +15,6 @@ from .step_detection_algorithms import (
     adaptive_threshold_algorithm,
     shoe_algorithm,
     evaluate_algorithm,
-    plot_algorithm_results,
-    compare_algorithms,
-    compare_sensors
 )
 
 from .StepDataCollector import StepDataCollector
