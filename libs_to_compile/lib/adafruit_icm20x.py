@@ -517,7 +517,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     def magnetometer_data_rate(self):
         """The rate at which the magnetometer takes measurements to update its output registers"""
         # read mag DR register
-        self._read_mag_register(_AK09916_CNTL2)
+        return self._read_mag_register(_AK09916_CNTL2) # had to add the "return" because it was missing :skull:
     @magnetometer_data_rate.setter
     def magnetometer_data_rate(self, mag_rate):
         # From https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
