@@ -65,6 +65,8 @@ class StepDataCollector:
         self.udp_port = udp_port
         self.target_rate_hz = target_rate_hz
 
+        self.detection_results_path = None
+
         # HTTP Session for keep-alive connections (keep for compatibility, but use UDP instead)
         self.session = requests.Session()  # type: ignore
         # Configure connection pooling and timeouts
@@ -593,6 +595,11 @@ class StepDataCollector:
                 self.analyze_btn.config(state=tk.NORMAL)
 
             self.update_status("Recording stopped.")
+            
+        # Only set the variable after save / load because when we do,
+        # we have the path where we can save the results (wow)
+        # otherwise we could overwrite the results file of a previous recording
+        self.detection_results_path = None
 
     def record_data(self, update_interval: int | float | None = None) -> None:
         """
@@ -1055,7 +1062,9 @@ class StepDataCollector:
                 if len(self.data["time"]) > 0
                 else 0
             ),
+            # "dir_path": recording_dir,
         }
+        self.detection_results_path = recording_dir
 
         with open(os.path.join(recording_dir, "metadata.json"), "w") as f:  # type: ignore
             json.dump(metadata, f, indent=4)  # type: ignore
@@ -1094,6 +1103,17 @@ class StepDataCollector:
             battery_df = None
             if os.path.exists(os.path.join(load_dir, "battery.csv")):  # type: ignore
                 battery_df = pd.read_csv(os.path.join(load_dir, "battery.csv"))  # type: ignore
+
+            self.detection_results_path = load_dir
+            # metadata_path = os.path.join(load_dir, "metadata.json") # type: ignore
+            # if os.path.exists(metadata_path): # type: ignore
+            #     with open(metadata_path, "r") as f:
+            #         metadata = json.load(f)
+
+            # self.detection_results_path = metadata.get("dir_path", None)
+            # recording_name = metadata.get("recording_name", "Loaded Recording")
+            # self.recording_name.delete(0, tk.END)
+            # self.recording_name.insert(0, recording_name)
 
             # Reset data structures
             self.data = {
@@ -1166,7 +1186,10 @@ class StepDataCollector:
             )
             return
 
-        print_results = True
+        # save results to file instead of printing
+        # self.detection_results_path set after save / load
+        print_results = False
+        
         # General tuning guidelines (tailored for 22Hz):
         # - Too many false positives: INCREASE threshold/sensitivity, INCREASE min_time_between_steps
         # - Missing steps: DECREASE threshold/sensitivity, DECREASE min_time_between_steps
@@ -1943,9 +1966,33 @@ class StepDataCollector:
 
         self.update_status("Analysis complete!")
 
+        if self.detection_results_path:
+            file = os.path.join(self.detection_results_path, "detection_results.yaml")  # type: ignore
+            with open(file, "w") as f:
+                f.write("# Step Detection Results:\n\n\n")
+                for sensor, algorithms in results.items():
+                    f.write("##############################################\n")
+                    f.write(f"# {sensor.upper()}\n")
+                    f.write("##############################################\n")
+                    f.write(f"{sensor.upper()}:\n")
+                    for alg, res in algorithms.items():
+                        f.write(f"\n  {alg.replace('_', ' ').title()}:\n")
+                        f.write(f"    Execution Time: {res['execution_time']:.4f} s\n")
+                        f.write(f"    Detected Steps: {len(res['detected_steps'])}\n")
+                        # f.write(f"    Metrics: {res['metrics']}\n")
+                        f.write(f"    Metrics:\n")
+                        f.write(
+                            json.dumps(res["metrics"], indent=6)  # type: ignore
+                            .replace("{", "    {")
+                            .replace("}", "    }\n\n")
+                        )
+
         if print_results:
-            print("Step Detection Results:")
+            print("# Step Detection Results:")
             for sensor, algorithms in results.items():
+                print("##############################################")
+                print(f"# {sensor.upper()}")
+                print("##############################################")
                 print(f"\n{sensor.upper()}:")
                 for alg, res in algorithms.items():
                     print(f"\n  {alg.replace('_', ' ').title()}:")

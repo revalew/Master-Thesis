@@ -1,13 +1,13 @@
-# Step Detection Results
+# Step Detection Results:
 
 
 ##############################################
-# 1
+# SENSOR1
 ##############################################
 SENSOR1:
 
   Peak Detection:
-    Execution Time: 0.0015 s
+    Execution Time: 0.0023 s
     Detected Steps: 20
     Metrics:
     {
@@ -27,7 +27,7 @@ SENSOR1:
 
 
   Zero Crossing:
-    Execution Time: 0.0007 s
+    Execution Time: 0.0011 s
     Detected Steps: 20
     Metrics:
     {
@@ -47,7 +47,7 @@ SENSOR1:
 
 
   Spectral Analysis:
-    Execution Time: 0.0007 s
+    Execution Time: 0.0009 s
     Detected Steps: 19
     Metrics:
     {
@@ -67,7 +67,7 @@ SENSOR1:
 
 
   Adaptive Threshold:
-    Execution Time: 0.0007 s
+    Execution Time: 0.0016 s
     Detected Steps: 20
     Metrics:
     {
@@ -87,7 +87,7 @@ SENSOR1:
 
 
   Shoe:
-    Execution Time: 0.0033 s
+    Execution Time: 0.0065 s
     Detected Steps: 20
     Metrics:
     {
@@ -106,12 +106,12 @@ SENSOR1:
     }
 
 ##############################################
-# 2
+# SENSOR2
 ##############################################
 SENSOR2:
 
   Peak Detection:
-    Execution Time: 0.0018 s
+    Execution Time: 0.0014 s
     Detected Steps: 20
     Metrics:
     {
@@ -131,7 +131,7 @@ SENSOR2:
 
 
   Zero Crossing:
-    Execution Time: 0.0006 s
+    Execution Time: 0.0007 s
     Detected Steps: 20
     Metrics:
     {
@@ -151,7 +151,7 @@ SENSOR2:
 
 
   Spectral Analysis:
-    Execution Time: 0.0003 s
+    Execution Time: 0.0005 s
     Detected Steps: 19
     Metrics:
     {
@@ -171,7 +171,7 @@ SENSOR2:
 
 
   Adaptive Threshold:
-    Execution Time: 0.0005 s
+    Execution Time: 0.0013 s
     Detected Steps: 20
     Metrics:
     {
@@ -191,7 +191,7 @@ SENSOR2:
 
 
   Shoe:
-    Execution Time: 0.0030 s
+    Execution Time: 0.0068 s
     Detected Steps: 17
     Metrics:
     {
@@ -208,3 +208,4 @@ SENSOR2:
       "mse": 0.06756600027478983,
       "count_mse": 9
     }
+
