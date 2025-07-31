@@ -13,45 +13,74 @@ import json
 def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
     """
     Safely apply Savitzky-Golay filter with proper parameter validation.
-    This prevents the "polyorder must be less than window_length" error.
 
-    Parameters:
-    - data: Input signal data
-    - window_size_seconds: Window size in seconds
-    - fs: Sampling frequency in Hz
-    - polyorder: Polynomial order for the filter
+    The Savitzky-Golay filter is a digital smoothing filter that fits successive
+    sub-sets of adjacent data points with a low-degree polynomial by the method
+    of linear least squares. It preserves features of the signal (like peaks)
+    better than simple moving averages while reducing noise.
+
+    How it works:
+        - Takes a sliding window of data points
+        - Fits a polynomial (degree = polyorder) to points in each window
+        - Uses the polynomial's center value as the filtered output
+        - Moves window by one sample and repeats
+        
+    Key advantages over moving average:
+        - Better preservation of signal features (peaks, slopes)
+        - Reduces noise while maintaining signal characteristics
+        - Polynomial fitting provides better local approximation
+
+    Args:
+        data: Input signal data (1D array)
+        window_size_seconds: Window size in seconds (converted to samples)
+        fs: Sampling frequency in Hz
+        polyorder: Polynomial degree (2=quadratic, 3=cubic). Higher orders preserve
+                 peaks better but may amplify noise. Range: 1 to window_length-1
 
     Returns:
-    - filtered_signal: Filtered signal data
+        filtered_signal: Smoothed signal data preserving original length
     """
     # Convert window_size from seconds to samples
-    window_len = max(5, int(window_size_seconds * fs))
+    window_len = max(3, int(window_size_seconds * fs))
+    # window_len = max(5, int(window_size_seconds * fs))
 
-    # Ensure window_len is odd and at least 3
+    # Ensure window_len is odd (required by Savitzky-Golay)
     if window_len % 2 == 0:
         window_len += 1
 
-    # Ensure window_len is not larger than data length
-    if window_len >= len(data):
-        window_len = max(3, len(data) // 2)
+    # Ensure window_len doesn't exceed data length
+    if window_len > len(data):
+        window_len = len(data)
         if window_len % 2 == 0:
             window_len -= 1
+        # For very short data, use minimum odd window
+        if window_len < 3:
+            window_len = 3 if len(data) >= 3 else len(data)
 
-    # Ensure polyorder is less than window_len and at least 1
+    # Ensure polyorder is valid: must be less than window_len and at least 1
     polyorder = max(1, min(polyorder, window_len - 1))
 
     try:
+        # Apply Savitzky-Golay filter
         filtered_signal = signal.savgol_filter(data, window_len, polyorder)
         return filtered_signal
-    except ValueError as e:
+
+    except (ValueError, np.linalg.LinAlgError) as e:
         print(f"Savgol filter error: {e}, using moving average fallback")
+
         # Fallback to simple moving average
-        kernel_size = min(5, len(data))
-        if kernel_size > 0:
-            kernel = np.ones(kernel_size) / kernel_size
-            return np.convolve(data, kernel, mode="same")
-        else:
+        kernel_size = min(window_len, len(data))
+        if kernel_size > len(data):
             return data.copy()
+
+        # Ensure odd kernel size for consistency
+        if kernel_size % 2 == 0:
+            kernel_size -= 1
+        if kernel_size < 1:
+            kernel_size = 1
+
+        kernel = np.ones(kernel_size) / kernel_size
+        return np.convolve(data, kernel, mode="same")
 
 
 ##############################################
@@ -64,15 +93,14 @@ def peak_detection_algorithm(
     Step detection using peak detection with adaptive threshold
 
     Args:
-        - accel_data: Accelerometer data (3D array [x, y, z])
-        - fs: Sampling frequency in Hz
-        - window_size: Size of the moving average window in seconds
-        - threshold: Threshold for peak detection
-        - min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data: Accelerometer data (3D array [x, y, z])
+        fs: Sampling frequency in Hz
+        window_size: Size of the moving average window in seconds
+        threshold: Threshold for peak detection
+        min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-        - detected_steps: Array of detected step times
-        - filtered_signal: Filtered acceleration magnitude signal
+        tuple: Array of detected step times + Filtered acceleration magnitude signal
     """
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
 
@@ -126,15 +154,14 @@ def zero_crossing_algorithm(
     Step detection using zero-crossing method with hysteresis
 
     Args:
-        - accel_data: Accelerometer data (3D array [x, y, z])
-        - fs: Sampling frequency in Hz
-        - window_size: Size of the moving average window in seconds
-        - min_time_between_steps: Minimum time between consecutive steps in seconds
-        - hysteresis_band: Hysteresis band in Hz. Default is 0.3
+        accel_data: Accelerometer data (3D array [x, y, z])
+        fs: Sampling frequency in Hz
+        window_size: Size of the moving average window in seconds
+        min_time_between_steps: Minimum time between consecutive steps in seconds
+        hysteresis_band: Hysteresis band in Hz. Default is 0.3
 
     Returns:
-        - detected_steps: Array of detected step times
-        - filtered_signal: Filtered acceleration signal
+        tuple: Array of detected step times + Filtered acceleration signal
     """
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
     filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
@@ -178,15 +205,14 @@ def spectral_analysis_algorithm(
     Step detection using STFT spectral analysis
 
     Args:
-        - accel_data: Accelerometer data (3D array [x, y, z])
-        - fs: Sampling frequency in Hz
-        - window_size: Size of FFT window in seconds
-        - overlap: Overlap between consecutive windows (0-1)
-        - step_freq_range: Range of expected step frequencies in Hz
+        accel_data: Accelerometer data (3D array [x, y, z])
+        fs: Sampling frequency in Hz
+        window_size: Size of FFT window in seconds
+        overlap: Overlap between consecutive windows (0-1)
+        step_freq_range: Range of expected step frequencies in Hz
 
     Returns:
-        - detected_steps: Array of detected step times
-        - step_freqs: Array of step frequencies
+        tuple: Array of detected step times + Array of step frequencies
     """
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
 
@@ -249,16 +275,14 @@ def adaptive_threshold_algorithm(
     Step detection using adaptive threshold with local minima detection
 
     Args:
-        - accel_data: Accelerometer data (3D array [x, y, z])
-        - fs: Sampling frequency in Hz
-        - window_size: Size of the moving average window in seconds
-        - sensitivity: Sensitivity parameter (0-1) controlling the adaptive threshold
-        - min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data: Accelerometer data (3D array [x, y, z])
+        fs: Sampling frequency in Hz
+        window_size: Size of the moving average window in seconds
+        sensitivity: Sensitivity parameter (0-1) controlling the adaptive threshold
+        min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-        - detected_steps: Array of detected step times
-        - filtered_signal: Filtered acceleration magnitude signal
-        - adaptive_threshold: Array of adaptive threshold values
+        tuple: Array of detected step times + Filtered acceleration magnitude signal + Array of adaptive threshold values
     """
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
     filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
@@ -320,16 +344,15 @@ def shoe_algorithm(
     This is a Multi-sensor algorithm that uses both acceleration and gyroscope data. The algorithm is using stance phase detection
 
     Args:
-        - accel_data: Accelerometer data (3D array [x, y, z])
-        - gyro_data: Gyroscope data (3D array [x, y, z])
-        - fs: Sampling frequency in Hz
-        - window_size: Size of the moving average window in seconds
-        - threshold: Threshold parameter for step detection
-        - min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data: Accelerometer data (3D array [x, y, z])
+        gyro_data: Gyroscope data (3D array [x, y, z])
+        fs: Sampling frequency in Hz
+        window_size: Size of the moving average window in seconds
+        threshold: Threshold parameter for step detection
+        min_time_between_steps: Minimum time between consecutive steps in seconds
 
     Returns:
-        - detected_steps: Array of detected step times
-        - combined_signal: Combined and normalized signal
+        tuple: Array of detected step times + Combined and normalized signal
     """
     accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
     gyro_mag = np.sqrt(gyro_data[0] ** 2 + gyro_data[1] ** 2 + gyro_data[2] ** 2)
@@ -440,6 +463,14 @@ def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.3):
     Calculate Mean Squared Error between detected and ground truth steps.
     For each ground truth step, finds the closest detected step and applies
     penalty for steps outside tolerance range.
+    
+    Args:
+        detected_steps: Array of detected step times
+        ground_truth_steps: Array of ground truth step times
+        tolerance: Time tolerance in seconds for matching steps
+
+    Returns:
+        float: Mean Squared Error between detected and ground truth steps
     """
     if len(ground_truth_steps) == 0:
         return 0.0
@@ -459,13 +490,13 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
     """
     Evaluate the performance of a step detection algorithm.
 
-    Parameters:
-    - detected_steps: Array of detected step times
-    - ground_truth_steps: Array of ground truth step times
-    - tolerance: Time tolerance in seconds for matching steps
+    Args:
+        detected_steps: Array of detected step times
+        ground_truth_steps: Array of ground truth step times
+        tolerance: Time tolerance in seconds for matching steps
 
     Returns:
-    - metrics: Dictionary of evaluation metrics
+        dict: Dictionary of evaluation metrics
     """
     # Handle edge cases
     if len(ground_truth_steps) == 0:

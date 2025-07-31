@@ -156,13 +156,13 @@ The following algorithms are implemented in [`./utils/step_detection_algorithms.
 
 <br/>
 
-You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1192-L1218) (method `analyze_data`, variable `param_sets`, lines `1192-1218`).
+You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1191-L1220) (method `analyze_data`, variable `param_sets`, lines `1191-1220`).
 
 <br/>
 
 ### Quick Start
 
-For most applications, use the **Normal Walking** configuration from [`SCENARIO_SPECIFIC_PARAMS.md`](SCENARIO_SPECIFIC_PARAMS.md).
+For most applications, use the **Normal Walking** configuration from [`SCENARIO_SPECIFIC_PARAMS.md`](SCENARIO_SPECIFIC_PARAMS.md#2-normal-walking).
 
 <br/>
 

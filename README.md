@@ -417,7 +417,7 @@ Actual sampling rate is $`\thickapprox [22, 23] Hz`$ due to network limitations,
 
 - Added comprehensive parameter tuning guides: [Tuning Guide](./step_detection/TUNING_PARAMS_GUIDE.md) and [Scenario Configs](./step_detection/SCENARIO_SPECIFIC_PARAMS.md)
 
-- Universal parameter sets SHOULD work across different sensor mounting points (SHOULD, that's a good word)
+- Universal parameter sets SHOULD work across different sensor mounting points (**SHOULD**, that's a good word)
 
 <br/>
 

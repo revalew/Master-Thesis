@@ -595,7 +595,12 @@ class StepDataCollector:
             self.update_status("Recording stopped.")
 
     def record_data(self, update_interval: int | float | None = None) -> None:
-        """Background thread to record data from the Pico"""
+        """
+        Background thread to record data from the Pico
+
+        Args:
+            update_interval (int | float | None): The interval in seconds to wait between samples. Defaults to None, which means it will use the target rate. If None, it will default to `1.0 / target_rate_hz`.
+        """
         if update_interval is None:
             update_interval = 1.0 / self.target_rate_hz
 
@@ -800,7 +805,7 @@ class StepDataCollector:
         | `3f` | **3x float** (32-bit each) | 12 bytes |
 
         Returns:
-            dict[str, Any]: Sensor data
+            dict: Sensor data
         """
         try:
             self.udp_sock.sendto(b"GET", self.server_addr)
@@ -1161,6 +1166,7 @@ class StepDataCollector:
             )
             return
 
+        print_results = True
         # General tuning guidelines (tailored for 22Hz):
         # - Too many false positives: INCREASE threshold/sensitivity, INCREASE min_time_between_steps
         # - Missing steps: DECREASE threshold/sensitivity, DECREASE min_time_between_steps
@@ -1936,6 +1942,22 @@ class StepDataCollector:
         analysis_window.protocol("WM_DELETE_WINDOW", on_analysis_window_close)
 
         self.update_status("Analysis complete!")
+
+        if print_results:
+            print("Step Detection Results:")
+            for sensor, algorithms in results.items():
+                print(f"\n{sensor.upper()}:")
+                for alg, res in algorithms.items():
+                    print(f"\n  {alg.replace('_', ' ').title()}:")
+                    print(f"    Execution Time: {res['execution_time']:.4f} s")
+                    print(f"    Detected Steps: {len(res['detected_steps'])}")
+                    # print(f"    Metrics: {res['metrics']}\n")
+                    print(f"    Metrics:")
+                    print(
+                        json.dumps(res["metrics"], indent=6)  # type: ignore
+                        .replace("{", "    {")
+                        .replace("}", "    }\n")
+                    )
 
     def update_status(self, message) -> None:
         """Update the status bar with a message"""

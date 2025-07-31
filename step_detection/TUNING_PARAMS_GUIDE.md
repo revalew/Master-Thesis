@@ -4,7 +4,7 @@
 
 This guide provides comprehensive parameter tuning instructions for the step detection algorithms, optimized for **22Hz sampling rate**.
 
-You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1192-L1218) (method `analyze_data`, variable `param_sets`, lines `1192-1218`).
+You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1191-L1220) (method `analyze_data`, variable `param_sets`, lines `1191-1220`).
 
 <br/><br/>
 
@@ -41,16 +41,16 @@ You can change the parameters for each algorithm in [`./utils/StepDataCollector.
 
 <br/><br/>
 
-## Default Configuration
+## Default Configuration (tested on 22Hz)
 
 <br/>
 
 ```python
 param_sets = {
     "peak_detection": {
-        "window_size": 1.0,                 # Smoothing window (seconds)
-        "threshold": 0.8,                   # Adaptive threshold multiplier
-        "min_time_between_steps": 0.4,      # Minimum step interval (seconds)
+        "window_size": 0.6,                 # Smoothing window (seconds)
+        "threshold": 0.5,                   # Adaptive threshold multiplier
+        "min_time_between_steps": 0.35,     # Minimum step interval (seconds)
     },
     "zero_crossing": {
         "window_size": 0.5,                 # Smoothing window (seconds)
@@ -58,9 +58,9 @@ param_sets = {
         "hysteresis_band": 0.3,             # Hysteresis threshold (m/s²)
     },
     "spectral_analysis": {
-        "window_size": 6.0,                 # STFT window (seconds)
-        "overlap": 0.7,                     # STFT overlap (0-1)
-        "step_freq_range": (0.6, 2.5),      # Walking frequency range (Hz)
+        "window_size": 8.0,                 # STFT window (seconds)
+        "overlap": 0.8,                     # STFT overlap (0-1)
+        "step_freq_range": (0.8, 2.0),      # Walking frequency range (Hz)
     },
     "adaptive_threshold": {
         "window_size": 0.8,                 # Smoothing window (seconds)
@@ -68,9 +68,9 @@ param_sets = {
         "min_time_between_steps": 0.4,      # Minimum step interval (seconds)
     },
     "shoe": {
-        "window_size": 0.5,                 # Smoothing window (seconds)
-        "threshold": 0.6,                   # Stance detection threshold
-        "min_time_between_steps": 0.4,      # Minimum step interval (seconds)
+        "window_size": 0.3,                 # Smoothing window (seconds)
+        "threshold": 9.0,                   # Stance detection threshold
+        "min_time_between_steps": 0.35,     # Minimum step interval (seconds)
     },
 }
 ```
@@ -87,9 +87,11 @@ param_sets = {
 
 **Tuning:**
 
-- If oversensitive: increase `threshold` to 1.0-1.2
+- Current optimal: `window_size=0.6`, `threshold=0.5`
 
-- For noisy data: increase `window_size` to 1.2-1.5s
+- If oversensitive: increase `threshold` to 0.7-0.9
+
+- For noisy data: increase `window_size` to 0.8-1.0s
 
 <br/>
 
@@ -99,21 +101,25 @@ param_sets = {
 
 **Tuning:**
 
+- Current optimal: `hysteresis_band=0.3`
+
 - If chattering occurs: increase `hysteresis_band` to 0.4-0.5
 
-- For weak steps: decrease `hysteresis_band` to 0.1-0.2
+- For weak steps: decrease `hysteresis_band` to 0.2
 
 <br/>
 
 ### Spectral Analysis
 
-**Characteristics:** Good for steady walking patterns
+**Characteristics:** Excellent for steady walking patterns
 
 **Tuning:**
 
-- For better frequency resolution: increase `window_size` to 8-10s
+- Current optimal: `window_size=8.0s`, `step_freq_range=(0.8, 2.0)`
 
-- For faster response: decrease `window_size` to 4-5s
+- For better frequency resolution: increase `window_size` to 10-12s
+
+- For faster response: decrease `window_size` to 6-7s
 
 - Adjust `step_freq_range` based on expected walking speed
 
@@ -125,9 +131,11 @@ param_sets = {
 
 **Tuning:**
 
+- Current optimal: `sensitivity=0.5`, `window_size=0.8`
+
 - For noisy data: lower `sensitivity` to 0.3-0.4
 
-- For consistent performance: increase `window_size` to 1.0-1.2s
+- For better consistency: increase `window_size` to 1.0-1.2s
 
 <br/>
 
@@ -137,9 +145,13 @@ param_sets = {
 
 **Tuning:**
 
-- If too many false detections: increase `threshold` to 0.7-0.8
+- **Critical:** Use `threshold=9.0` for 22Hz sampling (much higher than typical 0.5-0.8 - [check why](./SCENARIO_SPECIFIC_PARAMS.md#critical-parameter-notes-for-22hz))
 
-- For better stance detection: decrease `threshold` to 0.4-0.5
+- If too many false detections: increase `threshold` to 10-12
+
+- For better stance detection: decrease `threshold` to 7-8
+
+- Lower sampling rates may need different threshold values
 
 <br/><br/>
 
