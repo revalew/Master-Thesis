@@ -595,7 +595,7 @@ class StepDataCollector:
                 self.analyze_btn.config(state=tk.NORMAL)
 
             self.update_status("Recording stopped.")
-            
+
         # Only set the variable after save / load because when we do,
         # we have the path where we can save the results (wow)
         # otherwise we could overwrite the results file of a previous recording
@@ -987,7 +987,9 @@ class StepDataCollector:
             )
             return
 
-        save_dir = filedialog.askdirectory(title="Select Directory to Save Data")
+        save_dir = filedialog.askdirectory(
+            title="Select Directory to Save Data", initialdir="./analysis", 
+        )
         if not save_dir:
             return
 
@@ -1189,7 +1191,7 @@ class StepDataCollector:
         # save results to file instead of printing
         # self.detection_results_path set after save / load
         print_results = False
-        
+
         # General tuning guidelines (tailored for 22Hz):
         # - Too many false positives: INCREASE threshold/sensitivity, INCREASE min_time_between_steps
         # - Missing steps: DECREASE threshold/sensitivity, DECREASE min_time_between_steps
@@ -1967,9 +1969,12 @@ class StepDataCollector:
         self.update_status("Analysis complete!")
 
         if self.detection_results_path:
+
             file = os.path.join(self.detection_results_path, "detection_results.yaml")  # type: ignore
+            recording_name = os.path.basename(self.detection_results_path)  # type: ignore
             with open(file, "w") as f:
-                f.write("# Step Detection Results:\n\n\n")
+                f.write("# Step Detection Results\n")
+                f.write(f"# {recording_name}\n\n\n")
                 for sensor, algorithms in results.items():
                     f.write("##############################################\n")
                     f.write(f"# {sensor.upper()}\n")
