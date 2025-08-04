@@ -28,6 +28,8 @@ __all__ = [
     "ResponseBuilder",
     "DebouncedInput",
     "UDPHandler",
+    "NativeICM20948",
+    "HighSpeedSampler",
 ]
 
 from .WiFiConnection import WiFiConnection
@@ -45,3 +47,7 @@ from .ResponseBuilder import ResponseBuilder
 from .DebouncedInput import DebouncedInput
 
 from .UDPHandler import UDPHandler
+
+from .NativeICM20948 import NativeICM20948
+
+from .HighSpeedSampler import HighSpeedSampler

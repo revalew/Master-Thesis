@@ -1,9 +1,18 @@
 # class to handle WiFi conenction
-import utime # type: ignore
-import network # type: ignore
+import utime  # type: ignore
+import network  # type: ignore
 from .NetworkCredentials import NetworkCredentials
 
+
 class WiFiConnection:
+    """
+    Class to handle WiFi connection setup and management.
+
+    WiFi Module Errors:
+        [CYW43] core not in reset
+        [CYW43] HT not ready
+    """
+
     # class level vars
     status = network.STAT_IDLE
     ip = ""
@@ -18,10 +27,10 @@ class WiFiConnection:
 
     @classmethod
     def start_ap_mode(cls, print_progress: bool = False) -> bool:
+        utime.sleep(1)
         cls.wlan = network.WLAN(network.AP_IF)
         cls.wlan.config(
-            essid=NetworkCredentials.ap_ssid,
-            password=NetworkCredentials.ap_password
+            essid=NetworkCredentials.ap_ssid, password=NetworkCredentials.ap_password
         )
         cls.wlan.active(True)  # Activate Access Point
         cls.wlan.config(pm=0xA11140)  # Disable power-save mode
@@ -58,8 +67,9 @@ class WiFiConnection:
             print("Successfully started AP")
             print(config)
 
-        return True
+        utime.sleep(0.5)
 
+        return True
 
     @classmethod
     def start_station_mode(cls, print_progress: bool = False) -> bool:
@@ -77,12 +87,12 @@ class WiFiConnection:
         # wait for connection - poll every 0.5 secs
         while max_wait > 0:
             """
-                0   STAT_IDLE -- no connection and no activity,
-                1   STAT_CONNECTING -- connecting in progress,
-                -3  STAT_WRONG_PASSWORD -- failed due to incorrect password,
-                -2  STAT_NO_AP_FOUND -- failed because no access point replied,
-                -1  STAT_CONNECT_FAIL -- failed due to other problems,
-                3   STAT_GOT_IP -- connection successful.
+            0   STAT_IDLE -- no connection and no activity,
+            1   STAT_CONNECTING -- connecting in progress,
+            -3  STAT_WRONG_PASSWORD -- failed due to incorrect password,
+            -2  STAT_NO_AP_FOUND -- failed because no access point replied,
+            -1  STAT_CONNECT_FAIL -- failed due to other problems,
+            3   STAT_GOT_IP -- connection successful.
             """
             if cls.wlan.status() < 0 or cls.wlan.status() >= 3:
                 # connection attempt finished
@@ -119,5 +129,5 @@ class WiFiConnection:
             ]
 
             if print_progress:
-                print('ip = ' + str(cls.ip))
+                print("ip = " + str(cls.ip))
             return True

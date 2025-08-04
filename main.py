@@ -1,114 +1,87 @@
 """
 Main program file
 
-Here we:
-    - set up the WiFi connection (Access Point or Station mode)
-    - start the web server,
-    - start the OLED update task (to display the IMU data live IF the screen is on),
-    - start the UDP server.
 """
 
-# import uasyncio as asyncio # type: ignore
 import asyncio
-
-import machine  # type: ignore
+import machine
 import gc
+from machine import freq
+
+# Performance optimization
+# (If you can't optimize the code - throw more compute at it?)
+freq(240000000)
+gc.threshold(32768)
 
 from classes import WiFiConnection, RequestHandler, IoHandler, UDPHandler
-
 
 gc.enable()
 gc.collect()
 
-# create Access Point ('192.168.4.1', '255.255.255.0', '192.168.4.1', '0.0.0.0')
 if not WiFiConnection.start_ap_mode():
     raise RuntimeError("Setting up Access Point failed")
-
-# if not WiFiConnection.start_station_mode():
-#     raise RuntimeError("Setting up Station mode failed")
-
-# for prop in WiFiConnection().fullConfig:  # type: ignore
-#     print(f"{prop}\n")
-
-
-# Configure sensor INTERNAL sample rates BEFORE starting async tasks
-# print_config = False
-# IoHandler.set_sample_rate(sample_rate=50, print_config=print_config)
-# IoHandler.set_sample_rate(sample_rate=1000, print_config=print_config)
 
 
 async def main() -> None:
     """
-    Main function of the program.
-
-    Initializes the asynchronous web server and OLED update task and UDP server.
-
-    Args:
-        None
-
-    Returns:
-        None
+    Main function with unified high-speed sampling
     """
-    # Start HTTP server (keep existing, just in case?)
     handler = RequestHandler()
     asyncio.create_task(
         asyncio.start_server(handler.handle_request, host="0.0.0.0", port=80, backlog=1)
     )
 
-    # Start OLED update
     asyncio.create_task(IoHandler.update_oled())
 
-    # UDP handler task
     udp_handler = UDPHandler()
     asyncio.create_task(udp_handler.handle_request())
 
-    # counter = 0
-    # while True:
-    #     # if counter % 1000 == 0:
-    #     if counter == 1000:
-    #         gc.collect()
-    #         # print(f"Allocated RAM: {gc.mem_alloc()}\nFree RAM: {gc.mem_free()}\n")  # type: ignore
-    #         counter = 0
+    # print("=== SYSTEM READY ===")
+    # print("Default: Output 50 Hz")
+    # print("Internal rates:")
+    # print("  Waveshare (accel/gyro):")
+    # print(f"    ICM20948 @ {IoHandler.ACCEL_WAV_HZ} / {IoHandler.GYRO_WAV_HZ} Hz")
+    # print("  Adafruit (accel_gyro/mag):")
+    # print(f"    LSM6DSOX @ {IoHandler.ACCEL_ADA_HZ} Hz")
+    # print(f"    LIS3MDL @ {IoHandler.MAG_ADA_HZ} Hz")
 
-    #     counter += 1
-    #     await asyncio.sleep(0.01)
 
     while True:
         gc.collect()
-        await asyncio.sleep(99999)
+        await asyncio.sleep(10)
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())  # Run the main asynchronous function
+        asyncio.run(main())
 
     except KeyboardInterrupt:
-        from time import sleep
-
         print("Program interrupted by user.")
 
-        IoHandler.oled.fill(0)  # Clear the display
+        IoHandler.oled.fill(0)
         IoHandler.oled.text("KeyboardInterrupt", 0, 0)
         IoHandler.oled.text("Stopped", 35, 30)
         IoHandler.oled.show()
-        sleep(2)
-        IoHandler.oled.poweroff()
 
+        import time
+
+        time.sleep(2)
+        IoHandler.oled.poweroff()
         machine.reset()
 
     except Exception as e:
-        from time import sleep
-
         print(f"Error: {e}")
 
-        IoHandler.oled.fill(0)  # Clear the display
+        IoHandler.oled.fill(0)
         IoHandler.oled.text("Exception", 0, 0)
         IoHandler.oled.text("Error", 45, 30)
         IoHandler.oled.show()
-        sleep(2)
-        IoHandler.oled.poweroff()
 
+        import time
+
+        time.sleep(2)
+        IoHandler.oled.poweroff()
         machine.reset()
 
     finally:
-        asyncio.new_event_loop()  # Create a new event loop if needed
+        asyncio.new_event_loop()
