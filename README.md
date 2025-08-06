@@ -88,6 +88,8 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Algorithm Improvements](#algorithm-improvements)
 
+  - [Drastically improved the sampling rate](#drastically-improved-the-sampling-rate)
+
 <br/>
 <br/>
 
