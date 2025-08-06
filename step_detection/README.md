@@ -156,7 +156,7 @@ The following algorithms are implemented in [`./utils/step_detection_algorithms.
 
 <br/>
 
-You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1191-L1220) (method `analyze_data`, variable `param_sets`, lines `1191-1220`).
+You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1372-L1401) (method `analyze_data`, variable `param_sets`, lines `1372-1401`).
 
 <br/>
 
@@ -174,7 +174,7 @@ For most applications, use the **Normal Walking** configuration from [`SCENARIO_
 
   - TUG Test (Timed Up and Go)
 
-  - Normal Walking  
+  - Normal Walking
 
   - Fast Walking
 

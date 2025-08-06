@@ -2,9 +2,9 @@
 
 <br/><br/>
 
-This guide provides comprehensive parameter tuning instructions for the step detection algorithms, optimized for **22Hz sampling rate**.
+This guide provides comprehensive parameter tuning instructions for the step detection algorithms.
 
-You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1191-L1220) (method `analyze_data`, variable `param_sets`, lines `1191-1220`).
+You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1372-L1401) (method `analyze_data`, variable `param_sets`, lines `1372-1401`).
 
 <br/><br/>
 
@@ -22,7 +22,7 @@ You can change the parameters for each algorithm in [`./utils/StepDataCollector.
 
 - **Delayed response**: DECREASE `window_size` for all algorithms
 
-- **For 22Hz sampling**: INCREASE all `window_size` parameters compared to higher sampling rates
+- **For 25Hz sampling** (and lower): INCREASE all `window_size` parameters compared to higher sampling rates
 
 <br/><br/>
 
@@ -32,7 +32,7 @@ You can change the parameters for each algorithm in [`./utils/StepDataCollector.
 
 | Parameter                 | Range        | Description                                 |
 | ------------------------- | ------------ | ------------------------------------------- |
-| `window_size`             | 0.3-2.0s     | 22Hz needs longer windows than 100Hz        |
+| `window_size`             | 0.3-2.0s     | 25Hz needs longer windows than 100Hz        |
 | `min_time_between_steps`  | 0.25-0.6s    | Physiological limits: slow=0.6s, fast=0.25s |
 | `threshold`/`sensitivity` | 0.3-1.2      | Lower=more sensitive, higher=more selective |
 | `hysteresis_band`         | 0.1-0.8 m/s² | Clean data=0.1, noisy=0.8                   |
@@ -41,7 +41,7 @@ You can change the parameters for each algorithm in [`./utils/StepDataCollector.
 
 <br/><br/>
 
-## Default Configuration (tested on 22Hz)
+## Default Configuration
 
 <br/>
 
@@ -145,7 +145,7 @@ param_sets = {
 
 **Tuning:**
 
-- **Critical:** Use `threshold=9.0` for 22Hz sampling (much higher than typical 0.5-0.8 - [check why](./SCENARIO_SPECIFIC_PARAMS.md#critical-parameter-notes-for-22hz))
+<!-- - **Critical:** Use `threshold=9.0` for 22Hz sampling (much higher than typical 0.5-0.8 - [check why](./SCENARIO_SPECIFIC_PARAMS.md#critical-parameter-notes-for-22hz)) -->
 
 - If too many false detections: increase `threshold` to 10-12
 

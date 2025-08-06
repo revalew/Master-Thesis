@@ -1,0 +1,12 @@
+{
+    "recording_name": "test",
+    "recording_date": "2025-08-06 22:24:14",
+    "total_duration": 17.439,
+    "step_count": 21,
+    "sampling_frequency": 98.62950857273927,
+    "target_frequency": 100,
+    "samples_collected": 1720,
+    "packets_received": 172,
+    "first_timestamp_ms": 97505,
+    "last_timestamp_ms": 114944
+}

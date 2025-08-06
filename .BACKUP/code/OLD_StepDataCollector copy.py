@@ -67,14 +67,6 @@ class StepDataCollector:
 
         self.detection_results_path = None
 
-        # High-speed recording tracking
-        self.first_timestamp = None
-        self.last_timestamp = None
-        self.sample_count = 0
-        self.packet_count = 0
-        self.debug_packets = True
-        self.last_print = 0
-
         # HTTP Session for keep-alive connections (keep for compatibility, but use UDP instead)
         self.session = requests.Session()  # type: ignore
         # Configure connection pooling and timeouts
@@ -177,29 +169,6 @@ class StepDataCollector:
             connection_frame, text="Connect", command=self.check_connection
         )
         self.connect_btn.grid(row=0, column=2, padx=5, pady=5)
-
-        # Sampling rate settings
-        sampling_frame = ttk.Frame(control_frame)
-        sampling_frame.pack(fill=tk.X, padx=5, pady=5)
-
-        ttk.Label(sampling_frame, text="Sampling Rate:").grid(
-            row=0, column=0, padx=5, pady=5, sticky="w"
-        )
-        self.sampling_rate_var = tk.StringVar(value="50")
-        self.sampling_rate_combo = ttk.Combobox(
-            sampling_frame,
-            textvariable=self.sampling_rate_var,
-            values=["25", "50", "100", "200"],
-            state="readonly",
-            width=10,
-            # fieldbackground="yellow",
-        )
-        # self.sampling_rate_combo.option_add('*TCombobox*Listbox.background', "yellow")
-        # self.sampling_rate_combo.option_add('fieldBackground', "yellow")
-        self.sampling_rate_combo.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Label(sampling_frame, text="Hz").grid(
-            row=0, column=2, padx=5, pady=5, sticky="w"
-        )
 
         # Recording controls
         record_frame = ttk.Frame(control_frame)
@@ -529,139 +498,9 @@ class StepDataCollector:
             )
             return False
 
-    def set_sampling_rate(self, hz: int) -> bool:
-        """Set sampling rate: 25, 50, 100, 200 Hz"""
-        # print(f"Setting sampling rate to {hz} Hz...")
-        try:
-            command = f"SET_RATE_{hz}".encode()
-            self.udp_sock.sendto(command, self.server_addr)
-            data, _ = self.udp_sock.recvfrom(64)
-
-            if len(data) >= 1:
-                success = struct.unpack("<B", data[:1])[0]
-                if success:
-                    # print(f"✓ Rate set to {hz} Hz")
-                    return True
-
-        except Exception as e:
-            print(f"✗ Rate setting failed: {e}")
-        return False
-
-    def start_high_speed_sampling(self) -> bool:
-        """Start high-speed sampling on Pico"""
-        # print("Starting high-speed sampling...")
-        try:
-            self.udp_sock.sendto(b"START", self.server_addr)
-            data, _ = self.udp_sock.recvfrom(1024)
-
-            if len(data) >= 2:
-                ack = struct.unpack("<H", data[:2])[0]
-                if ack == 0xACE:
-                    # print("✓ High-speed sampling started")
-                    return True
-                else:
-                    print(f"✗ Start failed: 0x{ack:04x}")
-
-        except Exception as e:
-            print(f"✗ Start failed: {e}")
-        return False
-
-    def stop_high_speed_sampling(self) -> bool:
-        """Stop high-speed sampling on Pico"""
-        # print("Stopping high-speed sampling...")
-        try:
-            for attempt in range(3):
-                try:
-                    self.udp_sock.settimeout(3.0)
-                    self.udp_sock.sendto(b"STOP", self.server_addr)
-                    data, _ = self.udp_sock.recvfrom(1024)
-
-                    if len(data) >= 12:
-                        stats = struct.unpack("<III", data[:12])
-                        print(
-                            f"✓ Stopped - {stats[0]} samples, {stats[1]} packets, {stats[2]} errors"
-                        )
-                        return True
-
-                except socket.timeout:
-                    print(f"Stop attempt {attempt + 1} timed out, retrying...")
-                    continue
-
-        except Exception as e:
-            print(f"✗ Stop failed: {e}")
-
-        print("✗ Stop failed after 3 attempts")
-        return False
-
-    def parse_sample_packet(self, data: bytes) -> list[dict]:
-        """Parse high-speed sample packet"""
-        if len(data) < 4:
-            return []
-
-        # Parse header
-        magic, count = struct.unpack("<HH", data[:4])
-        if magic != 0xBEEF:
-            return []
-
-        samples = []
-        sample_size = 76  # 4 + 72 bytes (timestamp int + 18 floats)
-
-        if self.debug_packets:
-            print(f"Packet: magic=0x{magic:04x}, count={count}, data_len={len(data)}")
-
-        for i in range(count):
-            offset = 4 + i * sample_size
-            if offset + sample_size <= len(data):
-                try:
-                    # Unpack: timestamp (I) + 18 floats
-                    sample_data = struct.unpack(
-                        "<I18f", data[offset : offset + sample_size]
-                    )
-                    timestamp = sample_data[0]
-
-                    # Sensor 1 data (indices 1-9)
-                    s1_accel = sample_data[1:4]  # accel x,y,z
-                    s1_gyro = sample_data[4:7]  # gyro x,y,z
-                    s1_mag = sample_data[7:10]  # mag x,y,z
-
-                    # Sensor 2 data (indices 10-18)
-                    s2_accel = sample_data[10:13]  # accel x,y,z
-                    s2_gyro = sample_data[13:16]  # gyro x,y,z
-                    s2_mag = sample_data[16:19]  # mag x,y,z
-
-                    samples.append(
-                        {
-                            "timestamp": timestamp,
-                            "sensor1": {
-                                "accel": s1_accel,
-                                "gyro": s1_gyro,
-                                "mag": s1_mag,
-                            },
-                            "sensor2": {
-                                "accel": s2_accel,
-                                "gyro": s2_gyro,
-                                "mag": s2_mag,
-                            },
-                        }
-                    )
-
-                except struct.error as e:
-                    if self.debug_packets:
-                        print(f"Struct unpack error at sample {i}: {e}")
-                    continue
-
-        if self.debug_packets and len(samples) > 0:
-            self.debug_packets = (
-                False  # Turn off debugging after first successful parse
-            )
-            print("Debug mode disabled - packet parsing working")
-
-        return samples
-
     def toggle_recording(self) -> None:
         """Toggle recording state"""
         self.api_url = self.url_entry.get()
-        target_rate_hz = int(self.sampling_rate_var.get())
         self.update_status(f"Connecting to {self.api_url}...")
 
         if self.use_udp:
@@ -671,27 +510,6 @@ class StepDataCollector:
             )
 
         if not self.recording:
-            # Set sampling rate with retry
-            for attempt in range(3):
-                if self.set_sampling_rate(target_rate_hz):
-                    break
-                if attempt < 2:
-                    print(f"Retry rate setting (attempt {attempt + 2})...")
-                    time.sleep(1)
-            else:
-                self.update_status("Failed to set sampling rate after 3 attempts")
-                return
-
-            for attempt in range(3):
-                if self.start_high_speed_sampling():
-                    break
-                if attempt < 2:
-                    print(f"Retry start sampling (attempt {attempt + 2})...")
-                    time.sleep(1)
-            else:
-                self.update_status("Failed to start sampling after 3 attempts")
-                return
-
             self.recording = True
             self.record_btn.config(text="Stop Recording")
             self.mark_step_btn.config(state=tk.NORMAL)
@@ -725,14 +543,6 @@ class StepDataCollector:
             }
             self.ground_truth_steps = []
             self.step_count_var.set("0")
-
-            # Reset high-speed tracking
-            self.first_timestamp = None
-            self.last_timestamp = None
-            self.sample_count = 0
-            self.packet_count = 0
-            self.debug_packets = True
-            self.last_print = time.time()
 
             # Reset plots
             self.line_ax1.set_data([], [])
@@ -780,14 +590,9 @@ class StepDataCollector:
             self.ground_truth_counting = False
             self.toggle_count_btn.config(text="Start Auto Counting")
 
-            # Stop high-speed sampling
-            self.stop_high_speed_sampling()
-
             # Enable analyze button if we have data
             if len(self.data["time"]) > 0:
                 self.analyze_btn.config(state=tk.NORMAL)
-                # Update plots after recording stops (disabled during recording to save resources)
-                self.update_plots()
 
             self.update_status("Recording stopped.")
 
@@ -796,113 +601,179 @@ class StepDataCollector:
         # otherwise we could overwrite the results file of a previous recording
         self.detection_results_path = None
 
-    def record_data(self) -> None:
-        """Background thread to record high-speed data from the Pico"""
-        # Set socket timeout for data reception
-        self.udp_sock.settimeout(0.5)
+    def record_data(self, update_interval: int | float | None = None) -> None:
+        """
+        Background thread to record data from the Pico
+
+        Args:
+            update_interval (int | float | None): The interval in seconds to wait between samples. Defaults to None, which means it will use the target rate. If None, it will default to `1.0 / target_rate_hz`.
+        """
+        if update_interval is None:
+            update_interval = 1.0 / self.target_rate_hz
+
+        next_sample = time.time()
+
+        # last_update_time = time.time()
+        sample_count = 0
 
         while self.recording:
-            try:
-                # Receive high-speed data packets
-                data, _ = self.udp_sock.recvfrom(4096)
-                current_time = time.time()
+            current_time = time.time()
 
-                # Skip short packets (likely control responses)
-                if len(data) < 20:
-                    continue
+            # # Auto-mark steps if enabled
+            # if (
+            #     self.ground_truth_counting and current_time - last_update_time >= 1.0
+            # ):  # Check once per second
+            #     # This simulates a real-time step detection - in reality, you'd integrate with a
+            #     # hardware button or auto-detection system
+            #     if np.random.random() < 0.2:  # 20% chance of a step each second
+            #         self.mark_step()
+            #     last_update_time = current_time
 
-                # Parse samples from packet
-                samples = self.parse_sample_packet(data)
+            if current_time >= next_sample:
+                try:
+                    if self.use_udp:
+                        data = self.read_sensors_udp()
 
-                if samples:
-                    self.packet_count += 1
+                    else:
+                        data = self.read_sensors()  # Fallback to HTTP session
 
-                    # Store all samples from this packet
-                    for sample in samples:
-                        # Use packet timestamp for accurate timing
-                        timestamp_ms = sample["timestamp"]
+                    if data and "status" in data and data["status"] == "OK":
+                        elapsed_time = current_time - self.recording_start_time
 
-                        if self.first_timestamp is None:
-                            self.first_timestamp = timestamp_ms
-                        self.last_timestamp = timestamp_ms
+                        # Update recording time display only every 10 samples
+                        if sample_count % 10 == 0:
+                            mins, secs = divmod(int(elapsed_time), 60)
+                            self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
 
-                        # Calculate elapsed time from first timestamp
-                        elapsed = (timestamp_ms - self.first_timestamp) / 1000.0
-                        self.data["time"].append(elapsed)
+                        # if sample_count % 5 == 0:
+                        #     # Update UI displays
+                        #     self.accel1_var.set(
+                        #         f"X: {data['sensor1']['acceleration']['X']:.2f}, Y: {data['sensor1']['acceleration']['Y']:.2f}, Z: {data['sensor1']['acceleration']['Z']:.2f}"
+                        #     )
+                        #     self.gyro1_var.set(
+                        #         f"X: {data['sensor1']['gyro']['X']:.2f}, Y: {data['sensor1']['gyro']['Y']:.2f}, Z: {data['sensor1']['gyro']['Z']:.2f}"
+                        #     )
+                        #     self.mag1_var.set(
+                        #         f"X: {data['sensor1']['magnetic']['X']:.2f}, Y: {data['sensor1']['magnetic']['Y']:.2f}, Z: {data['sensor1']['magnetic']['Z']:.2f}"
+                        #     )
+                        #
+                        #     self.accel2_var.set(
+                        #         f"X: {data['sensor2']['acceleration']['X']:.2f}, Y: {data['sensor2']['acceleration']['Y']:.2f}, Z: {data['sensor2']['acceleration']['Z']:.2f}"
+                        #     )
+                        #     self.gyro2_var.set(
+                        #         f"X: {data['sensor2']['gyro']['X']:.2f}, Y: {data['sensor2']['gyro']['Y']:.2f}, Z: {data['sensor2']['gyro']['Z']:.2f}"
+                        #     )
+                        #     self.mag2_var.set(
+                        #         f"X: {data['sensor2']['magnetic']['X']:.2f}, Y: {data['sensor2']['magnetic']['Y']:.2f}, Z: {data['sensor2']['magnetic']['Z']:.2f}"
+                        #     )
+                        #
+                        #     self.voltage_var.set(f"{data['battery']['voltage']:.2f} V")
+                        #     self.current_var.set(f"{data['battery']['current']:.3f} A")
+                        #     self.battery_var.set(f"{data['battery']['percentage']:.1f}%")
+                        #
 
-                        # Sensor 1 data
-                        s1 = sample["sensor1"]
-                        self.data["sensor1"]["accel_x"].append(s1["accel"][0])
-                        self.data["sensor1"]["accel_y"].append(s1["accel"][1])
-                        self.data["sensor1"]["accel_z"].append(s1["accel"][2])
-                        self.data["sensor1"]["gyro_x"].append(s1["gyro"][0])
-                        self.data["sensor1"]["gyro_y"].append(s1["gyro"][1])
-                        self.data["sensor1"]["gyro_z"].append(s1["gyro"][2])
-                        self.data["sensor1"]["mag_x"].append(s1["mag"][0])
-                        self.data["sensor1"]["mag_y"].append(s1["mag"][1])
-                        self.data["sensor1"]["mag_z"].append(s1["mag"][2])
+                        # Store data
+                        self.data["time"].append(elapsed_time)
 
-                        # Sensor 2 data
-                        s2 = sample["sensor2"]
-                        self.data["sensor2"]["accel_x"].append(s2["accel"][0])
-                        self.data["sensor2"]["accel_y"].append(s2["accel"][1])
-                        self.data["sensor2"]["accel_z"].append(s2["accel"][2])
-                        self.data["sensor2"]["gyro_x"].append(s2["gyro"][0])
-                        self.data["sensor2"]["gyro_y"].append(s2["gyro"][1])
-                        self.data["sensor2"]["gyro_z"].append(s2["gyro"][2])
-                        self.data["sensor2"]["mag_x"].append(s2["mag"][0])
-                        self.data["sensor2"]["mag_y"].append(s2["mag"][1])
-                        self.data["sensor2"]["mag_z"].append(s2["mag"][2])
+                        # Sensor 1
+                        self.data["sensor1"]["accel_x"].append(
+                            data["sensor1"]["acceleration"]["X"]
+                        )
+                        self.data["sensor1"]["accel_y"].append(
+                            data["sensor1"]["acceleration"]["Y"]
+                        )
+                        self.data["sensor1"]["accel_z"].append(
+                            data["sensor1"]["acceleration"]["Z"]
+                        )
+                        self.data["sensor1"]["gyro_x"].append(
+                            data["sensor1"]["gyro"]["X"]
+                        )
+                        self.data["sensor1"]["gyro_y"].append(
+                            data["sensor1"]["gyro"]["Y"]
+                        )
+                        self.data["sensor1"]["gyro_z"].append(
+                            data["sensor1"]["gyro"]["Z"]
+                        )
+                        self.data["sensor1"]["mag_x"].append(
+                            data["sensor1"]["magnetic"]["X"]
+                        )
+                        self.data["sensor1"]["mag_y"].append(
+                            data["sensor1"]["magnetic"]["Y"]
+                        )
+                        self.data["sensor1"]["mag_z"].append(
+                            data["sensor1"]["magnetic"]["Z"]
+                        )
 
-                        # Battery data - use fixed values during recording for performance
-                        self.data["battery"]["voltage"].append(4.0)
-                        self.data["battery"]["current"].append(0.5)
-                        self.data["battery"]["percentage"].append(80.0)
+                        # Sensor 2
+                        self.data["sensor2"]["accel_x"].append(
+                            data["sensor2"]["acceleration"]["X"]
+                        )
+                        self.data["sensor2"]["accel_y"].append(
+                            data["sensor2"]["acceleration"]["Y"]
+                        )
+                        self.data["sensor2"]["accel_z"].append(
+                            data["sensor2"]["acceleration"]["Z"]
+                        )
+                        self.data["sensor2"]["gyro_x"].append(
+                            data["sensor2"]["gyro"]["X"]
+                        )
+                        self.data["sensor2"]["gyro_y"].append(
+                            data["sensor2"]["gyro"]["Y"]
+                        )
+                        self.data["sensor2"]["gyro_z"].append(
+                            data["sensor2"]["gyro"]["Z"]
+                        )
+                        self.data["sensor2"]["mag_x"].append(
+                            data["sensor2"]["magnetic"]["X"]
+                        )
+                        self.data["sensor2"]["mag_y"].append(
+                            data["sensor2"]["magnetic"]["Y"]
+                        )
+                        self.data["sensor2"]["mag_z"].append(
+                            data["sensor2"]["magnetic"]["Z"]
+                        )
 
-                        self.sample_count += 1
+                        # Battery
+                        self.data["battery"]["voltage"].append(
+                            data["battery"]["voltage"]
+                        )
+                        self.data["battery"]["current"].append(
+                            data["battery"]["current"]
+                        )
+                        self.data["battery"]["percentage"].append(
+                            data["battery"]["percentage"]
+                        )
 
-                # Update recording time display every 10 samples
-                if self.sample_count % 10 == 0:
-                    if self.first_timestamp and self.last_timestamp:
-                        duration = (self.last_timestamp - self.first_timestamp) / 1000.0
-                        mins, secs = divmod(int(duration), 60)
-                        self.recording_time_var.set(f"{mins:02d}:{secs:02d}")
+                        sample_count += 1
 
-                # Progress update every 3 seconds
-                if current_time - self.last_print >= 3.0:
-                    if self.first_timestamp and self.last_timestamp:
-                        duration = (self.last_timestamp - self.first_timestamp) / 1000.0
-                        target_rate = int(self.sampling_rate_var.get())
-                        rate = self.sample_count / duration if duration > 0 else 0
-                        efficiency = (
-                            (rate / target_rate * 100) if target_rate > 0 else 0
+                    else:
+                        self.update_status("Error: Invalid data format.")
+                        print("Error: Invalid data format.")
+
+                    next_sample += update_interval
+
+                    # Safety limit
+                    if (time.time() - self.recording_start_time) > MAX_RECORDING_TIME:
+                        self.update_status(
+                            f"Max recording time ({MAX_RECORDING_TIME} s) reached, stopping..."
                         )
                         print(
-                            f"Recording... {duration:.1f}s, {self.sample_count} samples, {rate:.1f} Hz ({efficiency:.0f}%)"
+                            f"\nMax recording time ({MAX_RECORDING_TIME} s) reached, stopping..."
                         )
-                    self.last_print = current_time
+                        self.recording = False
+                        break
 
-                # Safety limit
-                if time.time() - self.recording_start_time > MAX_RECORDING_TIME:
-                    print(
-                        f"Max recording time ({MAX_RECORDING_TIME}s) reached, stopping..."
-                    )
-                    self.recording = False
-                    break
+                except Exception as e:
+                    self.update_status(f"Error reading data: {str(e)}")
+                    print(f"Error reading data: {str(e)}")
+                    if sample_count > 0:  # Only print rate if we have samples
+                        print(
+                            f"Sample {sample_count}, Duration: {elapsed_time:.3f}s, Rate: {sample_count/elapsed_time:.1f}Hz"
+                        )
 
-            except socket.timeout:
-                # No data received - check if still recording
-                if (
-                    time.time() - self.recording_start_time > 5
-                    and self.sample_count == 0
-                ):
-                    print("No data received for 5 seconds, stopping...")
-                    self.recording = False
-                    break
-                continue
-            except Exception as e:
-                print(f"Recording error: {e}")
-                continue
+            else:
+                time.sleep(0.001)  # 1ms sleep to prevent busy waiting
+                # time.sleep(update_interval)
 
     def read_sensors(self) -> dict[str, Any]:
         """Read sensor data via HTTP protocol"""
@@ -1117,8 +988,7 @@ class StepDataCollector:
             return
 
         save_dir = filedialog.askdirectory(
-            title="Select Directory to Save Data",
-            initialdir="./analysis",
+            title="Select Directory to Save Data", initialdir="./analysis", 
         )
         if not save_dir:
             return
@@ -1182,40 +1052,20 @@ class StepDataCollector:
             os.path.join(recording_dir, "ground_truth.csv"), index=False  # type: ignore
         )
 
-        # Calculate accurate duration and rate
-        if self.first_timestamp and self.last_timestamp:
-            duration = (self.last_timestamp - self.first_timestamp) / 1000.0
-        else:
-            duration = self.data["time"][-1] if self.data["time"] else 0
-
-        actual_rate = self.sample_count / duration if duration > 0 else 0
-
         metadata = {
             "recording_name": recording_name,
             "recording_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "total_duration": duration,
+            "total_duration": (
+                self.data["time"][-1] if len(self.data["time"]) > 0 else 0
+            ),
             "step_count": len(self.ground_truth_steps),
-            "sampling_frequency": actual_rate,
-            "target_frequency": int(self.sampling_rate_var.get()),
-            "samples_collected": self.sample_count,
-            "packets_received": self.packet_count,
-            "first_timestamp_ms": self.first_timestamp,
-            "last_timestamp_ms": self.last_timestamp,
+            "sampling_frequency": (
+                len(self.data["time"]) / self.data["time"][-1]
+                if len(self.data["time"]) > 0
+                else 0
+            ),
+            # "dir_path": recording_dir,
         }
-        # metadata = {
-        #     "recording_name": recording_name,
-        #     "recording_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        #     "total_duration": (
-        #         self.data["time"][-1] if len(self.data["time"]) > 0 else 0
-        #     ),
-        #     "step_count": len(self.ground_truth_steps),
-        #     "sampling_frequency": (
-        #         len(self.data["time"]) / self.data["time"][-1]
-        #         if len(self.data["time"]) > 0
-        #         else 0
-        #     ),
-        #     # "dir_path": recording_dir,
-        # }
         self.detection_results_path = recording_dir
 
         with open(os.path.join(recording_dir, "metadata.json"), "w") as f:  # type: ignore
