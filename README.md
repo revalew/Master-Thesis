@@ -437,7 +437,11 @@ Actual sampling rate is $`\thickapprox [22, 23] Hz`$ due to network limitations,
 
 ### Drastically improved the sampling rate
 
-I thought the 22 Hz sampling rate was good enough (I hoped, otherwise it would require additional work), but I received the feedback that I have to improve it - 50 Hz minimum sampling rate is required and 100 Hz would be ideal. After trying many different approaches I finally found out that the main issue was the Waveshare's IMU and [its library](./libs_to_compile/lib/adafruit_icm20x.py), which added unnecessary overhead / wait and made the sampling rate 46 Hz maximum. After rewriting the I2C interface (now operating on raw registers, though I think it would be better to just modify the original library code and remove / reduce the sleep), sensor can easily reach high internal sampling rates and the UDP handler can send updated data as fast as possible, using the built in timers of the Pico.
+I thought the $`23 Hz`$ sampling rate was good enough (I hoped, otherwise it would require additional work), but I received the feedback that I have to improve it - $`50 Hz`$ minimum sampling rate is required and $`100 Hz`$ would be ideal.
+
+After trying many different approaches I finally found out that the main issue was the Waveshare's IMU and [its library](./libs_to_compile/lib/adafruit_icm20x.py), which added unnecessary overhead / wait and made the sampling rate $`46 Hz`$ maximum. After rewriting the I2C interface (now operating on raw registers without additional methods, though I think, it would be better to just modify the original library code and remove / reduce the sleep), sensor can easily reach high internal sampling rates and the UDP handler can send updated data as fast as possible - batch transmission using timestamps and Pico's built-in timers.
+
+Updated the main GUI app to support the new high-speed recording and implemented a dropdown selection for $`25, 50, 100, 200 Hz`$ frequencies ($`\; 50 \;\text{or}\; 100 Hz`$ recommended, $`200 Hz`$ can be inconsistent).
 
 <br/><br/>
 
