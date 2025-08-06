@@ -1,0 +1,12 @@
+{
+    "recording_name": "performance_test_100hz",
+    "recording_date": "2025-08-06 20:30:19",
+    "total_duration": 15.78,
+    "step_count": 16,
+    "sampling_frequency": 100.12674271229405,
+    "target_frequency": 100,
+    "samples_collected": 1580,
+    "packets_received": 158,
+    "first_timestamp_ms": 329267,
+    "last_timestamp_ms": 345047
+}

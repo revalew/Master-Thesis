@@ -1,0 +1,12 @@
+{
+    "recording_name": "performance_test_001",
+    "recording_date": "2025-08-06 20:26:57",
+    "total_duration": 15.98,
+    "step_count": 23,
+    "sampling_frequency": 48.18523153942428,
+    "target_frequency": 50,
+    "samples_collected": 770,
+    "packets_received": 77,
+    "first_timestamp_ms": 119778,
+    "last_timestamp_ms": 135758
+}

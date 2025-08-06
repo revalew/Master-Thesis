@@ -3,11 +3,11 @@
 # CONFIGURATION
 API_URL = "http://192.168.4.1/api"  # AP mode
 # API_URL = "http://10.9.8.119/api" # STA mode
-RECORDING_NAME = "performance_test_001"
-SAVE_PATH = "../analysis"
-TARGET_RATE_HZ = 50  # Target sampling rate: 25, 50, 100, 200
+SAVE_PATH = "../analysis/performance_tests"  # Directory to save results
+TARGET_RATE_HZ = 200  # Target sampling rate: 25, 50, 100, 200
 REQUEST_TIMEOUT = 0.5  # Seconds
 MAX_RECORDING_TIME = 16  # Seconds
+RECORDING_NAME = f"performance_test_{TARGET_RATE_HZ}hz"
 
 import requests
 import time
@@ -23,7 +23,7 @@ import socket
 import struct
 
 
-class HighSpeedPerformanceTester:
+class PerformanceTester:
     def __init__(self):
         self.session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(
@@ -72,7 +72,7 @@ class HighSpeedPerformanceTester:
         self.sample_count = 0
         self.packet_count = 0
         self.last_print = 0
-        
+
         # For accurate timing
         self.first_timestamp = None
         self.last_timestamp = None
@@ -82,7 +82,7 @@ class HighSpeedPerformanceTester:
             # Test with STATUS command
             self.udp_sock.sendto(b"STATUS", self.server_addr)
             data, _ = self.udp_sock.recvfrom(1024)
-            
+
             if len(data) >= 17:
                 status = struct.unpack("<BIIII", data[:17])
                 print(f"✓ Connected to Pico - Active: {bool(status[0])}")
@@ -99,13 +99,13 @@ class HighSpeedPerformanceTester:
             command = f"SET_RATE_{hz}".encode()
             self.udp_sock.sendto(command, self.server_addr)
             data, _ = self.udp_sock.recvfrom(64)
-            
+
             if len(data) >= 1:
                 success = struct.unpack("<B", data[:1])[0]
                 if success:
                     print(f"✓ Rate set to {hz} Hz")
                     return True
-                    
+
         except Exception as e:
             print(f"✗ Rate setting failed: {e}")
         return False
@@ -116,7 +116,7 @@ class HighSpeedPerformanceTester:
         try:
             self.udp_sock.sendto(b"START", self.server_addr)
             data, _ = self.udp_sock.recvfrom(1024)
-            
+
             if len(data) >= 2:
                 ack = struct.unpack("<H", data[:2])[0]
                 if ack == 0xACE:
@@ -124,7 +124,7 @@ class HighSpeedPerformanceTester:
                     return True
                 else:
                     print(f"✗ Start failed: 0x{ack:04x}")
-                    
+
         except Exception as e:
             print(f"✗ Start failed: {e}")
         return False
@@ -139,19 +139,21 @@ class HighSpeedPerformanceTester:
                     self.udp_sock.settimeout(3.0)
                     self.udp_sock.sendto(b"STOP", self.server_addr)
                     data, _ = self.udp_sock.recvfrom(1024)
-                    
+
                     if len(data) >= 12:
                         stats = struct.unpack("<III", data[:12])
-                        print(f"✓ Stopped - {stats[0]} samples, {stats[1]} packets, {stats[2]} errors")
+                        print(
+                            f"✓ Stopped - {stats[0]} samples, {stats[1]} packets, {stats[2]} errors"
+                        )
                         return True
-                        
+
                 except socket.timeout:
                     print(f"Stop attempt {attempt + 1} timed out, retrying...")
                     continue
-                    
+
         except Exception as e:
             print(f"✗ Stop failed: {e}")
-        
+
         print("✗ Stop failed after 3 attempts")
         return False
 
@@ -159,51 +161,57 @@ class HighSpeedPerformanceTester:
         """Parse high-speed sample packet"""
         if len(data) < 4:
             return []
-        
+
         # Parse header
         magic, count = struct.unpack("<HH", data[:4])
         if magic != 0xBEEF:
             return []
-        
+
         samples = []
-        sample_size = 76  # 4 + 72 bytes (timestamp + 18 floats)
-        
+        sample_size = 76  # 4 + 72 bytes (timestamp int (ticks_ms) + 18 floats)
+
         if self.debug_packets:
-            print(f"Packet: magic=0x{magic:04x}, count={count}, data_len={len(data)}, expected_size={4 + count * sample_size}")
-        
+            print(
+                f"Packet: magic=0x{magic:04x}, count={count}, data_len={len(data)}, expected_size={4 + count * sample_size}"
+            )
+
         for i in range(count):
             offset = 4 + i * sample_size
             if offset + sample_size <= len(data):
                 try:
-                    # Unpack: timestamp (I) + 18 floats (corrected format)
-                    sample_data = struct.unpack("<I18f", data[offset:offset + sample_size])
-                    
+                    # Unpack: timestamp (I) + 18 floats
+                    sample_data = struct.unpack(
+                        "<I18f", data[offset : offset + sample_size]
+                    )
+
                     timestamp = sample_data[0]
-                    
+
                     # Sensor 1 data (indices 1-9)
-                    s1_accel = sample_data[1:4]   # accel x,y,z
-                    s1_gyro = sample_data[4:7]    # gyro x,y,z
-                    s1_mag = sample_data[7:10]    # mag x,y,z
-                    
+                    s1_accel = sample_data[1:4]  # accel x,y,z
+                    s1_gyro = sample_data[4:7]  # gyro x,y,z
+                    s1_mag = sample_data[7:10]  # mag x,y,z
+
                     # Sensor 2 data (indices 10-18)
-                    s2_accel = sample_data[10:13] # accel x,y,z
+                    s2_accel = sample_data[10:13]  # accel x,y,z
                     s2_gyro = sample_data[13:16]  # gyro x,y,z
-                    s2_mag = sample_data[16:19]   # mag x,y,z
-                    
-                    samples.append({
-                        'timestamp': timestamp,
-                        'sensor1': {
-                            'accel': s1_accel,
-                            'gyro': s1_gyro,
-                            'mag': s1_mag
-                        },
-                        'sensor2': {
-                            'accel': s2_accel,
-                            'gyro': s2_gyro,
-                            'mag': s2_mag
+                    s2_mag = sample_data[16:19]  # mag x,y,z
+
+                    samples.append(
+                        {
+                            "timestamp": timestamp,
+                            "sensor1": {
+                                "accel": s1_accel,
+                                "gyro": s1_gyro,
+                                "mag": s1_mag,
+                            },
+                            "sensor2": {
+                                "accel": s2_accel,
+                                "gyro": s2_gyro,
+                                "mag": s2_mag,
+                            },
                         }
-                    })
-                    
+                    )
+
                 except struct.error as e:
                     if self.debug_packets:
                         print(f"Struct unpack error at sample {i}: {e}")
@@ -211,14 +219,18 @@ class HighSpeedPerformanceTester:
                     continue
             else:
                 if self.debug_packets:
-                    print(f"Not enough data for sample {i}: need {sample_size}, have {len(data) - offset}")
-                    
+                    print(
+                        f"Not enough data for sample {i}: need {sample_size}, have {len(data) - offset}"
+                    )
+
         if self.debug_packets:
             print(f"Parsed {len(samples)} samples from packet")
             if len(samples) > 0:
-                self.debug_packets = False  # Turn off debugging after first successful parse
+                self.debug_packets = (
+                    False  # Turn off debugging after first successful parse
+                )
                 print("Debug mode disabled - packet parsing working")
-                
+
         return samples
 
     def get_battery_info(self):
@@ -226,16 +238,16 @@ class HighSpeedPerformanceTester:
         if self.recording:
             # Don't interfere with high-speed recording
             return {"voltage": 4.0, "current": 0.5, "percentage": 80.0}
-            
+
         try:
             self.udp_sock.sendto(b"GET", self.server_addr)
             data, _ = self.udp_sock.recvfrom(1024)
-            
+
             values = struct.unpack("<f18f3f", data)
             return {
                 "voltage": values[19],
-                "current": values[20], 
-                "percentage": values[21]
+                "current": values[20],
+                "percentage": values[21],
             }
         except:
             return {"voltage": 0.0, "current": 0.0, "percentage": 0.0}
@@ -253,8 +265,8 @@ class HighSpeedPerformanceTester:
                 print(f"Step marked at {elapsed:.2f}s (total: {len(self.step_times)})")
             elif key == keyboard.Key.esc:
                 return False  # Stop listener
-            elif hasattr(key, 'char'):
-                if key.char == 's' and not self.recording:
+            elif hasattr(key, "char"):
+                if key.char == "s" and not self.recording:
                     # Save current data
                     if self.sample_count > 0:
                         self.save_data()
@@ -269,7 +281,7 @@ class HighSpeedPerformanceTester:
             return
 
         print(f"\n🟢 Starting high-speed recording at {TARGET_RATE_HZ} Hz...")
-        
+
         # Set sampling rate with retry
         for attempt in range(3):
             if self.set_sampling_rate(TARGET_RATE_HZ):
@@ -280,7 +292,7 @@ class HighSpeedPerformanceTester:
         else:
             print("Failed to set sampling rate after 3 attempts")
             return
-        
+
         # Start high-speed sampling with retry
         for attempt in range(3):
             if self.start_high_speed_sampling():
@@ -291,13 +303,13 @@ class HighSpeedPerformanceTester:
         else:
             print("Failed to start sampling after 3 attempts")
             return
-        
+
         self.recording = True
         self.start_time = time.time()
         self.sample_count = 0
         self.packet_count = 0
         self.last_print = time.time()
-        
+
         # Reset timestamp tracking
         self.first_timestamp = None
         self.last_timestamp = None
@@ -320,16 +332,16 @@ class HighSpeedPerformanceTester:
             return
 
         self.recording = False
-        
+
         # Stop high-speed sampling
         self.stop_high_speed_sampling()
-        
+
         # Calculate duration from packet timestamps (more accurate)
         if self.first_timestamp and self.last_timestamp:
             duration = (self.last_timestamp - self.first_timestamp) / 1000.0
         else:
             duration = time.time() - self.start_time
-            
+
         actual_rate = self.sample_count / duration if duration > 0 else 0
 
         print(f"\n🔴 Recording stopped")
@@ -343,66 +355,68 @@ class HighSpeedPerformanceTester:
     def high_speed_recording_loop(self):
         """High-speed data collection loop"""
         # Disable battery updates during high-speed recording for better performance
-        
+
         while self.recording:
             try:
                 # Receive high-speed data packets
                 data, _ = self.udp_sock.recvfrom(4096)
                 current_time = time.time()
-                
+
                 # Skip short packets (likely control responses)
                 if len(data) < 20:
-                    print(f"Skipping short packet: {len(data)} bytes, data: {data.hex()}")
+                    print(
+                        f"Skipping short packet: {len(data)} bytes, data: {data.hex()}"
+                    )
                     continue
-                
+
                 # Parse samples from packet
                 samples = self.parse_sample_packet(data)
-                
+
                 if samples:
                     self.packet_count += 1
-                    
+
                     # Store all samples from this packet
                     for sample in samples:
                         # Use packet timestamp for accurate timing
-                        timestamp_ms = sample['timestamp']
-                        
+                        timestamp_ms = sample["timestamp"]
+
                         if self.first_timestamp is None:
                             self.first_timestamp = timestamp_ms
                         self.last_timestamp = timestamp_ms
-                        
+
                         # Calculate elapsed time from first timestamp
                         elapsed = (timestamp_ms - self.first_timestamp) / 1000.0
                         self.data["time"].append(elapsed)
-                        
+
                         # Sensor 1 data
-                        s1 = sample['sensor1']
-                        self.data["sensor1"]["accel_x"].append(s1['accel'][0])
-                        self.data["sensor1"]["accel_y"].append(s1['accel'][1])
-                        self.data["sensor1"]["accel_z"].append(s1['accel'][2])
-                        self.data["sensor1"]["gyro_x"].append(s1['gyro'][0])
-                        self.data["sensor1"]["gyro_y"].append(s1['gyro'][1])
-                        self.data["sensor1"]["gyro_z"].append(s1['gyro'][2])
-                        self.data["sensor1"]["mag_x"].append(s1['mag'][0])
-                        self.data["sensor1"]["mag_y"].append(s1['mag'][1])
-                        self.data["sensor1"]["mag_z"].append(s1['mag'][2])
-                        
+                        s1 = sample["sensor1"]
+                        self.data["sensor1"]["accel_x"].append(s1["accel"][0])
+                        self.data["sensor1"]["accel_y"].append(s1["accel"][1])
+                        self.data["sensor1"]["accel_z"].append(s1["accel"][2])
+                        self.data["sensor1"]["gyro_x"].append(s1["gyro"][0])
+                        self.data["sensor1"]["gyro_y"].append(s1["gyro"][1])
+                        self.data["sensor1"]["gyro_z"].append(s1["gyro"][2])
+                        self.data["sensor1"]["mag_x"].append(s1["mag"][0])
+                        self.data["sensor1"]["mag_y"].append(s1["mag"][1])
+                        self.data["sensor1"]["mag_z"].append(s1["mag"][2])
+
                         # Sensor 2 data
-                        s2 = sample['sensor2']
-                        self.data["sensor2"]["accel_x"].append(s2['accel'][0])
-                        self.data["sensor2"]["accel_y"].append(s2['accel'][1])
-                        self.data["sensor2"]["accel_z"].append(s2['accel'][2])
-                        self.data["sensor2"]["gyro_x"].append(s2['gyro'][0])
-                        self.data["sensor2"]["gyro_y"].append(s2['gyro'][1])
-                        self.data["sensor2"]["gyro_z"].append(s2['gyro'][2])
-                        self.data["sensor2"]["mag_x"].append(s2['mag'][0])
-                        self.data["sensor2"]["mag_y"].append(s2['mag'][1])
-                        self.data["sensor2"]["mag_z"].append(s2['mag'][2])
-                        
+                        s2 = sample["sensor2"]
+                        self.data["sensor2"]["accel_x"].append(s2["accel"][0])
+                        self.data["sensor2"]["accel_y"].append(s2["accel"][1])
+                        self.data["sensor2"]["accel_z"].append(s2["accel"][2])
+                        self.data["sensor2"]["gyro_x"].append(s2["gyro"][0])
+                        self.data["sensor2"]["gyro_y"].append(s2["gyro"][1])
+                        self.data["sensor2"]["gyro_z"].append(s2["gyro"][2])
+                        self.data["sensor2"]["mag_x"].append(s2["mag"][0])
+                        self.data["sensor2"]["mag_y"].append(s2["mag"][1])
+                        self.data["sensor2"]["mag_z"].append(s2["mag"][2])
+
                         # Battery data - use fixed values during recording for performance
                         self.data["battery"]["voltage"].append(4.0)  # Placeholder
                         self.data["battery"]["current"].append(0.5)  # Placeholder
                         self.data["battery"]["percentage"].append(80.0)  # Placeholder
-                        
+
                         self.sample_count += 1
 
                 # Progress update using packet timestamps
@@ -410,16 +424,22 @@ class HighSpeedPerformanceTester:
                     if self.first_timestamp and self.last_timestamp:
                         duration = (self.last_timestamp - self.first_timestamp) / 1000.0
                         rate = self.sample_count / duration if duration > 0 else 0
-                        efficiency = (rate / TARGET_RATE_HZ * 100) if TARGET_RATE_HZ > 0 else 0
-                        print(f"Recording... {duration:.1f}s, {self.sample_count} samples, {rate:.1f} Hz ({efficiency:.0f}%), {len(self.step_times)} steps")
+                        efficiency = (
+                            (rate / TARGET_RATE_HZ * 100) if TARGET_RATE_HZ > 0 else 0
+                        )
+                        print(
+                            f"Recording... {duration:.1f}s, {self.sample_count} samples, {rate:.1f} Hz ({efficiency:.0f}%), {len(self.step_times)} steps"
+                        )
                     self.last_print = current_time
 
                 # Safety limit using real time (not packet time)
                 if time.time() - self.start_time > MAX_RECORDING_TIME:
-                    print(f"\nMax recording time ({MAX_RECORDING_TIME}s) reached, stopping...")
+                    print(
+                        f"\nMax recording time ({MAX_RECORDING_TIME}s) reached, stopping..."
+                    )
                     self.recording = False
                     break
-                    
+
             except socket.timeout:
                 # No data received - check if still recording
                 if time.time() - self.start_time > 5 and self.sample_count == 0:
@@ -435,7 +455,7 @@ class HighSpeedPerformanceTester:
         if self.sample_count == 0:
             print("No data to save")
             return
-            
+
         if not os.path.exists(SAVE_PATH):
             os.makedirs(SAVE_PATH)
 
@@ -472,7 +492,7 @@ class HighSpeedPerformanceTester:
             duration = (self.last_timestamp - self.first_timestamp) / 1000.0
         else:
             duration = self.data["time"][-1] if self.data["time"] else 0
-            
+
         actual_rate = self.sample_count / duration if duration > 0 else 0
 
         # Save metadata
@@ -491,9 +511,11 @@ class HighSpeedPerformanceTester:
 
         with open(os.path.join(recording_dir, "metadata.json"), "w") as f:
             json.dump(metadata, f, indent=4)
-            
+
         print(f"Data saved to {recording_dir}")
-        print(f"Metadata: {duration:.2f}s, {actual_rate:.2f} Hz, {self.sample_count} samples")
+        print(
+            f"Metadata: {duration:.2f}s, {actual_rate:.2f} Hz, {self.sample_count} samples"
+        )
 
     def run(self):
         print("=" * 60)
@@ -531,5 +553,5 @@ class HighSpeedPerformanceTester:
 
 
 if __name__ == "__main__":
-    tester = HighSpeedPerformanceTester()
+    tester = PerformanceTester()
     tester.run()

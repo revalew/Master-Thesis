@@ -1,0 +1,12 @@
+{
+    "recording_name": "performance_test_200hz",
+    "recording_date": "2025-08-06 20:31:09",
+    "total_duration": 15.942,
+    "step_count": 16,
+    "sampling_frequency": 188.80943419897127,
+    "target_frequency": 200,
+    "samples_collected": 3010,
+    "packets_received": 301,
+    "first_timestamp_ms": 374987,
+    "last_timestamp_ms": 390929
+}
