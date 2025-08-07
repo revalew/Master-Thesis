@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_down_thigh_2",
+    "recording_date": "2025-08-07 23:02:13",
+    "total_duration": 16.59,
+    "step_count": 24,
+    "sampling_frequency": 100.06027727546714,
+    "target_frequency": 100,
+    "samples_collected": 1660,
+    "packets_received": 166,
+    "first_timestamp_ms": 151819,
+    "last_timestamp_ms": 168409
+}

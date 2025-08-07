@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_both_thigh_1",
+    "recording_date": "2025-08-07 23:06:08",
+    "total_duration": 32.484,
+    "step_count": 51,
+    "sampling_frequency": 100.04925501785493,
+    "target_frequency": 100,
+    "samples_collected": 3250,
+    "packets_received": 325,
+    "first_timestamp_ms": 372232,
+    "last_timestamp_ms": 404716
+}

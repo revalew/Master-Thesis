@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_up_thigh_3",
+    "recording_date": "2025-08-07 23:05:01",
+    "total_duration": 17.79,
+    "step_count": 25,
+    "sampling_frequency": 100.05621135469366,
+    "target_frequency": 100,
+    "samples_collected": 1780,
+    "packets_received": 178,
+    "first_timestamp_ms": 323664,
+    "last_timestamp_ms": 341454
+}
