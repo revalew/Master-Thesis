@@ -1,7 +1,12 @@
 {
     "recording_name": "tug_wrist_2",
-    "recording_date": "2025-07-27 19:09:03",
-    "total_duration": 10.397197246551514,
+    "recording_date": "2025-08-07 22:11:49",
+    "total_duration": 12.689,
     "step_count": 12,
-    "sampling_frequency": 1.3465167263844537
+    "sampling_frequency": 100.0866892584128,
+    "target_frequency": 100,
+    "samples_collected": 1270,
+    "packets_received": 127,
+    "first_timestamp_ms": 371130,
+    "last_timestamp_ms": 383819
 }

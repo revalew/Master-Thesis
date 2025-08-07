@@ -1,7 +1,12 @@
 {
     "recording_name": "tug_ankle_3",
-    "recording_date": "2025-07-27 19:29:23",
-    "total_duration": 14.697790384292603,
-    "step_count": 14,
-    "sampling_frequency": 0.6123369407702411
+    "recording_date": "2025-08-07 22:23:48",
+    "total_duration": 12.293,
+    "step_count": 13,
+    "sampling_frequency": 100.05694297567722,
+    "target_frequency": 100,
+    "samples_collected": 1230,
+    "packets_received": 123,
+    "first_timestamp_ms": 116393,
+    "last_timestamp_ms": 128686
 }

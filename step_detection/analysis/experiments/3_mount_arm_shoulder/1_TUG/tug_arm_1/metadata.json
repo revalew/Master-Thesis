@@ -1,7 +1,12 @@
 {
     "recording_name": "tug_arm_1",
-    "recording_date": "2025-07-27 19:16:11",
-    "total_duration": 12.169078350067139,
-    "step_count": 12,
-    "sampling_frequency": 1.232632379256334
+    "recording_date": "2025-08-07 22:18:49",
+    "total_duration": 13.936,
+    "step_count": 13,
+    "sampling_frequency": 98.30654420206659,
+    "target_frequency": 100,
+    "samples_collected": 1370,
+    "packets_received": 137,
+    "first_timestamp_ms": 70793,
+    "last_timestamp_ms": 84729
 }

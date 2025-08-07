@@ -1,7 +1,12 @@
 {
     "recording_name": "tug_thigh_2",
-    "recording_date": "2025-07-31 22:20:14",
-    "total_duration": 13.427755117416382,
+    "recording_date": "2025-08-07 22:06:51",
+    "total_duration": 13.146,
     "step_count": 13,
-    "sampling_frequency": 21.597057547158975
+    "sampling_frequency": 97.36802069070438,
+    "target_frequency": 100,
+    "samples_collected": 1280,
+    "packets_received": 128,
+    "first_timestamp_ms": 69828,
+    "last_timestamp_ms": 82974
 }
