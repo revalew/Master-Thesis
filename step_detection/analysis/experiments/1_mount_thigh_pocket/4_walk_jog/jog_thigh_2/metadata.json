@@ -1,0 +1,12 @@
+{
+    "recording_name": "jog_thigh_2",
+    "recording_date": "2025-08-07 22:55:01",
+    "total_duration": 67.39,
+    "step_count": 150,
+    "sampling_frequency": 99.27288915269328,
+    "target_frequency": 100,
+    "samples_collected": 6690,
+    "packets_received": 669,
+    "first_timestamp_ms": 1238001,
+    "last_timestamp_ms": 1305391
+}
