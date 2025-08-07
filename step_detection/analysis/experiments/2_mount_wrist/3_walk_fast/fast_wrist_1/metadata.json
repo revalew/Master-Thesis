@@ -1,0 +1,12 @@
+{
+    "recording_name": "fast_wrist_1",
+    "recording_date": "2025-08-07 23:24:32",
+    "total_duration": 67.59,
+    "step_count": 124,
+    "sampling_frequency": 98.9791389258766,
+    "target_frequency": 100,
+    "samples_collected": 6690,
+    "packets_received": 669,
+    "first_timestamp_ms": 489377,
+    "last_timestamp_ms": 556967
+}
