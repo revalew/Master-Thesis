@@ -1,0 +1,12 @@
+{
+    "recording_name": "fast_thigh_1",
+    "recording_date": "2025-08-07 22:45:49",
+    "total_duration": 67.564,
+    "step_count": 119,
+    "sampling_frequency": 98.72121248001895,
+    "target_frequency": 100,
+    "samples_collected": 6670,
+    "packets_received": 667,
+    "first_timestamp_ms": 676039,
+    "last_timestamp_ms": 743603
+}
