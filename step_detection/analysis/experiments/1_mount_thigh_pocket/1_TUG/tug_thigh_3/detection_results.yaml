@@ -8,7 +8,7 @@
 SENSOR1:
 
   Peak Detection:
-    Execution Time: 0.0034 s
+    Execution Time: 0.0015 s
     Detected Steps: 15
     Metrics:
     {
@@ -22,13 +22,13 @@ SENSOR1:
       "ground_truth_count": 13,
       "step_count_error": 2,
       "step_count_error_percent": 15.384615384615385,
-      "mse": 0.022618975308855385,
+      "mse": 0.02261897530885541,
       "count_mse": 4
     }
 
 
   Zero Crossing:
-    Execution Time: 0.0026 s
+    Execution Time: 0.0013 s
     Detected Steps: 17
     Metrics:
     {
@@ -42,13 +42,13 @@ SENSOR1:
       "ground_truth_count": 13,
       "step_count_error": 4,
       "step_count_error_percent": 30.76923076923077,
-      "mse": 0.0674361583067863,
+      "mse": 0.06743615830678623,
       "count_mse": 16
     }
 
 
   Spectral Analysis:
-    Execution Time: 0.0016 s
+    Execution Time: 0.0008 s
     Detected Steps: 18
     Metrics:
     {
@@ -62,13 +62,13 @@ SENSOR1:
       "ground_truth_count": 13,
       "step_count_error": 5,
       "step_count_error_percent": 38.46153846153846,
-      "mse": 0.06422146741662393,
+      "mse": 0.06422146741662395,
       "count_mse": 25
     }
 
 
   Adaptive Threshold:
-    Execution Time: 0.0024 s
+    Execution Time: 0.0019 s
     Detected Steps: 14
     Metrics:
     {
@@ -82,13 +82,13 @@ SENSOR1:
       "ground_truth_count": 13,
       "step_count_error": 1,
       "step_count_error_percent": 7.6923076923076925,
-      "mse": 0.01899797429524579,
+      "mse": 0.018997974295245808,
       "count_mse": 1
     }
 
 
   Shoe:
-    Execution Time: 0.0131 s
+    Execution Time: 0.0095 s
     Detected Steps: 14
     Metrics:
     {
@@ -102,7 +102,7 @@ SENSOR1:
       "ground_truth_count": 13,
       "step_count_error": 1,
       "step_count_error_percent": 7.6923076923076925,
-      "mse": 0.012987030780825979,
+      "mse": 0.012987030780826038,
       "count_mse": 1
     }
 
@@ -112,7 +112,7 @@ SENSOR1:
 SENSOR2:
 
   Peak Detection:
-    Execution Time: 0.0022 s
+    Execution Time: 0.0014 s
     Detected Steps: 15
     Metrics:
     {
@@ -126,13 +126,13 @@ SENSOR2:
       "ground_truth_count": 13,
       "step_count_error": 2,
       "step_count_error_percent": 15.384615384615385,
-      "mse": 0.019588889671385137,
+      "mse": 0.019588889671385164,
       "count_mse": 4
     }
 
 
   Zero Crossing:
-    Execution Time: 0.0023 s
+    Execution Time: 0.0012 s
     Detected Steps: 14
     Metrics:
     {
@@ -146,13 +146,13 @@ SENSOR2:
       "ground_truth_count": 13,
       "step_count_error": 1,
       "step_count_error_percent": 7.6923076923076925,
-      "mse": 0.06370837265493755,
+      "mse": 0.06370837265493748,
       "count_mse": 1
     }
 
 
   Spectral Analysis:
-    Execution Time: 0.0012 s
+    Execution Time: 0.0009 s
     Detected Steps: 18
     Metrics:
     {
@@ -166,13 +166,13 @@ SENSOR2:
       "ground_truth_count": 13,
       "step_count_error": 5,
       "step_count_error_percent": 38.46153846153846,
-      "mse": 0.06422146741662393,
+      "mse": 0.06422146741662395,
       "count_mse": 25
     }
 
 
   Adaptive Threshold:
-    Execution Time: 0.0022 s
+    Execution Time: 0.0015 s
     Detected Steps: 14
     Metrics:
     {
@@ -186,13 +186,13 @@ SENSOR2:
       "ground_truth_count": 13,
       "step_count_error": 1,
       "step_count_error_percent": 7.6923076923076925,
-      "mse": 0.01689076896725045,
+      "mse": 0.016890768967250468,
       "count_mse": 1
     }
 
 
   Shoe:
-    Execution Time: 0.0057 s
+    Execution Time: 0.0089 s
     Detected Steps: 29
     Metrics:
     {
@@ -206,7 +206,7 @@ SENSOR2:
       "ground_truth_count": 13,
       "step_count_error": 16,
       "step_count_error_percent": 123.07692307692308,
-      "mse": 0.018584851330549587,
+      "mse": 0.01858485133054961,
       "count_mse": 256
     }
 
