@@ -1,0 +1,12 @@
+{
+    "recording_name": "norm_wrist_1",
+    "recording_date": "2025-08-07 23:17:26",
+    "total_duration": 65.833,
+    "step_count": 98,
+    "sampling_frequency": 99.34227515076026,
+    "target_frequency": 100,
+    "samples_collected": 6540,
+    "packets_received": 654,
+    "first_timestamp_ms": 61705,
+    "last_timestamp_ms": 127538
+}
