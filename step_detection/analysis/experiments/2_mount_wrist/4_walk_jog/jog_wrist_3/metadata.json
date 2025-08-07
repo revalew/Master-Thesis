@@ -1,0 +1,12 @@
+{
+    "recording_name": "jog_wrist_3",
+    "recording_date": "2025-08-07 23:40:48",
+    "total_duration": 66.544,
+    "step_count": 151,
+    "sampling_frequency": 99.6333253185862,
+    "target_frequency": 100,
+    "samples_collected": 6630,
+    "packets_received": 663,
+    "first_timestamp_ms": 31986,
+    "last_timestamp_ms": 98530
+}
