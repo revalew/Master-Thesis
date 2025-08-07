@@ -1,0 +1,12 @@
+{
+    "recording_name": "norm_thigh_1",
+    "recording_date": "2025-08-07 22:37:39",
+    "total_duration": 65.592,
+    "step_count": 89,
+    "sampling_frequency": 100.01219660934261,
+    "target_frequency": 100,
+    "samples_collected": 6560,
+    "packets_received": 656,
+    "first_timestamp_ms": 194374,
+    "last_timestamp_ms": 259966
+}
