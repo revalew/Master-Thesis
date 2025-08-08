@@ -1,0 +1,12 @@
+{
+    "recording_name": "jog_arm_3",
+    "recording_date": "2025-08-08 21:50:08",
+    "total_duration": 66.99,
+    "step_count": 152,
+    "sampling_frequency": 88.37139871622631,
+    "target_frequency": 100,
+    "samples_collected": 5920,
+    "packets_received": 592,
+    "first_timestamp_ms": 1416978,
+    "last_timestamp_ms": 1483968
+}
