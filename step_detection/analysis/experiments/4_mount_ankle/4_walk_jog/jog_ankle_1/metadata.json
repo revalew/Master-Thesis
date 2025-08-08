@@ -1,0 +1,12 @@
+{
+    "recording_name": "jog_ankle_1",
+    "recording_date": "2025-08-08 23:09:46",
+    "total_duration": 65.69,
+    "step_count": 148,
+    "sampling_frequency": 98.03623078094078,
+    "target_frequency": 100,
+    "samples_collected": 6440,
+    "packets_received": 644,
+    "first_timestamp_ms": 1167730,
+    "last_timestamp_ms": 1233420
+}
