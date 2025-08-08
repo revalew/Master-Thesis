@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_both_arm_1",
+    "recording_date": "2025-08-08 22:00:33",
+    "total_duration": 31.89,
+    "step_count": 50,
+    "sampling_frequency": 97.52273439949828,
+    "target_frequency": 100,
+    "samples_collected": 3110,
+    "packets_received": 311,
+    "first_timestamp_ms": 463664,
+    "last_timestamp_ms": 495554
+}

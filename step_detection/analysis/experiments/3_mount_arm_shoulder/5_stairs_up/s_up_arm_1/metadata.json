@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_up_arm_1",
+    "recording_date": "2025-08-08 21:54:09",
+    "total_duration": 17.189,
+    "step_count": 25,
+    "sampling_frequency": 100.06399441503287,
+    "target_frequency": 100,
+    "samples_collected": 1720,
+    "packets_received": 172,
+    "first_timestamp_ms": 94634,
+    "last_timestamp_ms": 111823
+}

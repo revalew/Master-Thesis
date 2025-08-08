@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_down_arm_2",
+    "recording_date": "2025-08-08 21:56:44",
+    "total_duration": 15.99,
+    "step_count": 25,
+    "sampling_frequency": 95.68480300187618,
+    "target_frequency": 100,
+    "samples_collected": 1530,
+    "packets_received": 153,
+    "first_timestamp_ms": 243915,
+    "last_timestamp_ms": 259905
+}
