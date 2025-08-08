@@ -1,0 +1,12 @@
+{
+    "recording_name": "fast_arm_1",
+    "recording_date": "2025-08-08 21:34:31",
+    "total_duration": 66.19,
+    "step_count": 123,
+    "sampling_frequency": 88.83517147605379,
+    "target_frequency": 100,
+    "samples_collected": 5880,
+    "packets_received": 588,
+    "first_timestamp_ms": 484602,
+    "last_timestamp_ms": 550792
+}
