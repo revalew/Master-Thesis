@@ -1,0 +1,12 @@
+{
+    "recording_name": "norm_arm_1",
+    "recording_date": "2025-08-08 21:28:25",
+    "total_duration": 65.646,
+    "step_count": 102,
+    "sampling_frequency": 99.16826615483045,
+    "target_frequency": 100,
+    "samples_collected": 6510,
+    "packets_received": 651,
+    "first_timestamp_ms": 88671,
+    "last_timestamp_ms": 154317
+}
