@@ -1,0 +1,12 @@
+{
+    "recording_name": "fast_ankle_2",
+    "recording_date": "2025-08-08 23:03:36",
+    "total_duration": 66.09,
+    "step_count": 122,
+    "sampling_frequency": 93.35754274474202,
+    "target_frequency": 100,
+    "samples_collected": 6170,
+    "packets_received": 617,
+    "first_timestamp_ms": 793390,
+    "last_timestamp_ms": 859480
+}
