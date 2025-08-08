@@ -1,0 +1,12 @@
+{
+    "recording_name": "norm_ankle_3",
+    "recording_date": "2025-08-08 22:55:09",
+    "total_duration": 67.089,
+    "step_count": 100,
+    "sampling_frequency": 95.69377990430623,
+    "target_frequency": 100,
+    "samples_collected": 6420,
+    "packets_received": 642,
+    "first_timestamp_ms": 287202,
+    "last_timestamp_ms": 354291
+}
