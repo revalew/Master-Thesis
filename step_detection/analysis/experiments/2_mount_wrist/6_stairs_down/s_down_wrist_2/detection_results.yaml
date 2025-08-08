@@ -1,0 +1,212 @@
+# Step Detection Results
+# s_down_wrist_2
+
+
+##############################################
+# SENSOR1
+##############################################
+SENSOR1:
+
+  Peak Detection:
+    Execution Time: 0.0026 s
+    Detected Steps: 23
+    Metrics:
+    {
+      "true_positives": 11,
+      "false_positives": 12,
+      "false_negatives": 15,
+      "precision": 0.4782608695652174,
+      "recall": 0.4230769230769231,
+      "f1_score": 0.44897959183673475,
+      "step_count": 23,
+      "ground_truth_count": 26,
+      "step_count_error": 3,
+      "step_count_error_percent": 11.538461538461538,
+      "mse": 0.07894320746063146,
+      "count_mse": 9
+    }
+
+
+  Zero Crossing:
+    Execution Time: 0.0013 s
+    Detected Steps: 24
+    Metrics:
+    {
+      "true_positives": 22,
+      "false_positives": 2,
+      "false_negatives": 4,
+      "precision": 0.9166666666666666,
+      "recall": 0.8461538461538461,
+      "f1_score": 0.8799999999999999,
+      "step_count": 24,
+      "ground_truth_count": 26,
+      "step_count_error": 2,
+      "step_count_error_percent": 7.6923076923076925,
+      "mse": 0.03480837252542866,
+      "count_mse": 4
+    }
+
+
+  Spectral Analysis:
+    Execution Time: 0.0006 s
+    Detected Steps: 27
+    Metrics:
+    {
+      "true_positives": 20,
+      "false_positives": 7,
+      "false_negatives": 6,
+      "precision": 0.7407407407407407,
+      "recall": 0.7692307692307693,
+      "f1_score": 0.7547169811320754,
+      "step_count": 27,
+      "ground_truth_count": 26,
+      "step_count_error": 1,
+      "step_count_error_percent": 3.8461538461538463,
+      "mse": 0.043075344763096574,
+      "count_mse": 1
+    }
+
+
+  Adaptive Threshold:
+    Execution Time: 0.0015 s
+    Detected Steps: 24
+    Metrics:
+    {
+      "true_positives": 10,
+      "false_positives": 14,
+      "false_negatives": 16,
+      "precision": 0.4166666666666667,
+      "recall": 0.38461538461538464,
+      "f1_score": 0.4,
+      "step_count": 24,
+      "ground_truth_count": 26,
+      "step_count_error": 2,
+      "step_count_error_percent": 7.6923076923076925,
+      "mse": 0.0714818149244197,
+      "count_mse": 4
+    }
+
+
+  Shoe:
+    Execution Time: 0.0069 s
+    Detected Steps: 23
+    Metrics:
+    {
+      "true_positives": 13,
+      "false_positives": 10,
+      "false_negatives": 13,
+      "precision": 0.5652173913043478,
+      "recall": 0.5,
+      "f1_score": 0.5306122448979592,
+      "step_count": 23,
+      "ground_truth_count": 26,
+      "step_count_error": 3,
+      "step_count_error_percent": 11.538461538461538,
+      "mse": 0.08038972514614172,
+      "count_mse": 9
+    }
+
+##############################################
+# SENSOR2
+##############################################
+SENSOR2:
+
+  Peak Detection:
+    Execution Time: 0.0023 s
+    Detected Steps: 22
+    Metrics:
+    {
+      "true_positives": 9,
+      "false_positives": 13,
+      "false_negatives": 17,
+      "precision": 0.4090909090909091,
+      "recall": 0.34615384615384615,
+      "f1_score": 0.37500000000000006,
+      "step_count": 22,
+      "ground_truth_count": 26,
+      "step_count_error": 4,
+      "step_count_error_percent": 15.384615384615385,
+      "mse": 0.08272325730696393,
+      "count_mse": 16
+    }
+
+
+  Zero Crossing:
+    Execution Time: 0.0009 s
+    Detected Steps: 22
+    Metrics:
+    {
+      "true_positives": 21,
+      "false_positives": 1,
+      "false_negatives": 5,
+      "precision": 0.9545454545454546,
+      "recall": 0.8076923076923077,
+      "f1_score": 0.875,
+      "step_count": 22,
+      "ground_truth_count": 26,
+      "step_count_error": 4,
+      "step_count_error_percent": 15.384615384615385,
+      "mse": 0.03733024148219981,
+      "count_mse": 16
+    }
+
+
+  Spectral Analysis:
+    Execution Time: 0.0004 s
+    Detected Steps: 27
+    Metrics:
+    {
+      "true_positives": 20,
+      "false_positives": 7,
+      "false_negatives": 6,
+      "precision": 0.7407407407407407,
+      "recall": 0.7692307692307693,
+      "f1_score": 0.7547169811320754,
+      "step_count": 27,
+      "ground_truth_count": 26,
+      "step_count_error": 1,
+      "step_count_error_percent": 3.8461538461538463,
+      "mse": 0.043075344763096574,
+      "count_mse": 1
+    }
+
+
+  Adaptive Threshold:
+    Execution Time: 0.0009 s
+    Detected Steps: 24
+    Metrics:
+    {
+      "true_positives": 10,
+      "false_positives": 14,
+      "false_negatives": 16,
+      "precision": 0.4166666666666667,
+      "recall": 0.38461538461538464,
+      "f1_score": 0.4,
+      "step_count": 24,
+      "ground_truth_count": 26,
+      "step_count_error": 2,
+      "step_count_error_percent": 7.6923076923076925,
+      "mse": 0.0726725721071147,
+      "count_mse": 4
+    }
+
+
+  Shoe:
+    Execution Time: 0.0068 s
+    Detected Steps: 44
+    Metrics:
+    {
+      "true_positives": 26,
+      "false_positives": 18,
+      "false_negatives": 0,
+      "precision": 0.5909090909090909,
+      "recall": 1.0,
+      "f1_score": 0.7428571428571429,
+      "step_count": 44,
+      "ground_truth_count": 26,
+      "step_count_error": 18,
+      "step_count_error_percent": 69.23076923076923,
+      "mse": 0.013304041122272594,
+      "count_mse": 324
+    }
+

@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_both_wrist_2",
+    "recording_date": "2025-08-08 21:18:47",
+    "total_duration": 33.29,
+    "step_count": 50,
+    "sampling_frequency": 99.72964854310604,
+    "target_frequency": 100,
+    "samples_collected": 3320,
+    "packets_received": 332,
+    "first_timestamp_ms": 616265,
+    "last_timestamp_ms": 649555
+}

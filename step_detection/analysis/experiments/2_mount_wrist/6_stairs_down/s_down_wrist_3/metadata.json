@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_down_wrist_3",
+    "recording_date": "2025-08-08 21:14:01",
+    "total_duration": 17.99,
+    "step_count": 26,
+    "sampling_frequency": 100.05558643690941,
+    "target_frequency": 100,
+    "samples_collected": 1800,
+    "packets_received": 180,
+    "first_timestamp_ms": 328711,
+    "last_timestamp_ms": 346701
+}

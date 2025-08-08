@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_up_wrist_3",
+    "recording_date": "2025-08-08 21:14:48",
+    "total_duration": 19.19,
+    "step_count": 25,
+    "sampling_frequency": 94.84106305367378,
+    "target_frequency": 100,
+    "samples_collected": 1820,
+    "packets_received": 182,
+    "first_timestamp_ms": 395285,
+    "last_timestamp_ms": 414475
+}
