@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_down_ankle_2",
+    "recording_date": "2025-08-08 23:22:31",
+    "total_duration": 18.499,
+    "step_count": 26,
+    "sampling_frequency": 99.46483593707768,
+    "target_frequency": 100,
+    "samples_collected": 1840,
+    "packets_received": 184,
+    "first_timestamp_ms": 268344,
+    "last_timestamp_ms": 286843
+}

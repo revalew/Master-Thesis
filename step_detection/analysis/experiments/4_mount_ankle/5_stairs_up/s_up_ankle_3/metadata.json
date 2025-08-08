@@ -1,0 +1,12 @@
+{
+    "recording_name": "s_up_ankle_3",
+    "recording_date": "2025-08-08 23:23:45",
+    "total_duration": 19.39,
+    "step_count": 26,
+    "sampling_frequency": 94.37854564208355,
+    "target_frequency": 100,
+    "samples_collected": 1830,
+    "packets_received": 183,
+    "first_timestamp_ms": 337366,
+    "last_timestamp_ms": 356756
+}
