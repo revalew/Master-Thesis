@@ -1360,6 +1360,9 @@ class StepDataCollector:
         # Spectral Analysis: Good for steady walking. Increase window_size to 8-10s for better freq resolution
         # Adaptive Threshold: Best accuracy but sensitive to noise. Lower sensitivity (0.3-0.4) for noisy data
         # SHOE: Best for complex movements. Increase threshold to 0.7-0.8 if too many false detections
+        
+        tolerance: float = 0.3  # Time tolerance in seconds for matching steps
+        
         param_sets_sensor_1 = {
             "peak_detection": {
                 "window_size": 0.6,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
@@ -1495,8 +1498,8 @@ class StepDataCollector:
 
         # Process both sensors using the helper function
         results = {
-            "sensor1": process_sensor_algorithms(accel_data1, gyro_data1, param_sets_sensor_1, ground_truth_steps, fs),
-            "sensor2": process_sensor_algorithms(accel_data2, gyro_data2, param_sets_sensor_2, ground_truth_steps, fs)
+            "sensor1": process_sensor_algorithms(accel_data1, gyro_data1, param_sets_sensor_1, ground_truth_steps, fs, tolerance),
+            "sensor2": process_sensor_algorithms(accel_data2, gyro_data2, param_sets_sensor_2, ground_truth_steps, fs, tolerance)
         }
 
         # Create tabs for each algorithm

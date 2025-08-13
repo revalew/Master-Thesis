@@ -11,7 +11,12 @@ import time
 ##############################################
 # Savitzky-Golay Filter
 ##############################################
-def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
+def safe_savgol_filter(
+    data: np.ndarray,
+    window_size_seconds: float,
+    fs: int | float,
+    polyorder: int = 2
+) -> np.ndarray:
     """
     Safely apply Savitzky-Golay filter with proper parameter validation.
 
@@ -32,14 +37,14 @@ def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
         - Polynomial fitting provides better local approximation
 
     Args:
-        data: Input signal data (1D array)
-        window_size_seconds: Window size in seconds (converted to samples)
-        fs: Sampling frequency in Hz
-        polyorder: Polynomial degree (2=quadratic, 3=cubic). Higher orders preserve
-                 peaks better but may amplify noise. Range: 1 to window_length-1
+        data (np.ndarray): Input signal data (1D array)
+        window_size_seconds (float): Window size in seconds (converted to samples)
+        fs (int | float): Sampling frequency in Hz
+        polyorder (int): Polynomial degree (2=quadratic, 3=cubic).
+            Higher orders preserve peaks better but may amplify noise. Range: 1 to window_length-1
 
     Returns:
-        filtered_signal: Smoothed signal data preserving original length
+        np.ndarray: Smoothed signal data preserving original length
     """
     # Convert window_size from seconds to samples
     window_len = max(3, int(window_size_seconds * fs))
@@ -88,22 +93,26 @@ def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
 # Step Detection Algorithms
 ##############################################
 def peak_detection_algorithm(
-    accel_data, fs, window_size=0.1, threshold=1.0, min_time_between_steps=0.3
-):
+    accel_data: list[np.ndarray],
+    fs: int | float,
+    window_size: float = 0.1,
+    threshold: float = 1.0,
+    min_time_between_steps: float = 0.3
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Step detection using peak detection with adaptive threshold
 
     Args:
-        accel_data: Accelerometer data (3D array [x, y, z])
-        fs: Sampling frequency in Hz
-        window_size: Size of the moving average window in seconds
-        threshold: Threshold for peak detection
-        min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data (list[np.ndarray]): Accelerometer data (3D array [x, y, z])
+        fs (int | float): Sampling frequency in Hz
+        window_size (float): Size of the moving average window in seconds
+        threshold (float): Threshold for peak detection
+        min_time_between_steps (float): Minimum time between consecutive steps in seconds
 
     Returns:
         tuple: Array of detected step times + Filtered acceleration magnitude signal
     """
-    accel_mag = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
+    accel_mag: np.ndarray = np.sqrt(accel_data[0] ** 2 + accel_data[1] ** 2 + accel_data[2] ** 2)
 
     filtered_signal = safe_savgol_filter(accel_mag, window_size, fs, polyorder=3)
     gravity_baseline = np.median(filtered_signal)
@@ -149,17 +158,21 @@ def peak_detection_algorithm(
 
 
 def zero_crossing_algorithm(
-    accel_data, fs, window_size=0.1, min_time_between_steps=0.3, hysteresis_band=0.3
-):
+    accel_data: list[np.ndarray],
+    fs: int | float,
+    window_size: float = 0.1,
+    min_time_between_steps: float = 0.3,
+    hysteresis_band: float = 0.3,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Step detection using zero-crossing method with hysteresis
 
     Args:
-        accel_data: Accelerometer data (3D array [x, y, z])
-        fs: Sampling frequency in Hz
-        window_size: Size of the moving average window in seconds
-        min_time_between_steps: Minimum time between consecutive steps in seconds
-        hysteresis_band: Hysteresis band in Hz. Default is 0.3
+        accel_data (list[np.ndarray]): Accelerometer data (3D array [x, y, z])
+        fs (int | float): Sampling frequency in Hz
+        window_size (float): Size of the moving average window in seconds
+        min_time_between_steps (float): Minimum time between consecutive steps in seconds
+        hysteresis_band (float): Hysteresis band in Hz. Default is 0.3
 
     Returns:
         tuple: Array of detected step times + Filtered acceleration signal
@@ -200,17 +213,21 @@ def zero_crossing_algorithm(
 
 
 def spectral_analysis_algorithm(
-    accel_data, fs, window_size=5.0, overlap=0.5, step_freq_range=(1.0, 2.5)
-):
+    accel_data: list[np.ndarray],
+    fs: int | float,
+    window_size: float = 5.0,
+    overlap: float = 0.5,
+    step_freq_range: tuple[float, float] = (1.0, 2.5),
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Step detection using STFT spectral analysis
 
     Args:
-        accel_data: Accelerometer data (3D array [x, y, z])
-        fs: Sampling frequency in Hz
-        window_size: Size of FFT window in seconds
-        overlap: Overlap between consecutive windows (0-1)
-        step_freq_range: Range of expected step frequencies in Hz
+        accel_data (list[np.ndarray]): Accelerometer data (3D array [x, y, z])
+        fs (int | float): Sampling frequency in Hz
+        window_size (float): Size of FFT window in seconds
+        overlap (float): Overlap between consecutive windows (0-1)
+        step_freq_range (tuple[float, float]): Range of expected step frequencies in Hz
 
     Returns:
         tuple: Array of detected step times + Array of step frequencies
@@ -270,17 +287,21 @@ def spectral_analysis_algorithm(
 
 
 def adaptive_threshold_algorithm(
-    accel_data, fs, window_size=0.1, sensitivity=0.6, min_time_between_steps=0.3
-):
+    accel_data: list[np.ndarray],
+    fs: int | float,
+    window_size: float = 0.1,
+    sensitivity: float = 0.6,
+    min_time_between_steps: float = 0.3,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Step detection using adaptive threshold with local minima detection
 
     Args:
-        accel_data: Accelerometer data (3D array [x, y, z])
-        fs: Sampling frequency in Hz
-        window_size: Size of the moving average window in seconds
-        sensitivity: Sensitivity parameter (0-1) controlling the adaptive threshold
-        min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data (list[np.ndarray]): Accelerometer data (3D array [x, y, z])
+        fs (int | float): Sampling frequency in Hz
+        window_size (float): Size of the moving average window in seconds
+        sensitivity (float): Sensitivity parameter (0-1) controlling the adaptive threshold
+        min_time_between_steps (float): Minimum time between consecutive steps in seconds
 
     Returns:
         tuple: Array of detected step times + Filtered acceleration magnitude signal + Array of adaptive threshold values
@@ -333,24 +354,24 @@ def adaptive_threshold_algorithm(
 
 
 def shoe_algorithm(
-    accel_data,
-    gyro_data,
-    fs,
-    window_size=0.1,
-    threshold=0.5,
-    min_time_between_steps=0.3,
-):
+    accel_data: list[np.ndarray],
+    gyro_data: list[np.ndarray],
+    fs: int | float,
+    window_size: float = 0.1,
+    threshold: float = 0.5,
+    min_time_between_steps: float = 0.3,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Step detection using SHOE (Step Heading Offset Estimator) approach.
     This is a Multi-sensor algorithm that uses both acceleration and gyroscope data. The algorithm is using stance phase detection
 
     Args:
-        accel_data: Accelerometer data (3D array [x, y, z])
-        gyro_data: Gyroscope data (3D array [x, y, z])
-        fs: Sampling frequency in Hz
-        window_size: Size of the moving average window in seconds
-        threshold: Threshold parameter for step detection
-        min_time_between_steps: Minimum time between consecutive steps in seconds
+        accel_data (list[np.ndarray]): Accelerometer data (3D array [x, y, z])
+        gyro_data (list[np.ndarray]): Gyroscope data (3D array [x, y, z])
+        fs (int | float): Sampling frequency in Hz
+        window_size (float): Size of the moving average window in seconds
+        threshold (float): Threshold parameter for step detection
+        min_time_between_steps (float): Minimum time between consecutive steps in seconds
 
     Returns:
         tuple: Array of detected step times + Combined and normalized signal
@@ -459,16 +480,20 @@ def shoe_algorithm(
 ##############################################
 # Evaluation
 ##############################################
-def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.3):
+def calculate_mse(
+    detected_steps: np.ndarray,
+    ground_truth_steps: np.ndarray,
+    tolerance: float = 0.3
+) -> float:
     """
     Calculate Mean Squared Error between detected and ground truth steps.
     For each ground truth step, finds the closest detected step and applies
     penalty for steps outside tolerance range.
 
     Args:
-        detected_steps: Array of detected step times
-        ground_truth_steps: Array of ground truth step times
-        tolerance: Time tolerance in seconds for matching steps
+        detected_steps (np.ndarray): Array of detected step times
+        ground_truth_steps (np.ndarray): Array of ground truth step times
+        tolerance (float): Time tolerance in seconds for matching steps
 
     Returns:
         float: Mean Squared Error between detected and ground truth steps
@@ -484,17 +509,21 @@ def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.3):
         min_error = min(abs(gt_step - detected) for detected in detected_steps)
         squared_errors.append(min_error**2 if min_error <= tolerance else tolerance**2)
 
-    return np.mean(squared_errors)
+    return np.mean(squared_errors) # type: ignore
 
 
-def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
+def evaluate_algorithm(
+    detected_steps: np.ndarray,
+    ground_truth_steps: np.ndarray,
+    tolerance: float = 0.3
+) -> dict[str, float | int]:
     """
     Evaluate the performance of a step detection algorithm.
 
     Args:
-        detected_steps: Array of detected step times
-        ground_truth_steps: Array of ground truth step times
-        tolerance: Time tolerance in seconds for matching steps
+        detected_steps (np.ndarray): Array of detected step times
+        ground_truth_steps (np.ndarray): Array of ground truth step times
+        tolerance (float): Time tolerance in seconds for matching steps
 
     Returns:
         dict: Dictionary of evaluation metrics
@@ -601,6 +630,7 @@ def process_sensor_algorithms(
     param_sets: dict[str, dict[str, float]],
     ground_truth_steps: np.ndarray,
     fs: int | float,
+    tolerance: float = 0.3
 ) -> dict[str, dict[str, float | np.ndarray | dict[str, float | int]]]:
     """
     Process all algorithms for a single sensor
@@ -611,6 +641,7 @@ def process_sensor_algorithms(
         param_sets (dict[str, dict[str, float]]): Dictionary of algorithm parameters
         ground_truth_steps (np.ndarray): Array of ground truth step times
         fs (int | float): Sampling frequency in Hz
+        tolerance (float): Time tolerance in seconds for matching steps
 
     Returns:
         dict: Dictionary of algorithm results
@@ -632,7 +663,7 @@ def process_sensor_algorithms(
                 results[algorithm_name] = {
                     "detected_steps": detected_steps,
                     "filtered_signal": filtered_signal,
-                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps, tolerance),
                     "execution_time": execution_time,
                 }
 
@@ -649,7 +680,7 @@ def process_sensor_algorithms(
                 results[algorithm_name] = {
                     "detected_steps": detected_steps,
                     "filtered_signal": filtered_signal,
-                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps, tolerance),
                     "execution_time": execution_time,
                 }
 
@@ -660,13 +691,13 @@ def process_sensor_algorithms(
                     fs,
                     params["window_size"],
                     params["overlap"],
-                    params["step_freq_range"],
+                    params["step_freq_range"], # type: ignore
                 )
                 execution_time = time.time() - start_time
                 results[algorithm_name] = {
                     "detected_steps": detected_steps,
                     "step_frequencies": step_freqs,
-                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps, tolerance),
                     "execution_time": execution_time,
                 }
 
@@ -686,7 +717,7 @@ def process_sensor_algorithms(
                     "detected_steps": detected_steps,
                     "filtered_signal": filtered_signal,
                     "threshold": threshold,
-                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps, tolerance),
                     "execution_time": execution_time,
                 }
 
@@ -704,7 +735,7 @@ def process_sensor_algorithms(
                 results[algorithm_name] = {
                     "detected_steps": detected_steps,
                     "combined_signal": combined_signal,
-                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps, tolerance),
                     "execution_time": execution_time,
                 }
 
