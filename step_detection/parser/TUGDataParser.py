@@ -7,6 +7,8 @@ from typing import Any
 # import time
 from datetime import datetime
 # import shutil
+from tqdm import tqdm # progress bar
+from sys import stdout
 
 from utils import process_sensor_algorithms
 
@@ -16,6 +18,7 @@ class TUGDataParser:
     Parser for TUG (Timed Up and Go) test CSV files.
     Converts sensor data files and runs step detection analysis with location-specific parameters.
     """
+
 
     def __init__(self, config_path: str = "tug_parser_config.json") -> None:
         """
@@ -49,6 +52,7 @@ class TUGDataParser:
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+
     def _load_config(self, config_filename: str) -> dict[str, Any]:
         """
         Load configuration from JSON file. This file will be searched in the same directory as the main script (or at least this will be the starting point).
@@ -65,6 +69,7 @@ class TUGDataParser:
         with open(config_path, "r") as f:
             return json.load(f)
 
+
     def _load_location_params(self, params_filename: str) -> dict[str, Any]:
         """
         Load sensor location parameters from JSON file. This file will be searched in the same directory as the main script (or at least this will be the starting point).
@@ -79,6 +84,7 @@ class TUGDataParser:
         params_path = script_dir / params_filename
         with open(params_path, "r") as f:
             return json.load(f)
+
 
     def _parse_filename(self, filename: str) -> tuple[str, str] | None:
         """
@@ -112,6 +118,7 @@ class TUGDataParser:
             return None
 
         return recording_id, sensor_location
+
 
     def _load_sensor_data(self, file_path: Path) -> pd.DataFrame | None:
         """
@@ -166,6 +173,7 @@ class TUGDataParser:
             print(f"Error loading {file_path}: {e}")
             return None
 
+
     def _get_params_for_location(self, sensor_location: str) -> dict[str, Any]:
         """
         Get detection parameters for specific sensor location.
@@ -178,6 +186,7 @@ class TUGDataParser:
         """
         param_key = self.location_param_map.get(sensor_location, "back_params")
         return self.location_params[param_key]
+
 
     def _analyze_single_sensor(
         self, sensor_df: pd.DataFrame, sensor_location: str, output_file: Path
@@ -261,6 +270,7 @@ class TUGDataParser:
         except Exception as e:
             print(f"Error analyzing {sensor_location}: {e}")
 
+
     def _create_sensor_pair(
         self, sensor1_df: pd.DataFrame | None, sensor2_df: pd.DataFrame | None
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -334,6 +344,7 @@ class TUGDataParser:
 
         return sensor1_df, sensor2_df
 
+
     def _save_gui_compatible_data(
         self,
         recording_dir: Path,
@@ -381,6 +392,7 @@ class TUGDataParser:
 
         with open(pair_dir / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=4) # type: ignore
+
 
     def _analyze_gui_sensor_pair(
         self,
@@ -507,6 +519,7 @@ class TUGDataParser:
         except Exception as e:
             print(f"Error analyzing {pair_dir}: {e}")
 
+
     def process_all_recordings(self) -> None:
         """
         Process all TUG recordings in input directory.
@@ -536,7 +549,7 @@ class TUGDataParser:
         # print(f"Found {len(recordings)} recordings to process")
 
         # Process each recording
-        for recording_id, sensor_files in recordings.items():
+        for recording_id, sensor_files in tqdm(recordings.items(), desc="Processing images...", dynamic_ncols=True, bar_format="{l_bar}{bar}{r_bar}", colour="green", file=stdout, position=0):
             # print(f"\nProcessing recording {recording_id}...")
 
             # Create recording directory
@@ -551,6 +564,7 @@ class TUGDataParser:
         self.duration = (datetime.now() - start_time).total_seconds() # type: ignore
 
         # print(f"\nProcessing complete! Results saved to: {self.output_dir}")
+
 
     def _process_gui_compatible(
         self, recording_dir: Path, recording_id: str, sensor_files: dict[str, Path]
@@ -602,6 +616,7 @@ class TUGDataParser:
                 self._analyze_gui_sensor_pair(
                     pair_dir, sensor1_df, sensor2_df, pair_name
                 )
+
 
     def _process_simple_format(
         self, recording_dir: Path, recording_id: str, sensor_files: dict[str, Path]
@@ -656,6 +671,7 @@ class TUGDataParser:
 
         with open(recording_dir / "recording_metadata.json", "w") as f:
             json.dump(metadata, f, indent=4) # type: ignore
+
 
     def create_summary_report(self) -> None:
         """
@@ -734,6 +750,7 @@ def validate_environment() -> bool:
         return False
         
     return True
+
 
 def main() -> None:
     """
