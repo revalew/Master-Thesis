@@ -1,0 +1,124 @@
+{
+	"description": {
+		"purpose": "Step detection parameters optimized for different sensor locations",
+		"sensor_locations": ["ankle", "wrist", "back"],
+		"parameter_tuning": {
+			"ankle": "Sensors at ankle level - clearer step signals, lower noise",
+			"wrist": "Sensors at wrist level - more arm swing artifacts, higher noise",
+			"back": "Sensors at back/sacrum - whole body movement, moderate noise"
+		}
+	},
+
+	"tolerance": 0.3,
+
+	"ankle_params": {
+		"peak_detection": {
+			"window_size": 0.4,
+			"threshold": 0.6,
+			"min_time_between_steps": 0.3
+		},
+		"zero_crossing": {
+			"window_size": 0.3,
+			"min_time_between_steps": 0.35,
+			"hysteresis_band": 0.4
+		},
+		"spectral_analysis": {
+			"window_size": 6.0,
+			"overlap": 0.7,
+			"step_freq_range": [0.8, 2.5]
+		},
+		"adaptive_threshold": {
+			"window_size": 0.5,
+			"sensitivity": 0.6,
+			"min_time_between_steps": 0.35
+		},
+		"shoe": {
+			"window_size": 0.2,
+			"threshold": 0.4,
+			"min_time_between_steps": 0.3
+		}
+	},
+
+	"wrist_params": {
+		"peak_detection": {
+			"window_size": 0.8,
+			"threshold": 0.8,
+			"min_time_between_steps": 0.4
+		},
+		"zero_crossing": {
+			"window_size": 0.7,
+			"min_time_between_steps": 0.45,
+			"hysteresis_band": 0.5
+		},
+		"spectral_analysis": {
+			"window_size": 8.0,
+			"overlap": 0.8,
+			"step_freq_range": [0.6, 2.0]
+		},
+		"adaptive_threshold": {
+			"window_size": 1.0,
+			"sensitivity": 0.4,
+			"min_time_between_steps": 0.45
+		},
+		"shoe": {
+			"window_size": 0.4,
+			"threshold": 0.6,
+			"min_time_between_steps": 0.4
+		}
+	},
+
+	"back_params": {
+		"peak_detection": {
+			"window_size": 0.6,
+			"threshold": 0.7,
+			"min_time_between_steps": 0.35
+		},
+		"zero_crossing": {
+			"window_size": 0.5,
+			"min_time_between_steps": 0.4,
+			"hysteresis_band": 0.4
+		},
+		"spectral_analysis": {
+			"window_size": 7.0,
+			"overlap": 0.75,
+			"step_freq_range": [0.7, 2.2]
+		},
+		"adaptive_threshold": {
+			"window_size": 0.7,
+			"sensitivity": 0.5,
+			"min_time_between_steps": 0.4
+		},
+		"shoe": {
+			"window_size": 0.3,
+			"threshold": 0.5,
+			"min_time_between_steps": 0.35
+		}
+	},
+
+	"parameter_explanations": {
+		"ankle_optimization": {
+			"reason": "Ankle sensors provide clearest step signals with lower noise",
+			"adjustments": [
+				"Smaller window sizes for better temporal resolution",
+				"Higher thresholds for better selectivity",
+				"Shorter min_time_between_steps for faster walking detection"
+			]
+		},
+		"wrist_optimization": {
+			"reason": "Wrist sensors have more artifacts from arm swing and daily activities",
+			"adjustments": [
+				"Larger window sizes to smooth out noise",
+				"Higher thresholds to reduce false positives from arm movements",
+				"Longer min_time_between_steps to avoid double-counting"
+			]
+		},
+		"back_optimization": {
+			"reason": "Back/sacrum sensors capture whole-body movement patterns",
+			"adjustments": [
+				"Medium window sizes for balance of noise reduction and response",
+				"Moderate thresholds for reliable detection",
+				"Standard timing parameters for natural gait"
+			]
+		}
+	}
+}

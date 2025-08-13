@@ -1,0 +1,17 @@
+{
+    "processing_date": "2025-08-14 00:51:18",
+    "duration_seconds": 0.07397,
+    "gui_compatibility_mode": false,
+    "total_recordings": 1,
+    "successful_analysis": 5,
+    "failed_analysis": 0,
+    "recordings": {
+        "001": {
+            "left_ankle": "analyzed",
+            "left_wrist": "analyzed",
+            "right_ankle": "analyzed",
+            "right_wrist": "analyzed",
+            "sacrum_back": "analyzed"
+        }
+    }
+}

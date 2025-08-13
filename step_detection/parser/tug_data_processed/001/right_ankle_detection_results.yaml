@@ -1,0 +1,52 @@
+# Step Detection Results
+# Sensor Location: right_ankle
+# Note: No ground truth available for TUG data
+
+Peak Detection:
+  Execution Time: 0.0008 s
+  Detected Steps: 10
+  Step Times: [1.2, 1.6, 2.3, 2.82, 3.49, 3.89, 4.76, 5.23, 5.84, 6.3]
+  Step Count: 10
+  First Step: 1.200 s
+  Last Step: 6.300 s
+  Mean Step Interval: 0.567 s
+  Step Rate: 0.15 steps/s
+
+Zero Crossing:
+  Execution Time: 0.0005 s
+  Detected Steps: 10
+  Step Times: [1.81, 2.43, 3.02, 3.63, 4.4, 4.89, 5.45, 5.98, 6.55, 8.23]
+  Step Count: 10
+  First Step: 1.810 s
+  Last Step: 8.230 s
+  Mean Step Interval: 0.713 s
+  Step Rate: 0.15 steps/s
+
+Spectral Analysis:
+  Execution Time: 0.0003 s
+  Detected Steps: 14
+  Step Times: [0.30250000000000005, 0.9075000000000002, 1.5125000000000004, 2.1175000000000006, 2.722500000000001, 3.3275000000000015, 3.9325000000000014, 4.537500000000001, 5.142500000000002, 5.747500000000002, 6.352500000000003, 6.957500000000002, 7.562500000000003, 8.167500000000002]
+  Step Count: 14
+  First Step: 0.303 s
+  Last Step: 8.168 s
+  Mean Step Interval: 0.605 s
+  Step Rate: 0.21 steps/s
+
+Adaptive Threshold:
+  Execution Time: 0.0005 s
+  Detected Steps: 10
+  Step Times: [1.18, 1.61, 2.28, 2.81, 3.46, 3.92, 4.74, 5.24, 5.83, 6.31]
+  Step Count: 10
+  First Step: 1.180 s
+  Last Step: 6.310 s
+  Mean Step Interval: 0.570 s
+  Step Rate: 0.15 steps/s
+
+Shoe:
+  Execution Time: 0.0020 s
+  Detected Steps: 1
+  Step Times: [8.3]
+  Step Count: 1
+  First Step: 8.300 s
+  Last Step: 8.300 s
+

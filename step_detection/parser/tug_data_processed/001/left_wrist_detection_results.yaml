@@ -1,0 +1,52 @@
+# Step Detection Results
+# Sensor Location: left_wrist
+# Note: No ground truth available for TUG data
+
+Peak Detection:
+  Execution Time: 0.0009 s
+  Detected Steps: 7
+  Step Times: [0.95, 1.71, 2.38, 3.81, 4.87, 6.02, 7.2]
+  Step Count: 7
+  First Step: 0.950 s
+  Last Step: 7.200 s
+  Mean Step Interval: 1.042 s
+  Step Rate: 0.11 steps/s
+
+Zero Crossing:
+  Execution Time: 0.0005 s
+  Detected Steps: 7
+  Step Times: [1.23, 1.89, 2.64, 4.22, 5.26, 6.3, 7.49]
+  Step Count: 7
+  First Step: 1.230 s
+  Last Step: 7.490 s
+  Mean Step Interval: 1.043 s
+  Step Rate: 0.11 steps/s
+
+Spectral Analysis:
+  Execution Time: 0.0003 s
+  Detected Steps: 8
+  Step Times: [0.529375, 1.5881250000000002, 2.6468750000000005, 3.705625000000001, 4.764375000000001, 5.823125000000001, 6.881875000000002, 7.9406250000000025]
+  Step Count: 8
+  First Step: 0.529 s
+  Last Step: 7.941 s
+  Mean Step Interval: 1.059 s
+  Step Rate: 0.12 steps/s
+
+Adaptive Threshold:
+  Execution Time: 0.0004 s
+  Detected Steps: 7
+  Step Times: [0.88, 1.74, 2.46, 3.78, 4.95, 5.93, 7.23]
+  Step Count: 7
+  First Step: 0.880 s
+  Last Step: 7.230 s
+  Mean Step Interval: 1.058 s
+  Step Rate: 0.11 steps/s
+
+Shoe:
+  Execution Time: 0.0021 s
+  Detected Steps: 1
+  Step Times: [8.1]
+  Step Count: 1
+  First Step: 8.100 s
+  Last Step: 8.100 s
+

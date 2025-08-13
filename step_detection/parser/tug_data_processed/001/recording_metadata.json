@@ -1,0 +1,34 @@
+{
+    "recording_id": "001",
+    "recording_date": "2025-08-14 00:51:18",
+    "sampling_frequency": 100,
+    "gui_compatible": false,
+    "parsed_from_tug_format": true,
+    "sensors": [
+        {
+            "location": "left_ankle",
+            "duration": 66.04,
+            "samples": 847
+        },
+        {
+            "location": "left_wrist",
+            "duration": 66.04,
+            "samples": 847
+        },
+        {
+            "location": "right_ankle",
+            "duration": 66.04,
+            "samples": 847
+        },
+        {
+            "location": "right_wrist",
+            "duration": 66.04,
+            "samples": 847
+        },
+        {
+            "location": "sacrum_back",
+            "duration": 66.04,
+            "samples": 847
+        }
+    ]
+}

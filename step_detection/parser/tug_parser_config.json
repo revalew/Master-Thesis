@@ -1,0 +1,64 @@
+{
+	"input_directory": "/home/maks/Dokumenty/Master-Thesis/.BACKUP/parser/IMU_signals",
+	"output_directory": "/home/maks/Dokumenty/Master-Thesis/.BACKUP/parser/tug_data_processed",
+	"sampling_rate_hz": 100,
+	"run_analysis": true,
+	"gui_compatibility": false,
+	"sensor_location_params_file": "sensor_location_params.json",
+
+	"description": {
+		"input_directory": "Directory containing TUG CSV files (001-left_ankle.csv, etc.)",
+		"output_directory": "Directory where processed recordings will be saved",
+		"sampling_rate_hz": "Expected sampling rate in Hz (used to generate timestamps)",
+		"run_analysis": "Whether to run step detection analysis automatically",
+		"gui_compatibility": "If true: creates GUI-compatible folder structure with sensor pairs. If false: simple structure with individual sensor files",
+		"sensor_location_params_file": "JSON file containing step detection parameters optimized for sensor locations"
+	},
+
+	"file_format_info": {
+		"input_format": "CSV files with columns: PacketCounter,Acc_X,Acc_Y,Acc_Z,Gyr_X,Gyr_Y,Gyr_Z,Roll,Pitch,Yaw",
+		"naming_convention": "XXX-sensor_location.csv where XXX is recording ID (001, 002, etc.)",
+		"valid_sensor_locations": ["left_ankle", "right_ankle", "left_wrist", "right_wrist", "sacrum_back"],
+		"output_structure": {
+			"gui_compatibility_true": {
+				"description": "GUI-compatible structure with sensor pairs",
+				"structure": [
+					"XXX/ (e.g., 001/, 002/)",
+					"  ├── ankle_XXX/",
+					"  │   ├── sensor1_waveshare.csv",
+					"  │   ├── sensor2_adafruit.csv",
+					"  │   ├── ground_truth.csv",
+					"  │   ├── metadata.json",
+					"  │   └── detection_results.yaml",
+					"  ├── wrist_XXX/",
+					"  └── sacrum_XXX/"
+				]
+			},
+			"gui_compatibility_false": {
+				"description": "Simple structure with individual sensor files",
+				"structure": [
+					"XXX/ (e.g., 001/, 002/)",
+					"  ├── left_ankle.csv",
+					"  ├── left_ankle_detection_results.yaml",
+					"  ├── right_ankle.csv",
+					"  ├── right_ankle_detection_results.yaml",
+					"  ├── left_wrist.csv",
+					"  ├── left_wrist_detection_results.yaml",
+					"  ├── right_wrist.csv",
+					"  ├── right_wrist_detection_results.yaml",
+					"  ├── sacrum_back.csv",
+					"  ├── sacrum_back_detection_results.yaml",
+					"  └── recording_metadata.json"
+				]
+			}
+		}
+	},
+
+	"data_conversion": {
+		"time_generation": "Generated from PacketCounter / sampling_rate_hz",
+		"acceleration_units": "Assumed m/s² (no conversion applied)",
+		"gyroscope_units": "Assumed rad/s (no conversion applied)",
+		"magnetometer": "Set to zeros (not available in TUG data)",
+		"missing_sensors": "Filled with zeros if sensor file not found"
+	}
+}
