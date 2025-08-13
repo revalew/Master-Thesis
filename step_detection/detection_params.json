@@ -1,0 +1,72 @@
+{
+    "param_descriptions": {
+        "window_size": "Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response",
+        "min_time_between_steps": "Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking",
+        "peak_detection_threshold": "Adaptive threshold multiplier. INCREASE to reduce false positives, DECREASE to catch more steps",
+        "zero_crossing_hysteresis_band": "Hysteresis threshold (m/s²). INCREASE to reduce noise sensitivity, DECREASE to catch weak steps",
+        "spectral_analysis_overlap": "STFT overlap (0-1). INCREASE for smoother results, DECREASE for faster processing",
+        "spectral_analysis_step_freq_range": "Walking frequency range (Hz). ADJUST based on expected walking speed",
+        "adaptive_threshold_sensitivity": "Threshold sensitivity (0-1). INCREASE to catch more steps, DECREASE to reduce false positives",
+        "shoe_threshold": "Stance detection threshold. INCREASE to be more selective, DECREASE to detect more stance phases"
+    },
+
+    "print_analysis_results_when_not_saved": true,
+
+	"tolerance": 0.3,
+
+	"param_sets_sensor_1": {
+		"peak_detection": {
+			"window_size": 0.6,
+			"threshold": 0.5,
+			"min_time_between_steps": 0.35
+		},
+		"zero_crossing": {
+			"window_size": 0.5,
+			"min_time_between_steps": 0.4,
+			"hysteresis_band": 0.3
+		},
+		"spectral_analysis": {
+			"window_size": 8.0,
+			"overlap": 0.8,
+			"step_freq_range": [0.8, 2.0]
+		},
+		"adaptive_threshold": {
+			"window_size": 0.8,
+			"sensitivity": 0.5,
+			"min_time_between_steps": 0.4
+		},
+		"shoe": {
+			"window_size": 0.3,
+			"threshold": 9.0,
+			"min_time_between_steps": 0.35
+		}
+	},
+
+	"param_sets_sensor_2": {
+		"peak_detection": {
+			"window_size": 0.6,
+			"threshold": 0.5,
+			"min_time_between_steps": 0.35
+		},
+		"zero_crossing": {
+			"window_size": 0.5,
+			"min_time_between_steps": 0.4,
+			"hysteresis_band": 0.3
+		},
+		"spectral_analysis": {
+			"window_size": 8.0,
+			"overlap": 0.8,
+			"step_freq_range": [0.8, 2.0]
+		},
+		"adaptive_threshold": {
+			"window_size": 0.8,
+			"sensitivity": 0.5,
+			"min_time_between_steps": 0.4
+		},
+		"shoe": {
+			"window_size": 0.3,
+			"threshold": 9.0,
+			"min_time_between_steps": 0.35
+		}
+	}
+}

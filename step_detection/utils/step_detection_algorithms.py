@@ -4,8 +4,9 @@ from scipy import signal
 # from scipy.fft import fft, fftfreq
 # import os
 # from datetime import datetime
-# import json
+import json
 import time
+from pathlib import Path
 
 
 ##############################################
@@ -758,3 +759,21 @@ def process_sensor_algorithms(
             }
 
     return results
+
+
+##############################################
+# MISC
+##############################################
+def load_params(config_filename: str = "detection_params.json") -> dict:
+    """
+    Load configuration from JSON file
+    
+    Args:
+        config_filename (str): Name of the JSON configuration file. This file will be searched in the same directory as the main script (or at least this will be the starting point).
+    """
+    # script_dir = Path(__file__).parent
+    script_dir = Path(__file__).parent.parent
+    config_path = script_dir / config_filename
+    print(f"{config_path = }")
+    with open(config_path, 'r') as f:
+        return json.load(f)
