@@ -18,15 +18,7 @@ import socket
 import struct
 
 from .step_detection_algorithms import (
-    peak_detection_algorithm,
-    zero_crossing_algorithm,
-    spectral_analysis_algorithm,
-    adaptive_threshold_algorithm,
-    shoe_algorithm,
-    evaluate_algorithm,
-    # plot_algorithm_results,
-    # compare_algorithms,
-    # compare_sensors
+    process_sensor_algorithms,
 )
 
 # Just in case - prevent anyone from recording for more than 5 minutes
@@ -583,7 +575,7 @@ class StepDataCollector:
                         )
                         return True
 
-                except socket.timeout:
+                except socket.timeout: # type: ignore
                     print(f"Stop attempt {attempt + 1} timed out, retrying...")
                     continue
 
@@ -890,7 +882,7 @@ class StepDataCollector:
                     self.recording = False
                     break
 
-            except socket.timeout:
+            except socket.timeout: # type: ignore
                 # No data received - check if still recording
                 if (
                     time.time() - self.recording_start_time > 5
@@ -1368,8 +1360,38 @@ class StepDataCollector:
         # Spectral Analysis: Good for steady walking. Increase window_size to 8-10s for better freq resolution
         # Adaptive Threshold: Best accuracy but sensitive to noise. Lower sensitivity (0.3-0.4) for noisy data
         # SHOE: Best for complex movements. Increase threshold to 0.7-0.8 if too many false detections
-
-        param_sets = {
+        param_sets_sensor_1 = {
+            "peak_detection": {
+                "window_size": 0.6,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "threshold": 0.5,  # Adaptive threshold multiplier. INCREASE to reduce false positives, DECREASE to catch more steps
+                "min_time_between_steps": 0.35,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+            },
+            "zero_crossing": {
+                "window_size": 0.5,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "min_time_between_steps": 0.4,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+                "hysteresis_band": 0.3,  # Hysteresis threshold (m/s²). INCREASE to reduce noise sensitivity, DECREASE to catch weak steps
+            },
+            "spectral_analysis": {
+                "window_size": 8.0,  # STFT window (seconds). INCREASE for better freq resolution, DECREASE for better time resolution
+                "overlap": 0.8,  # STFT overlap (0-1). INCREASE for smoother results, DECREASE for faster processing
+                "step_freq_range": (
+                    0.8,
+                    2.0,
+                ),  # Walking frequency range (Hz). ADJUST based on expected walking speed
+            },
+            "adaptive_threshold": {
+                "window_size": 0.8,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "sensitivity": 0.5,  # Threshold sensitivity (0-1). INCREASE to catch more steps, DECREASE to reduce false positives
+                "min_time_between_steps": 0.4,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+            },
+            "shoe": {
+                "window_size": 0.3,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
+                "threshold": 9.0,  # Stance detection threshold. INCREASE to be more selective, DECREASE to detect more stance phases
+                "min_time_between_steps": 0.35,  # Minimum step interval (seconds). INCREASE for slow walking, DECREASE for fast walking
+            },
+        }
+        
+        param_sets_sensor_2 = {
             "peak_detection": {
                 "window_size": 0.6,  # Smoothing window (seconds). INCREASE for noisy data, DECREASE for better response
                 "threshold": 0.5,  # Adaptive threshold multiplier. INCREASE to reduce false positives, DECREASE to catch more steps
@@ -1400,7 +1422,6 @@ class StepDataCollector:
             },
         }
 
-        # Create dataset in the format expected by the algorithms
         dataset = {
             "time": np.array(self.data["time"]),
             "sensor1": {
@@ -1442,33 +1463,28 @@ class StepDataCollector:
 
         analysis_window = tk.Toplevel(self.master)
         analysis_window.title("Step Detection Analysis")
-        analysis_window.geometry("1000x800")
+        analysis_window.geometry("1200x900")
 
-        # Create notebook for tabbed interface
         notebook = ttk.Notebook(analysis_window)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        results = {"sensor1": {}, "sensor2": {}}
-
-        # Process sensor 1
-        accel_data1 = [
+        accel_data1: list[np.ndarray] = [
             dataset["sensor1"]["accel_x"],
             dataset["sensor1"]["accel_y"],
             dataset["sensor1"]["accel_z"],
         ]
-        gyro_data1 = [
+        gyro_data1: list[np.ndarray] = [
             dataset["sensor1"]["gyro_x"],
             dataset["sensor1"]["gyro_y"],
             dataset["sensor1"]["gyro_z"],
         ]
 
-        # Process sensor 2
-        accel_data2 = [
+        accel_data2: list[np.ndarray] = [
             dataset["sensor2"]["accel_x"],
             dataset["sensor2"]["accel_y"],
             dataset["sensor2"]["accel_z"],
         ]
-        gyro_data2 = [
+        gyro_data2: list[np.ndarray] = [
             dataset["sensor2"]["gyro_x"],
             dataset["sensor2"]["gyro_y"],
             dataset["sensor2"]["gyro_z"],
@@ -1477,246 +1493,14 @@ class StepDataCollector:
         fs = dataset["params"]["fs"]
         ground_truth_steps = dataset["ground_truth"]["step_times"]
 
-        for algorithm_name, params in param_sets.items():
-            self.update_status(f"Running {algorithm_name}...")
-
-            try:
-                # Sensor 1
-                if algorithm_name == "peak_detection":
-                    start_time = time.time()
-                    detected_steps1, filtered_signal1 = peak_detection_algorithm(
-                        accel_data1,
-                        fs,
-                        params["window_size"],
-                        params["threshold"],
-                        params["min_time_between_steps"],
-                    )
-                    execution_time1 = time.time() - start_time
-                    results["sensor1"][algorithm_name] = {
-                        "detected_steps": detected_steps1,
-                        "filtered_signal": filtered_signal1,
-                        "metrics": evaluate_algorithm(
-                            detected_steps1, ground_truth_steps
-                        ),
-                        "execution_time": execution_time1,
-                    }
-
-                elif algorithm_name == "zero_crossing":
-                    start_time = time.time()
-                    detected_steps1, filtered_signal1 = zero_crossing_algorithm(
-                        accel_data1,
-                        fs,
-                        params["window_size"],
-                        params["min_time_between_steps"],
-                        params["hysteresis_band"],
-                    )
-                    execution_time1 = time.time() - start_time
-                    results["sensor1"][algorithm_name] = {
-                        "detected_steps": detected_steps1,
-                        "filtered_signal": filtered_signal1,
-                        "metrics": evaluate_algorithm(
-                            detected_steps1, ground_truth_steps
-                        ),
-                        "execution_time": execution_time1,
-                    }
-
-                elif algorithm_name == "spectral_analysis":
-                    start_time = time.time()
-                    detected_steps1, step_freqs1 = spectral_analysis_algorithm(
-                        accel_data1,
-                        fs,
-                        params["window_size"],
-                        params["overlap"],
-                        params["step_freq_range"],
-                    )
-                    execution_time1 = time.time() - start_time
-                    results["sensor1"][algorithm_name] = {
-                        "detected_steps": detected_steps1,
-                        "step_frequencies": step_freqs1,
-                        "metrics": evaluate_algorithm(
-                            detected_steps1, ground_truth_steps
-                        ),
-                        "execution_time": execution_time1,
-                    }
-
-                elif algorithm_name == "adaptive_threshold":
-                    start_time = time.time()
-                    detected_steps1, filtered_signal1, threshold1 = (
-                        adaptive_threshold_algorithm(
-                            accel_data1,
-                            fs,
-                            params["window_size"],
-                            params["sensitivity"],
-                            params["min_time_between_steps"],
-                        )
-                    )
-                    execution_time1 = time.time() - start_time
-                    results["sensor1"][algorithm_name] = {
-                        "detected_steps": detected_steps1,
-                        "filtered_signal": filtered_signal1,
-                        "threshold": threshold1,
-                        "metrics": evaluate_algorithm(
-                            detected_steps1, ground_truth_steps
-                        ),
-                        "execution_time": execution_time1,
-                    }
-
-                elif algorithm_name == "shoe":
-                    start_time = time.time()
-                    detected_steps1, combined_signal1 = shoe_algorithm(
-                        accel_data1,
-                        gyro_data1,
-                        fs,
-                        params["window_size"],
-                        params["threshold"],
-                        params["min_time_between_steps"],
-                    )
-                    execution_time1 = time.time() - start_time
-                    results["sensor1"][algorithm_name] = {
-                        "detected_steps": detected_steps1,
-                        "combined_signal": combined_signal1,
-                        "metrics": evaluate_algorithm(
-                            detected_steps1, ground_truth_steps
-                        ),
-                        "execution_time": execution_time1,
-                    }
-
-                # Sensor 2
-                if algorithm_name == "peak_detection":
-                    start_time = time.time()
-                    detected_steps2, filtered_signal2 = peak_detection_algorithm(
-                        accel_data2,
-                        fs,
-                        params["window_size"],
-                        params["threshold"],
-                        params["min_time_between_steps"],
-                    )
-                    execution_time2 = time.time() - start_time
-                    results["sensor2"][algorithm_name] = {
-                        "detected_steps": detected_steps2,
-                        "filtered_signal": filtered_signal2,
-                        "metrics": evaluate_algorithm(
-                            detected_steps2, ground_truth_steps
-                        ),
-                        "execution_time": execution_time2,
-                    }
-
-                elif algorithm_name == "zero_crossing":
-                    start_time = time.time()
-                    detected_steps2, filtered_signal2 = zero_crossing_algorithm(
-                        accel_data2,
-                        fs,
-                        params["window_size"],
-                        params["min_time_between_steps"],
-                        params["hysteresis_band"],
-                    )
-                    execution_time2 = time.time() - start_time
-                    results["sensor2"][algorithm_name] = {
-                        "detected_steps": detected_steps2,
-                        "filtered_signal": filtered_signal2,
-                        "metrics": evaluate_algorithm(
-                            detected_steps2, ground_truth_steps
-                        ),
-                        "execution_time": execution_time2,
-                    }
-
-                elif algorithm_name == "spectral_analysis":
-                    start_time = time.time()
-                    detected_steps2, step_freqs2 = spectral_analysis_algorithm(
-                        accel_data2,
-                        fs,
-                        params["window_size"],
-                        params["overlap"],
-                        params["step_freq_range"],
-                    )
-                    execution_time2 = time.time() - start_time
-                    results["sensor2"][algorithm_name] = {
-                        "detected_steps": detected_steps2,
-                        "step_frequencies": step_freqs2,
-                        "metrics": evaluate_algorithm(
-                            detected_steps2, ground_truth_steps
-                        ),
-                        "execution_time": execution_time2,
-                    }
-
-                elif algorithm_name == "adaptive_threshold":
-                    start_time = time.time()
-                    detected_steps2, filtered_signal2, threshold2 = (
-                        adaptive_threshold_algorithm(
-                            accel_data2,
-                            fs,
-                            params["window_size"],
-                            params["sensitivity"],
-                            params["min_time_between_steps"],
-                        )
-                    )
-                    execution_time2 = time.time() - start_time
-                    results["sensor2"][algorithm_name] = {
-                        "detected_steps": detected_steps2,
-                        "filtered_signal": filtered_signal2,
-                        "threshold": threshold2,
-                        "metrics": evaluate_algorithm(
-                            detected_steps2, ground_truth_steps
-                        ),
-                        "execution_time": execution_time2,
-                    }
-
-                elif algorithm_name == "shoe":
-                    start_time = time.time()
-                    detected_steps2, combined_signal2 = shoe_algorithm(
-                        accel_data2,
-                        gyro_data2,
-                        fs,
-                        params["window_size"],
-                        params["threshold"],
-                        params["min_time_between_steps"],
-                    )
-                    execution_time2 = time.time() - start_time
-                    results["sensor2"][algorithm_name] = {
-                        "detected_steps": detected_steps2,
-                        "combined_signal": combined_signal2,
-                        "metrics": evaluate_algorithm(
-                            detected_steps2, ground_truth_steps
-                        ),
-                        "execution_time": execution_time2,
-                    }
-
-            except Exception as e:
-                print(f"Error running {algorithm_name}: {e}")
-                # Create dummy results if algorithm fails
-                results["sensor1"][algorithm_name] = {
-                    "detected_steps": np.array([]),
-                    "metrics": {
-                        "precision": 0,
-                        "recall": 0,
-                        "f1_score": 0,
-                        "step_count": 0,
-                        "ground_truth_count": len(ground_truth_steps),
-                        "step_count_error": len(ground_truth_steps),
-                        "step_count_error_percent": 100.0,
-                        "mse": 99999.9,
-                        "count_mse": 99999.9,
-                    },
-                    "execution_time": 0.0,
-                }
-                results["sensor2"][algorithm_name] = {
-                    "detected_steps": np.array([]),
-                    "metrics": {
-                        "precision": 0,
-                        "recall": 0,
-                        "f1_score": 0,
-                        "step_count": 0,
-                        "ground_truth_count": len(ground_truth_steps),
-                        "step_count_error": len(ground_truth_steps),
-                        "step_count_error_percent": 100.0,
-                        "mse": 99999.9,
-                        "count_mse": 99999.9,
-                    },
-                    "execution_time": 0.0,
-                }
+        # Process both sensors using the helper function
+        results = {
+            "sensor1": process_sensor_algorithms(accel_data1, gyro_data1, param_sets_sensor_1, ground_truth_steps, fs),
+            "sensor2": process_sensor_algorithms(accel_data2, gyro_data2, param_sets_sensor_2, ground_truth_steps, fs)
+        }
 
         # Create tabs for each algorithm
-        for algorithm_name in param_sets.keys():
+        for algorithm_name in param_sets_sensor_1.keys():
             tab = ttk.Frame(notebook)
             notebook.add(tab, text=algorithm_name.replace("_", " ").title())
 
@@ -1725,7 +1509,7 @@ class StepDataCollector:
 
             # Plot sensor 1 results
             ax1 = fig.add_subplot(2, 1, 1)
-            metrics1 = results["sensor1"][algorithm_name]["metrics"]
+            metrics1: dict[str, float | int] = results["sensor1"][algorithm_name]["metrics"] # type: ignore
             ax1.set_title(
                 f"Sensor 1 (Waveshare) - {algorithm_name} - F1: {metrics1['f1_score']:.2f}, Error: {metrics1['step_count_error']}"
             )
@@ -1733,7 +1517,7 @@ class StepDataCollector:
             # Plot ground truth and detected steps
             ax1.vlines(ground_truth_steps, 0, 0.8, color="g", label="Ground Truth")
             ax1.vlines(
-                results["sensor1"][algorithm_name]["detected_steps"],
+                results["sensor1"][algorithm_name]["detected_steps"], # type: ignore
                 0.2,
                 1.0,
                 color="r",
@@ -1747,7 +1531,7 @@ class StepDataCollector:
 
             # Plot sensor 2 results
             ax2 = fig.add_subplot(2, 1, 2)
-            metrics2 = results["sensor2"][algorithm_name]["metrics"]
+            metrics2: dict[str, float | int] = results["sensor2"][algorithm_name]["metrics"] # type: ignore
             ax2.set_title(
                 f"Sensor 2 (Adafruit) - {algorithm_name} - F1: {metrics2['f1_score']:.2f}, Error: {metrics2['step_count_error']}"
             )
@@ -1755,7 +1539,7 @@ class StepDataCollector:
             # Plot ground truth and detected steps
             ax2.vlines(ground_truth_steps, 0, 0.8, color="g", label="Ground Truth")
             ax2.vlines(
-                results["sensor2"][algorithm_name]["detected_steps"],
+                results["sensor2"][algorithm_name]["detected_steps"], # type: ignore
                 0.2,
                 1.0,
                 color="r",
@@ -2006,7 +1790,7 @@ class StepDataCollector:
             summary_frame,
             columns=columns,
             show="headings",
-            height=len(param_sets.keys()) + 1,
+            height=len(param_sets_sensor_1.keys()) + 1,
         )
 
         for col in columns:
@@ -2021,9 +1805,9 @@ class StepDataCollector:
             else:
                 tree.column(col, width=35, anchor="center")
 
-        for i, algorithm_name in enumerate(param_sets.keys()):
-            metrics1 = results["sensor1"][algorithm_name]["metrics"]
-            metrics2 = results["sensor2"][algorithm_name]["metrics"]
+        for i, algorithm_name in enumerate(param_sets_sensor_1.keys()):
+            metrics1: dict[str, float | int] = results["sensor1"][algorithm_name]["metrics"] # type: ignore
+            metrics2: dict[str, float | int] = results["sensor2"][algorithm_name]["metrics"] # type: ignore
 
             tag = "evenrow" if i % 2 == 0 else "oddrow"
 
@@ -2063,12 +1847,12 @@ class StepDataCollector:
         ax_summary = fig_summary.add_subplot(1, 1, 1)
 
         # Extract F1 scores for all algorithms
-        algorithms = list(param_sets.keys())
+        algorithms = list(param_sets_sensor_1.keys())
         f1_scores_s1 = [
-            results["sensor1"][alg]["metrics"]["f1_score"] for alg in algorithms
+            results["sensor1"][alg]["metrics"]["f1_score"] for alg in algorithms # type: ignore
         ]
         f1_scores_s2 = [
-            results["sensor2"][alg]["metrics"]["f1_score"] for alg in algorithms
+            results["sensor2"][alg]["metrics"]["f1_score"] for alg in algorithms # type: ignore
         ]
 
         # Sort algorithms by average F1 score
@@ -2076,22 +1860,22 @@ class StepDataCollector:
             (algorithms[i], (f1_scores_s1[i] + f1_scores_s2[i]) / 2)
             for i in range(len(algorithms))
         ]
-        avg_scores.sort(key=lambda x: x[1], reverse=True)
+        avg_scores.sort(key=lambda x: x[1], reverse=True) # type: ignore
 
         sorted_algorithms = [item[0] for item in avg_scores]
         sorted_f1_s1 = [
-            results["sensor1"][alg]["metrics"]["f1_score"] for alg in sorted_algorithms
+            results["sensor1"][alg]["metrics"]["f1_score"] for alg in sorted_algorithms # type: ignore
         ]
         sorted_f1_s2 = [
-            results["sensor2"][alg]["metrics"]["f1_score"] for alg in sorted_algorithms
+            results["sensor2"][alg]["metrics"]["f1_score"] for alg in sorted_algorithms # type: ignore
         ]
 
         # Create bar chart
         x = np.arange(len(sorted_algorithms))
         width = 0.35
 
-        ax_summary.bar(x - width / 2, sorted_f1_s1, width, label="Sensor 1 (Waveshare)")
-        ax_summary.bar(x + width / 2, sorted_f1_s2, width, label="Sensor 2 (Adafruit)")
+        ax_summary.bar(x - width / 2, sorted_f1_s1, width, label="Sensor 1 (Waveshare)") # type: ignore
+        ax_summary.bar(x + width / 2, sorted_f1_s2, width, label="Sensor 2 (Adafruit)") # type: ignore
 
         ax_summary.set_title("Algorithm Performance Comparison (F1 Score)")
         ax_summary.set_ylabel("F1 Score")
@@ -2133,7 +1917,7 @@ class StepDataCollector:
                     for alg, res in algorithms.items():
                         f.write(f"\n  {alg.replace('_', ' ').title()}:\n")
                         f.write(f"    Execution Time: {res['execution_time']:.4f} s\n")
-                        f.write(f"    Detected Steps: {len(res['detected_steps'])}\n")
+                        f.write(f"    Detected Steps: {len(res['detected_steps'])}\n") # type: ignore
                         # f.write(f"    Metrics: {res['metrics']}\n")
                         f.write(f"    Metrics:\n")
                         f.write(
@@ -2152,7 +1936,7 @@ class StepDataCollector:
                 for alg, res in algorithms.items():
                     print(f"\n  {alg.replace('_', ' ').title()}:")
                     print(f"    Execution Time: {res['execution_time']:.4f} s")
-                    print(f"    Detected Steps: {len(res['detected_steps'])}")
+                    print(f"    Detected Steps: {len(res['detected_steps'])}") # type: ignore
                     # print(f"    Metrics: {res['metrics']}\n")
                     print(f"    Metrics:")
                     print(

@@ -6,6 +6,7 @@ __all__ = [
     "shoe_algorithm",
     "evaluate_algorithm",
     "StepDataCollector",
+    "process_sensor_algorithms",
 ]
 
 from .step_detection_algorithms import (
@@ -15,6 +16,7 @@ from .step_detection_algorithms import (
     adaptive_threshold_algorithm,
     shoe_algorithm,
     evaluate_algorithm,
+    process_sensor_algorithms,
 )
 
 from .StepDataCollector import StepDataCollector

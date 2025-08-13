@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 from scipy import signal
-from scipy.fft import fft, fftfreq
-import os
-from datetime import datetime
-import json
+# from scipy.fft import fft, fftfreq
+# import os
+# from datetime import datetime
+# import json
+import time
 
 
 ##############################################
@@ -24,7 +25,7 @@ def safe_savgol_filter(data, window_size_seconds, fs, polyorder=2):
         - Fits a polynomial (degree = polyorder) to points in each window
         - Uses the polynomial's center value as the filtered output
         - Moves window by one sample and repeats
-        
+
     Key advantages over moving average:
         - Better preservation of signal features (peaks, slopes)
         - Reduces noise while maintaining signal characteristics
@@ -123,7 +124,7 @@ def peak_detection_algorithm(
             adaptive_threshold = np.std(centered_signal) * threshold
 
         else:
-            adaptive_threshold = running_std.values * threshold
+            adaptive_threshold = running_std.values * threshold # type: ignore
 
     except Exception as e:
         print(f"Rolling std error: {e}, using fallback")
@@ -463,7 +464,7 @@ def calculate_mse(detected_steps, ground_truth_steps, tolerance=0.3):
     Calculate Mean Squared Error between detected and ground truth steps.
     For each ground truth step, finds the closest detected step and applies
     penalty for steps outside tolerance range.
-    
+
     Args:
         detected_steps: Array of detected step times
         ground_truth_steps: Array of ground truth step times
@@ -592,3 +593,137 @@ def evaluate_algorithm(detected_steps, ground_truth_steps, tolerance=0.3):
         "mse": mse,
         "count_mse": count_mse,
     }
+
+
+def process_sensor_algorithms(
+    accel_data: list[np.ndarray],
+    gyro_data: list[np.ndarray],
+    param_sets: dict[str, dict[str, float]],
+    ground_truth_steps: np.ndarray,
+    fs: int | float,
+) -> dict[str, dict[str, float | np.ndarray | dict[str, float | int]]]:
+    """
+    Process all algorithms for a single sensor
+    
+    Args:
+        accel_data (np.ndarray): Accelerometer data (3D array [x, y, z])
+        gyro_data (np.ndarray): Gyroscope data (3D array [x, y, z])
+        param_sets (dict[str, dict[str, float]]): Dictionary of algorithm parameters
+        ground_truth_steps (np.ndarray): Array of ground truth step times
+        fs (int | float): Sampling frequency in Hz
+
+    Returns:
+        dict: Dictionary of algorithm results
+    """
+    results = {}
+
+    for algorithm_name, params in param_sets.items():
+        try:
+            if algorithm_name == "peak_detection":
+                start_time = time.time()
+                detected_steps, filtered_signal = peak_detection_algorithm(
+                    accel_data,
+                    fs,
+                    params["window_size"],
+                    params["threshold"],
+                    params["min_time_between_steps"],
+                )
+                execution_time = time.time() - start_time
+                results[algorithm_name] = {
+                    "detected_steps": detected_steps,
+                    "filtered_signal": filtered_signal,
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "execution_time": execution_time,
+                }
+
+            elif algorithm_name == "zero_crossing":
+                start_time = time.time()
+                detected_steps, filtered_signal = zero_crossing_algorithm(
+                    accel_data,
+                    fs,
+                    params["window_size"],
+                    params["min_time_between_steps"],
+                    params["hysteresis_band"],
+                )
+                execution_time = time.time() - start_time
+                results[algorithm_name] = {
+                    "detected_steps": detected_steps,
+                    "filtered_signal": filtered_signal,
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "execution_time": execution_time,
+                }
+
+            elif algorithm_name == "spectral_analysis":
+                start_time = time.time()
+                detected_steps, step_freqs = spectral_analysis_algorithm(
+                    accel_data,
+                    fs,
+                    params["window_size"],
+                    params["overlap"],
+                    params["step_freq_range"],
+                )
+                execution_time = time.time() - start_time
+                results[algorithm_name] = {
+                    "detected_steps": detected_steps,
+                    "step_frequencies": step_freqs,
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "execution_time": execution_time,
+                }
+
+            elif algorithm_name == "adaptive_threshold":
+                start_time = time.time()
+                detected_steps, filtered_signal, threshold = (
+                    adaptive_threshold_algorithm(
+                        accel_data,
+                        fs,
+                        params["window_size"],
+                        params["sensitivity"],
+                        params["min_time_between_steps"],
+                    )
+                )
+                execution_time = time.time() - start_time
+                results[algorithm_name] = {
+                    "detected_steps": detected_steps,
+                    "filtered_signal": filtered_signal,
+                    "threshold": threshold,
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "execution_time": execution_time,
+                }
+
+            elif algorithm_name == "shoe":
+                start_time = time.time()
+                detected_steps, combined_signal = shoe_algorithm(
+                    accel_data,
+                    gyro_data,
+                    fs,
+                    params["window_size"],
+                    params["threshold"],
+                    params["min_time_between_steps"],
+                )
+                execution_time = time.time() - start_time
+                results[algorithm_name] = {
+                    "detected_steps": detected_steps,
+                    "combined_signal": combined_signal,
+                    "metrics": evaluate_algorithm(detected_steps, ground_truth_steps),
+                    "execution_time": execution_time,
+                }
+
+        except Exception as e:
+            print(f"Error running {algorithm_name}: {e}")
+            results[algorithm_name] = {
+                "detected_steps": np.array([]),
+                "metrics": {
+                    "precision": 0.0,
+                    "recall": 0.0,
+                    "f1_score": 0.0,
+                    "step_count": 0.0,
+                    "ground_truth_count": len(ground_truth_steps),
+                    "step_count_error": len(ground_truth_steps),
+                    "step_count_error_percent": 100.0,
+                    "mse": 99999.9,
+                    "count_mse": 99999.9,
+                },
+                "execution_time": 0.0,
+            }
+
+    return results
