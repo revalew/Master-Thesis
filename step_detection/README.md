@@ -13,11 +13,13 @@ This module contains the data analysis pipeline for the Master's Thesis project 
 ```
 step_detection/
 ├── analysis/                    # Analysis results and screenshots
-├── data/                        # Data directory for recorded sensor data
-├── plots/                       # Generated plots and visualizations
+├── parser/                      # Parser for TUG (Timed Up and Go) test data and bulk analysis 
 ├── utils/                       # Module with the GUI app and algorithm implementations
 ├── requirements.txt             # Python dependencies
-├── step_data_collector.py       # Main
+├── data_analyzer.py             # Run bulk analysis in given directory
+├── parser.py                    # Parser for TUG (Timed Up and Go) test data (which I got from my supervisor)
+├── step_data_collector.py       # Main GUI
+├── detection_params.json        # Algorithm parameters
 ├── TUNING_PARAMS_GUIDE.md       # Parameter tuning guide
 ├── SCENARIO_SPECIFIC_PARAMS.md  # Ready-to-use parameter sets
 └── README.md                    # This file
@@ -90,25 +92,44 @@ python step_data_collector.py
 
 - Live algorithm analysis with [5 different methods](#step-detection-algorithms)
 
+- Adjustable detection parameters (through [`./detection_params.json`](./detection_params.json); can be modified without restarting the application - just reopen the analysis window afterwards)
+
 - Save/load recorded sessions
 
 - Export data to CSV format
 
 <br/>
 
-### Standalone Algorithm Testing
+### Standalone Performance Analysis (bulk analysis)
 
-Generate synthetic data and test algorithms:
+Manually going through $`84`$ experiments using the GUI could take a long time. Run the analysis module without the GUI for all subfolders
+in the [`./analysis/experiments/`](./analysis/experiments/) directory (or any other directory of your choice):
 
 <br/>
 
 ```bash
-python step_detection_algorithms.py
+python data_analyzer.py
 ```
 
 <br/>
 
-This creates example datasets and comprehensive visualizations in the [`./plots/`](./plots/) directory.
+This creates (or updates) the analysis results of each experiment in the given directory,
+
+e.g.: [`./analysis/experiments/1_mount_thigh_pocket/1_TUG/tug_thigh_1/detection_results.yaml`](./analysis/experiments/1_mount_thigh_pocket/1_TUG/tug_thigh_1/detection_results.yaml)
+
+<br/>
+
+### Parser for TUG (Timed Up and Go) test data
+
+After the consultation with my supervisor, I got the task of adjusting the recordings of her experiments to fit the required format of this project. This allows us to evaluate the performance of the algorithms on the same data.
+
+Go read the README there [`./parser/`](./parser/) and see how the parser converts the data into the format used by this project.
+
+<br/>
+
+```bash
+python parser.py
+```
 
 <br/><br/>
 
@@ -156,7 +177,28 @@ The following algorithms are implemented in [`./utils/step_detection_algorithms.
 
 <br/>
 
-You can change the parameters for each algorithm in [`./utils/StepDataCollector.py`](./utils/StepDataCollector.py#L1372-L1401) (method `analyze_data`, variable `param_sets`, lines `1372-1401`).
+### GUI and bulk analysis
+
+You can change the parameters for each algorithm in [`./detection_params.json`](./detection_params.json)
+Each sensor has its own section
+
+- [`sensor_1`](./detection_params.json#L17-L43)
+
+- [`sensor_2`](./detection_params.json#L45-L71).
+
+<br/>
+
+### TUG Parser
+
+You can change the parameters for each algorithm (and mounting point) in 
+[`./parser/sensor_location_params.json`](./parser/sensor_location_params.json).
+Each sensor pair has its own section
+
+- [`ankle_params`](./parser/sensor_location_params.json#L14-L40)
+
+- [`wrist_params`](./parser/sensor_location_params.json#L42-L68)
+
+- [`back_params`](./parser/sensor_location_params.json#L70-L96)
 
 <br/>
 
@@ -186,7 +228,7 @@ For most applications, use the **Normal Walking** configuration from [`SCENARIO_
 
 ### Universal Configuration Philosophy
 
-All parameter sets are designed to work **universally across different sensor mounting points** (pocket, wrist, arm, ankle) without requiring algorithm-specific adjustments.
+All parameter sets should be designed to work **universally across different sensor mounting points** (pocket, wrist, arm, ankle) without requiring algorithm-specific adjustments.
 
 <br/><br/>
 

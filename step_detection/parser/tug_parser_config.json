@@ -1,18 +1,18 @@
 {
 	"input_directory": "/home/maks/Dokumenty/Master-Thesis/.BACKUP/parser/IMU_signals",
 	"output_directory": "/home/maks/Dokumenty/Master-Thesis/.BACKUP/parser/tug_data_processed",
+	"sensor_location_params_file": "sensor_location_params.json",
 	"sampling_rate_hz": 100,
 	"run_analysis": true,
 	"gui_compatibility": false,
-	"sensor_location_params_file": "sensor_location_params.json",
 
 	"description": {
 		"input_directory": "Directory containing TUG CSV files (001-left_ankle.csv, etc.)",
 		"output_directory": "Directory where processed recordings will be saved",
+		"sensor_location_params_file": "JSON file containing step detection parameters optimized for sensor locations",
 		"sampling_rate_hz": "Expected sampling rate in Hz (used to generate timestamps)",
-		"run_analysis": "Whether to run step detection analysis automatically",
-		"gui_compatibility": "If true: creates GUI-compatible folder structure with sensor pairs. If false: simple structure with individual sensor files",
-		"sensor_location_params_file": "JSON file containing step detection parameters optimized for sensor locations"
+		"run_analysis": "Whether to run step detection analysis automatically after conversion",
+		"gui_compatibility": "If true: creates GUI-compatible folder structure with sensor pairs. If false: simple structure with individual sensor files"
 	},
 
 	"file_format_info": {

@@ -86,9 +86,13 @@ This project was developed by Maksymilian Kisiel as part of a Master's Thesis at
 
   - [Added UDP support](#added-udp-support)
 
-  - [Algorithm Improvements](#algorithm-improvements)
+  - [Algorithm improvements](#algorithm-improvements)
 
   - [Drastically improved the sampling rate](#drastically-improved-the-sampling-rate)
+
+  - [Running experiments](#running-experiments)
+
+  - [Parser and Bulk Analysis](#parser-and-bulk-analysis)
 
 <br/>
 <br/>
@@ -334,17 +338,19 @@ Successfully implemented and tested the complete step detection pipeline.
 
 For more information about the app and algorithms check out the [`step_detection/`](./step_detection/) directory.
 
-Major achievements of this stage:
-
-- **Step Detection GUI Application**: Created a comprehensive Python application (`step_data_collector.py`) for real-time data collection and analysis with live plotting capabilities,
+- **Step Detection GUI Application**: Created a GUI Python application for real-time data collection and analysis with live plotting capabilities,
 
 - **Multiple Detection Algorithms**: Implemented and compared 5 different step detection algorithms:
 
-  - Peak Detection with fixed threshold,
-  - Zero Crossing method,
+  - Peak Detection,
+
+  - Zero Crossing,
+
   - Spectral Analysis (STFT-based),
-  - Adaptive Threshold algorithm,
-  - SHOE (Step Heading Offset Estimator) approach,
+
+  - Adaptive Threshold,
+
+  - SHOE (Step Heading Offset Estimator),
 
 - **Robust Error Handling**: Added safe Savitzky-Golay filter implementation to prevent `polyorder` errors and enhanced thread management for proper application closing,
 
@@ -444,6 +450,26 @@ I thought the $`23 Hz`$ sampling rate was good enough (I hoped, otherwise it wou
 After trying many different approaches I finally found out that the main issue was the Waveshare's IMU and [its library](./libs_to_compile/lib/adafruit_icm20x.py), which added unnecessary overhead / wait and made the sampling rate $`46 Hz`$ maximum. After rewriting the I2C interface (now operating on raw registers without additional methods, though I think, it would be better to just modify the original library code and remove / reduce the sleep), sensor can easily reach high internal sampling rates and the UDP handler can send updated data as fast as possible - batch transmission using timestamps and Pico's built-in timers.
 
 Updated the main GUI app to support the new high-speed recording and implemented a dropdown selection for $`25, 50, 100, 200 Hz`$ frequencies ($`\; 50 \;\text{or}\; 100 Hz`$ recommended, $`200 Hz`$ can be inconsistent).
+
+<br/><br/>
+
+### Running Experiments
+
+I gathered data from $`84`$ experiments ($`7`$ scenarios, $`4`$ mounting points, $`3`$ attempts each, $`100 Hz`$ targeted sampling rate) and analyzed them with $`5`$ different algorithms. I still need to adjust the parameter sets (to see how much I can improve the detection), but I'm getting closer to the final results.
+
+The raw data and analysis results can be found in the [`./step_detection/analysis/experiments/`](./step_detection/analysis/experiments/) directory.
+
+<br/><br/>
+
+### Parser and Bulk Analysis
+
+I created a parser for the TUG test data and wrote a script for bulk analysis (with external parameter sets), eliminating the need for manual work through the GUI.
+
+The TUG data originates from experiments conducted by my supervisor, but it is in a different format to that used in this project. Therefore, I created a parser to convert the data and analyze it using my algorithms.
+
+After creating the parser, I realized that running a bulk analysis in the same way as the parser would be easier, so I added the [`./step_detection/parser/SimpleAnalyzer.py`](./step_detection/parser/SimpleAnalyzer.py) class to the parser module to skip the manual work through the GUI. To improve the parameter optimization process, I moved them to an external JSON file [`./step_detection/detection_params.json`](./step_detection/detection_params.json) and added a separate section for each sensor. Now it is easier to update the parameters and the GUI app doesn't need to be restarted - just update the JSON file and reopen the analysis window.
+
+Check out the updated README there for more information about the parser and bulk analysis: [`./step_detection/`](./step_detection/), [`./step_detection/parser/`](./step_detection/parser/)
 
 <br/><br/>
 

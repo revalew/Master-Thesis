@@ -1,40 +1,106 @@
 # TUG Data Parser
 
+</br>
+
 Independent parser for TUG (Timed Up and Go) test CSV files that converts sensor data and runs step detection analysis with location-specific parameters.
+
+> [!NOTE]
+> 
+> to use the parser or the simple bulk analyzer, go to the `step_detection` directory and run
+>
+> `python parser.py`
+>
+> OR
+>
+> `python data_analyzer.py`
+>
+> This will ensure that the imports are available
+
+</br></br>
+
+## In a nutshell
+
+Convert this
+
+</br>
+
+```csv
+PacketCounter,Acc_X,Acc_Y,Acc_Z,Gyr_X,Gyr_Y,Gyr_Z,Roll,Pitch,Yaw
+5758,9.867562,0.006708,-0.797566,0.043418,-0.013966,-0.029659,164.128107,-85.361152,0.098424
+5759,9.820398,-0.043264,-0.975658,0.040553,-0.01197,-0.052602,163.838922,-85.345859,0.411857
+```
+
+</br>
+
+to this
+
+</br>
+
+```csv
+time,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z
+0.0002710,9.8880529,5.83227,0.900219,-0.8409555,0.260866761,-2.71845006,0.0,0.0,0.0
+0.0463035,10.175356,2.99035,0.466869,-0.9653935,0.082869835,-2.31662464,0.0,0.0,0.0
+```
+
+</br>
+
+and run the analysis.
+
+</br></br>
 
 ## Quick Start
 
-1. **Setup Files**
+<ol>
+<li><b>Setup Files</b>
 
-   ```bash
-   # Place your TUG CSV files in input directory
-   mkdir tug_data_raw
-   # Copy your 001-left_ankle.csv, 001-right_ankle.csv, etc. files here
-   ```
+<br/><br/>
 
-2. **Configure**
+```bash
+# Place your TUG CSV files in input directory
+mkdir tug_data_raw
+# Copy your 001-left_ankle.csv, 001-right_ankle.csv, etc. files here
+```
+    
+</li></br>
 
-   ```bash
-   # Edit main configuration (optional)
-   vi tug_parser_config.json
-   
-   # Edit sensor parameters (optional)
-   vi sensor_location_params.json
-   ```
+<li><b>Configure</b>
 
-3. **Run Parser**
+<br/><br/>
 
-   ```bash
-   python run_tug_parser.py
-   ```
+```bash
+# Edit main configuration (optional)
+vi tug_parser_config.json
+
+# Edit sensor parameters (optional)
+vi sensor_location_params.json
+```
+
+</li></br>
+
+<li><b>Run Parser</b>
+
+<br/><br/>
+
+```bash
+python parser.py
+```
+
+</li>
+</ol>
+
+</br></br>
 
 ## Output Modes
 
 The parser supports two output modes controlled by `gui_compatibility` setting:
 
+</br>
+
 ### GUI Compatible Mode (`"gui_compatibility": true`)
 
 Creates structure compatible with existing GUI application:
+
+</br>
 
 ```bash
 tug_data_processed/
@@ -51,9 +117,13 @@ tug_data_processed/
 └── processing_summary.json
 ```
 
+</br>
+
 ### Simple Mode (`"gui_compatibility": false`)
 
 Creates simple structure with individual sensor files:
+
+</br>
 
 ```bash
 tug_data_processed/
@@ -73,7 +143,11 @@ tug_data_processed/
 └── processing_summary.json
 ```
 
+</br></br>
+
 ## Input File Format
+
+</br>
 
 ### Naming Convention
 
@@ -91,9 +165,13 @@ Examples:
 
 - `001-sacrum_back.csv`
 
+</br>
+
 ### CSV Format
 
 Required columns:
+
+</br>
 
 ```csv
 PacketCounter,Acc_X,Acc_Y,Acc_Z,Gyr_X,Gyr_Y,Gyr_Z,Roll,Pitch,Yaw
@@ -101,20 +179,28 @@ PacketCounter,Acc_X,Acc_Y,Acc_Z,Gyr_X,Gyr_Y,Gyr_Z,Roll,Pitch,Yaw
 5759,9.820398,-0.043264,-0.975658,0.040553,-0.01197,-0.052602,163.838922,-85.345859,0.411857
 ```
 
+</br></br>
+
 ## Configuration Files
 
+</br>
+
 ### Main Configuration (`tug_parser_config.json`)
+
+</br>
 
 ```json
 {
     "input_directory": "./tug_data_raw",
     "output_directory": "./tug_data_processed", 
+    "sensor_location_params_file": "sensor_location_params.json",
     "sampling_rate_hz": 100,
     "run_analysis": true,
-    "gui_compatibility": false,
-    "sensor_location_params_file": "sensor_location_params.json"
+    "gui_compatibility": false
 }
 ```
+
+</br>
 
 **Key Parameters:**
 
@@ -123,6 +209,8 @@ PacketCounter,Acc_X,Acc_Y,Acc_Z,Gyr_X,Gyr_Y,Gyr_Z,Roll,Pitch,Yaw
 - **`sampling_rate_hz`**: Sampling rate used to generate timestamps (default: 100 Hz)
 
 - **`run_analysis`**: Whether to automatically run step detection analysis
+
+</br>
 
 ### Sensor Location Parameters (`sensor_location_params.json`)
 
@@ -136,6 +224,8 @@ Contains optimized parameters for different sensor locations (most probably will
 
 Each location has tuned parameters for all algorithms:
 
+</br>
+
 ```json
 {
     "ankle_params": {
@@ -148,15 +238,24 @@ Each location has tuned parameters for all algorithms:
 }
 ```
 
+</br></br>
+
 ## Location-Specific Optimization
 
-The parser automatically selects optimal parameters based on sensor location:
+The parser automatically selects optimal parameters based on sensor location
+
+</br>
+<div align="center">
 
 | Location | Characteristics | Parameter Adjustments |
 |----------|----------------|----------------------|
 | **Ankle** | Clearest step signals, lower noise | Smaller windows, higher thresholds, faster detection |
 | **Wrist** | More artifacts from arm swing | Larger windows, higher thresholds, noise reduction |
 | **Back/Sacrum** | Whole-body movement patterns | Medium windows, moderate thresholds, balanced approach |
+
+</div>
+
+</br></br>
 
 ## Step Detection Analysis
 
@@ -174,16 +273,26 @@ If `run_analysis` is enabled, the parser runs multiple step detection algorithms
 
 Results include step count, timing, and frequency analysis.
 
+</br></br>
+
 ## Usage Examples
+
+</br>
 
 ### Basic Processing
 
+</br>
+
 ```bash
 # Process with default settings
-python TUGDataParser.py
+python parser.py
 ```
 
+</br>
+
 ### GUI Compatible Mode
+
+</br>
 
 ```json
 // Set in tug_parser_config.json
@@ -193,9 +302,15 @@ python TUGDataParser.py
 }
 ```
 
+</br>
+
 Result: Can load processed data in original GUI application
 
+</br>
+
 ### Simple Analysis Mode  
+
+</br>
 
 ```json
 // Set in tug_parser_config.json
@@ -205,9 +320,15 @@ Result: Can load processed data in original GUI application
 }
 ```
 
+</br>
+
 Result: Individual sensor files with analysis results
 
+</br>
+
 ### Convert Only (No Analysis)
+
+</br>
 
 ```json
 // Set in tug_parser_config.json
@@ -216,19 +337,27 @@ Result: Individual sensor files with analysis results
 }
 ```
 
+</br>
+
 Result: Just convert CSV format without running step detection
+
+</br></br>
 
 ## Output Files Explained
 
-### Simple Mode Files
-
 **`{sensor_location}.csv`**: Converted sensor data
+
+</br>
 
 ```csv
 time,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z
 ```
 
+</br>
+
 **`{sensor_location}_detection_results.yaml`**: Step detection results
+
+</br>
 
 ```yaml
 Peak Detection:
@@ -238,7 +367,11 @@ Peak Detection:
   Step Rate: 0.64 steps/s
 ```
 
+</br>
+
 **`recording_metadata.json`**: Recording information
+
+</br>
 
 ```json
 {
@@ -250,7 +383,11 @@ Peak Detection:
 }
 ```
 
+</br>
+
 **`processing_summary.json`**: Overall statistics
+
+</br>
 
 ```json
 {
@@ -267,9 +404,11 @@ Peak Detection:
 }
 ```
 
+</br></br>
+
 ## Performance Notes
 
-- Processing ~600 recordings takes approximately 3-10 minutes depending on hardware
+- Processing ~600 recordings takes approximately 1-5 minutes depending on hardware
 
 - Simple mode is faster than GUI-compatible mode
 
@@ -278,3 +417,5 @@ Peak Detection:
 - Missing sensor files are handled gracefully (in GUI mode filled with zeros, in simple mode skipped)
 
 - Location-specific parameters provide better accuracy than generic parameters
+
+</br></br>

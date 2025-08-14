@@ -1,6 +1,6 @@
 {
 	"description": {
-		"purpose": "Step detection parameters optimized for different sensor locations",
+		"purpose": "Step detection parameters optimized for different sensor locations, most probably will try making them the same for all sensors",
 		"sensor_locations": ["ankle", "wrist", "back"],
 		"parameter_tuning": {
 			"ankle": "Sensors at ankle level - clearer step signals, lower noise",
