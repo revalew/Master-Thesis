@@ -53,7 +53,7 @@ and run the analysis.
 <ol>
 <li><b>Setup Files</b>
 
-<br/><br/>
+<br/>
 
 ```bash
 # Place your TUG CSV files in input directory
@@ -65,7 +65,7 @@ mkdir tug_data_raw
 
 <li><b>Configure</b>
 
-<br/><br/>
+<br/>
 
 ```bash
 # Edit main configuration (optional)
@@ -79,7 +79,7 @@ vi sensor_location_params.json
 
 <li><b>Run Parser</b>
 
-<br/><br/>
+<br/>
 
 ```bash
 python parser.py
